@@ -62,13 +62,7 @@ function evolve!(simulation::Simulation{<:DiscontinuousGalerkinBackend})
     rhs           = simulation.rhs
     state         = simulation.state
 
-    # Instantiate time stepping method & create callbacks
-    # ode_solver = method(
-    #     rhs,
-    #     state;
-    #     dt = timestep,
-    #     t0 = start,
-    # )
+    # Create ode solver & callbacks
 
     ode_solver = construct_odesolver(simulation.splitting, simulation)
 

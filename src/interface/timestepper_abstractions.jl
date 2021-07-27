@@ -1,5 +1,22 @@
+abstract type AbstractTimestepper end
 abstract type AbstractRate end
-abstract type AbstractSplitting end
+abstract type AbstractSplitting end 
+abstract type AbstractCFL end
+
+# struct CFL{𝒜} <: AbstractCFL
+#     cfl::𝒜
+# end
+
+# Base.@kwdef struct Timestepper{𝒜,ℬ,𝒞,𝒟} <: AbstractTimestepper
+#     method::𝒜
+#     start::ℬ
+#     finish::𝒞
+#     timestep::𝒟
+# end
+
+# function Timestepper(; method = SSPRK22Heuns, start = 0.0, finish, timestep = CFL(1.0))
+
+# end
 
 struct NoSplitting <: AbstractSplitting end
 
