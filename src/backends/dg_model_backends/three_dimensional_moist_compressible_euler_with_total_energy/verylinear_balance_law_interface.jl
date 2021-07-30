@@ -3,25 +3,23 @@
 
     vars_state returns a NamedTuple of data types.
 """
-function vars_state(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, 
-    st::Auxiliary, 
-    FT
-)
+function vars_state(balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy, aux::Auxiliary, FT)
     @vars begin
         x::FT
         y::FT
         z::FT
         Φ::FT
-        ref_state::vars_state(balance_law, balance_law.ref_state, st, FT)
+        ref_state::vars_state(balance_law, balance_law.ref_state, aux, FT)
     end
 end
 
-vars_state(::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::DryReferenceState, ::Auxiliary, FT) =
+vars_state(::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::DryReferenceState, ::Auxiliary, FT) =
     @vars(T::FT, p::FT, ρ::FT, ρu::SVector{3, FT}, ρe::FT, ρq::FT)
-vars_state(::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::NoReferenceState, ::Auxiliary, FT) = @vars()
 
-function vars_state(::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::Prognostic, FT)
+vars_state(::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::NoReferenceState, ::Auxiliary, FT) =
+    @vars()
+
+function vars_state(::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::Prognostic, FT)
     @vars begin
         ρ::FT
         ρu::SVector{3, FT}
@@ -38,7 +36,7 @@ end
     the gradient flux variables by default.
 """
 function init_state_prognostic!(
-        balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+        balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
         state::Vars,
         aux::Vars,
         localgeo,
@@ -63,7 +61,7 @@ function init_state_prognostic!(
 end
 
 function nodal_init_state_auxiliary!(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
     state_auxiliary,
     tmp,
     geom,
@@ -73,7 +71,7 @@ function nodal_init_state_auxiliary!(
 end
 
 function init_state_auxiliary!(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
     ::SphericalOrientation,
     state_auxiliary,
     geom,
@@ -88,7 +86,7 @@ function init_state_auxiliary!(
 end
 
 function init_state_auxiliary!(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
     ::FlatOrientation,
     state_auxiliary,
     geom,
@@ -103,14 +101,14 @@ function init_state_auxiliary!(
 end
 
 function init_state_auxiliary!(
-    ::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    ::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
     ::NoReferenceState,
     state_auxiliary,
     geom,
 ) end
 
 function init_state_auxiliary!(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
     ref_state::DryReferenceState,
     state_auxiliary,
     geom,
@@ -142,27 +140,48 @@ end
     Main model computations
 """
 @inline function flux_first_order!(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
     flux::Grad,
     state::Vars,
     aux::Vars,
     t::Real,
     direction,
-)    
+)
+    # states
     ρ   = state.ρ
     ρu  = state.ρu
     ρe  = state.ρe
     ρq  = state.ρq
+
+    # thermodynamics
     eos = balance_law.equation_of_state
     parameters = balance_law.parameters
+    p = calc_very_linear_pressure(eos, state, aux, parameters)
 
-    p = calc_pressure(eos, state, aux, parameters)
-    u = ρu / ρ
+    # Reference states
+    ρᵣ  = aux.ref_state.ρ
+    ρuᵣ = aux.ref_state.ρu
+    ρeᵣ = aux.ref_state.ρe
+    ρqᵣ = aux.ref_state.ρq
+    pᵣ  = aux.ref_state.p
 
-    flux.ρ  += ρu
-    flux.ρu += ρu ⊗ u + p * I
-    flux.ρe += (ρe + p) * u
-    flux.ρq += ρq * u
+    # derived states
+    u = ρu / ρᵣ - ρ * ρuᵣ / (ρᵣ^2)
+    q = ρq / ρᵣ - ρ * ρqᵣ / (ρᵣ^2)
+    e = ρe / ρᵣ - ρ * ρeᵣ / (ρᵣ^2)
+
+    # derived reference states
+    uᵣ = ρuᵣ / ρᵣ
+    qᵣ = ρqᵣ / ρᵣ
+    eᵣ = ρeᵣ / ρᵣ
+
+    # can be simplified, but written this way to look like the VeryLinearKGVolumeFlux
+    flux.ρ   += ρᵣ * u + ρ * uᵣ # this is just ρu
+    flux.ρu  += p * I + ρᵣ .* (uᵣ .* u' + u .* uᵣ')
+    flux.ρu  += (ρ .* uᵣ) .* uᵣ'
+    flux.ρe  += (ρᵣ * eᵣ + pᵣ) * u
+    flux.ρe  += (ρᵣ * e + ρ * eᵣ + p) * uᵣ
+    flux.ρq  += ρᵣ * qᵣ * u + (ρᵣ * q + ρ * qᵣ) * uᵣ
 
     nothing
 end
@@ -171,27 +190,28 @@ end
     Source computations
 """
 function source!(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, 
-    source, 
-    state_prognostic, 
-    state_auxiliary, 
+    balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    source,
+    state_prognostic,
+    state_auxiliary,
     _...
 )
     sources = balance_law.sources
-
+    #=
     ntuple(Val(length(sources))) do s
         Base.@_inline_meta
         calc_source!(source, balance_law, sources[s], state_prognostic, state_auxiliary)
     end
+    =#
 end
 
 """
     Utils
 """
-function altitude(balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::SphericalOrientation, geom)
+function altitude(balance_law::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::SphericalOrientation, geom)
     return norm(geom.coord) - balance_law.parameters.a
 end
 
-function altitude(::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::FlatOrientation, geom)
+function altitude(::VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy, ::FlatOrientation, geom)
     @inbounds geom.coord[3]
 end

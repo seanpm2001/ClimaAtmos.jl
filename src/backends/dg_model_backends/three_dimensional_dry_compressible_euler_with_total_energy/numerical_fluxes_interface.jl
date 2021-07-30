@@ -25,7 +25,7 @@ end
 
 function numerical_volume_fluctuation_flux_first_order!(
     ::NumericalFluxFirstOrder,
-    balance_law::LinearBalanceLaw,
+    balance_law::DryLinearBalanceLaw,
     source::Grad,
     state_1::Vars,
     aux_1::Vars,
@@ -372,7 +372,7 @@ end
 
 function numerical_flux_first_order!(
     ::RefanovFlux,
-    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, LinearBalanceLaw},
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
     fluxᵀn::Vars{S},
     normal_vector::SVector,
     state⁻::Vars{S},
@@ -423,7 +423,7 @@ end
 
 function numerical_flux_second_order!(
     ::Nothing, 
-    ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy,LinearBalanceLaw}, 
+    ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw}, 
     _...,
 ) 
     return nothing

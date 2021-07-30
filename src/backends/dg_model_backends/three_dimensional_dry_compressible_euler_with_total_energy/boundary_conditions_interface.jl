@@ -1,7 +1,7 @@
 function numerical_boundary_flux_first_order!(
     numerical_flux::NumericalFluxFirstOrder,
     ::DefaultBC,
-    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy,LinearBalanceLaw},
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
     fluxᵀn::Vars{S},
     n̂::SVector,
     state⁻::Vars{S},
@@ -38,7 +38,7 @@ end
 function numerical_boundary_flux_first_order!(
     numerical_flux::NumericalFluxFirstOrder,
     bctype::BulkFormulaTemperature,
-    balance_law::ThreeDimensionalDryCompressibleEulerWithTotalEnergy,
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
     fluxᵀn::Vars{S},
     n̂::SVector,
     state⁻::Vars{S},
@@ -94,14 +94,14 @@ end
 function numerical_boundary_flux_second_order!(
     ::Nothing, 
     a, 
-    ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy,LinearBalanceLaw}, 
+    ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw}, 
     _...
 ) 
     return nothing
 end
 
 function boundary_conditions(
-    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, LinearBalanceLaw}
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw}
 ) 
     return balance_law.boundary_conditions
 end

@@ -1,4 +1,5 @@
-abstract type LinearBalanceLaw <: BalanceLaw end
+abstract type DryLinearBalanceLaw <: BalanceLaw end
+abstract type MoistLinearBalanceLaw <: BalanceLaw end
 
 Base.@kwdef struct ThreeDimensionalCompressibleEulerWithBarotropicFluid{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ} <: BalanceLaw 
     equation_of_state::𝒜
@@ -19,7 +20,7 @@ Base.@kwdef struct ThreeDimensionalDryCompressibleEulerWithTotalEnergy{𝒜,ℬ,
     parameters::𝒢
 end
 
-Base.@kwdef struct LinearThreeDimensionalDryCompressibleEulerWithTotalEnergy{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ,𝒢} <: LinearBalanceLaw
+Base.@kwdef struct LinearThreeDimensionalDryCompressibleEulerWithTotalEnergy{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ,𝒢} <: DryLinearBalanceLaw
     orientation::𝒜
     equation_of_state::ℬ
     sources::𝒞 # may not need
@@ -29,7 +30,7 @@ Base.@kwdef struct LinearThreeDimensionalDryCompressibleEulerWithTotalEnergy{�
     parameters::𝒢
 end
 
-Base.@kwdef struct VeryLinearThreeDimensionalDryCompressibleEulerWithTotalEnergy{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ,𝒢} <: LinearBalanceLaw
+Base.@kwdef struct VeryLinearThreeDimensionalDryCompressibleEulerWithTotalEnergy{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ,𝒢} <: DryLinearBalanceLaw
     orientation::𝒜
     equation_of_state::ℬ
     sources::𝒞 # may not need
@@ -43,6 +44,26 @@ Base.@kwdef struct ThreeDimensionalMoistCompressibleEulerWithTotalEnergy{𝒜,�
     orientation::𝒜
     equation_of_state::ℬ
     sources::𝒞
+    boundary_conditions::𝒟
+    initial_conditions::ℰ
+    ref_state::ℱ 
+    parameters::𝒢
+end
+
+Base.@kwdef struct LinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ,𝒢} <: MoistLinearBalanceLaw
+    orientation::𝒜
+    equation_of_state::ℬ
+    sources::𝒞 # may not need
+    boundary_conditions::𝒟
+    initial_conditions::ℰ
+    ref_state::ℱ 
+    parameters::𝒢
+end
+
+Base.@kwdef struct VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy{𝒜,ℬ,𝒞,𝒟,ℰ,ℱ,𝒢} <: MoistLinearBalanceLaw
+    orientation::𝒜
+    equation_of_state::ℬ
+    sources::𝒞 # may not need
     boundary_conditions::𝒟
     initial_conditions::ℰ
     ref_state::ℱ 
@@ -103,9 +124,35 @@ function linearize_balance_law(balance_law::ThreeDimensionalDryCompressibleEuler
     )
 end
 
+function linearize_balance_law(balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy) 
+
+    return LinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy(
+        orientation = balance_law.orientation,
+        equation_of_state = balance_law.equation_of_state,
+        sources = balance_law.sources,
+        boundary_conditions = balance_law.boundary_conditions,
+        initial_conditions = balance_law.initial_conditions,
+        ref_state = balance_law.ref_state,
+        parameters = balance_law.parameters, 
+    )
+end
+
 function verylinearize_balance_law(balance_law::ThreeDimensionalDryCompressibleEulerWithTotalEnergy) 
 
     return VeryLinearThreeDimensionalDryCompressibleEulerWithTotalEnergy(
+        orientation = balance_law.orientation,
+        equation_of_state = balance_law.equation_of_state,
+        sources = balance_law.sources,
+        boundary_conditions = balance_law.boundary_conditions,
+        initial_conditions = balance_law.initial_conditions,
+        ref_state = balance_law.ref_state,
+        parameters = balance_law.parameters, 
+    )
+end
+
+function verylinearize_balance_law(balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy) 
+
+    return VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy(
         orientation = balance_law.orientation,
         equation_of_state = balance_law.equation_of_state,
         sources = balance_law.sources,

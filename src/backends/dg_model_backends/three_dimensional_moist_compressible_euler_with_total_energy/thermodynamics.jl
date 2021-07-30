@@ -24,6 +24,28 @@ end
     return (γ - 1) * (ρe - ρ * Φ - ρ_e_latent + ρ * cv_d * T_0)
 end
 
+@inline function calc_very_linear_pressure(::MoistIdealGas, state, aux, params)
+    ρ  = state.ρ
+    ρu = state.ρu
+    ρe = state.ρe
+    ρ_q_tot = state.ρq 
+    ρ_q_liq = 0 # zero for now
+    ρ_q_ice = 0 # zero for now
+    Φ  = aux.Φ
+    T_0  = params.T_0
+
+    # Reference states
+    ρᵣ  = aux.ref_state.ρ
+    ρuᵣ = aux.ref_state.ρu
+
+    γ  = calc_heat_capacity_ratio(DryIdealGas(), state, params)
+    cv_d = calc_heat_capacity_at_constant_volume(DryIdealGas(), state, params)
+
+    ρ_e_latent = (ρ_q_tot - ρ_q_liq) * params.e_int_v0 - ρ_q_ice * (params.e_int_v0 + params.e_int_i0)
+
+    return (γ - 1) * (ρe - dot(ρuᵣ, ρu) / ρᵣ + ρ * dot(ρuᵣ, ρuᵣ) / (2*ρᵣ^2) - ρ * Φ - ρ_e_latent + ρ * cv_d * T_0)
+end
+
 @inline function calc_sound_speed(eos::MoistIdealGas, state, aux, params)
     ρ  = state.ρ
 

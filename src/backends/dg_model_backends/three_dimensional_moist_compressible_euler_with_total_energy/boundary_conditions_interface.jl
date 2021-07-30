@@ -1,7 +1,7 @@
 function numerical_boundary_flux_first_order!(
     numerical_flux::NumericalFluxFirstOrder,
     ::DefaultBC,
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::Union{ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, MoistLinearBalanceLaw},
     fluxᵀn::Vars{S},
     n̂::SVector,
     state⁻::Vars{S},
@@ -39,7 +39,7 @@ end
 function numerical_boundary_flux_first_order!(
     numerical_flux::NumericalFluxFirstOrder,
     bctype::BulkFormulaTemperature,
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    balance_law::Union{ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, MoistLinearBalanceLaw},
     fluxᵀn::Vars{S},
     n̂::SVector,
     state⁻::Vars{S},
@@ -105,14 +105,14 @@ function numerical_boundary_flux_first_order!(
 function numerical_boundary_flux_second_order!(
     ::Nothing,
     a,
-    ::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy,
+    ::Union{ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, MoistLinearBalanceLaw},
     _...
 )
     return nothing
 end
 
 function boundary_conditions(
-    balance_law::ThreeDimensionalMoistCompressibleEulerWithTotalEnergy
+    balance_law::Union{ThreeDimensionalMoistCompressibleEulerWithTotalEnergy, MoistLinearBalanceLaw}
 )
     return balance_law.boundary_conditions
 end
