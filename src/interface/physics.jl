@@ -2,6 +2,7 @@ abstract type AbstractEquationOfState end
 abstract type AbstractThermodynamicVariable end
 abstract type AbstractCompressibility end
 abstract type AbstractSource end
+abstract type AbstractForcing end
 
 abstract type AbstractGravity <: AbstractSource end
 abstract type AbstractMicrophysics <: AbstractSource end
