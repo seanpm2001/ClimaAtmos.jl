@@ -149,13 +149,14 @@ held_suarez_parameters = (;
     MSLP = parameters.p0,  
 )
 
-function calc_component!(
+function calc_source!(
     source,
     balance_law::ThreeDimensionalDryCompressibleEulerWithTotalEnergy,
     hsf::HeldSuarezForcing,
     state,
     aux,
 )
+    @info "Held-Suarez Forcing activated" maxlog = 1
     FT = eltype(state)
     
     _R_d  = hsf.parameters.R_d
@@ -263,8 +264,8 @@ simulation = Simulation(
     ),
 )
 
-# # run the simulation
-# initialize!(simulation)
-# evolve!(simulation)
+# run the simulation
+initialize!(simulation)
+evolve!(simulation)
 
 nothing

@@ -13,6 +13,7 @@ function numerical_boundary_flux_first_order!(
     state1⁻::Vars{S},
     aux1⁻::Vars{A},
 ) where {S, A}
+    @info "default bc" maxlog = 1
     state⁺.ρ = state⁻.ρ
     state⁺.ρe = state⁻.ρe
 
