@@ -39,7 +39,7 @@ end
 function numerical_boundary_flux_first_order!(
     numerical_flux::NumericalFluxFirstOrder,
     bctype::BulkFormulaTemperature,
-    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
+    balance_law::ThreeDimensionalDryCompressibleEulerWithTotalEnergy,
     fluxᵀn::Vars{S},
     n̂::SVector,
     state⁻::Vars{S},
@@ -55,7 +55,7 @@ function numerical_boundary_flux_first_order!(
     # at the boundary
     numerical_boundary_flux_first_order!(
         numerical_flux,
-        bctype::FreeSlip,
+        DefaultBC(),
         balance_law,
         fluxᵀn,
         n̂,
@@ -85,7 +85,7 @@ function numerical_boundary_flux_first_order!(
     speed_tangential = norm((I - n̂ ⊗ n̂) * u)
        
     # sensible heat flux
-    cp = calc_cp(eos, state⁻, parameters)
+    cp = calc_heat_capacity_at_constant_pressure(eos, state⁻, parameters)
     T = calc_air_temperature(eos, state⁻, aux⁻, parameters)
     H = ρ * Cₕ * speed_tangential * cp * (T - T_sfc)
 

@@ -103,6 +103,7 @@ function create_dg_grid(
         mpicomm,
         elements.horizontal,
         Rrange,
+        boundary = (1,2),
     )
 
     grid = DiscontinuousSpectralElementGrid(

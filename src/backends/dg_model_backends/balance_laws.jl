@@ -116,8 +116,8 @@ function linearize_balance_law(balance_law::ThreeDimensionalDryCompressibleEuler
     return LinearThreeDimensionalDryCompressibleEulerWithTotalEnergy(
         orientation = balance_law.orientation,
         equation_of_state = balance_law.equation_of_state,
-        sources = balance_law.sources,
-        boundary_conditions = balance_law.boundary_conditions,
+        sources = (gravity = Gravity(),),
+        boundary_conditions = (DefaultBC(), DefaultBC()),
         initial_conditions = balance_law.initial_conditions,
         ref_state = balance_law.ref_state,
         parameters = balance_law.parameters, 
@@ -129,8 +129,8 @@ function linearize_balance_law(balance_law::ThreeDimensionalMoistCompressibleEul
     return LinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy(
         orientation = balance_law.orientation,
         equation_of_state = balance_law.equation_of_state,
-        sources = balance_law.sources,
-        boundary_conditions = balance_law.boundary_conditions,
+        sources = (gravity = Gravity(),),
+        boundary_conditions = (DefaultBC(), DefaultBC()),
         initial_conditions = balance_law.initial_conditions,
         ref_state = balance_law.ref_state,
         parameters = balance_law.parameters, 
@@ -142,8 +142,8 @@ function verylinearize_balance_law(balance_law::ThreeDimensionalDryCompressibleE
     return VeryLinearThreeDimensionalDryCompressibleEulerWithTotalEnergy(
         orientation = balance_law.orientation,
         equation_of_state = balance_law.equation_of_state,
-        sources = balance_law.sources,
-        boundary_conditions = balance_law.boundary_conditions,
+        sources = (gravity = Gravity(),),
+        boundary_conditions = (DefaultBC(), DefaultBC()),
         initial_conditions = balance_law.initial_conditions,
         ref_state = balance_law.ref_state,
         parameters = balance_law.parameters, 
@@ -155,8 +155,8 @@ function verylinearize_balance_law(balance_law::ThreeDimensionalMoistCompressibl
     return VeryLinearThreeDimensionalMoistCompressibleEulerWithTotalEnergy(
         orientation = balance_law.orientation,
         equation_of_state = balance_law.equation_of_state,
-        sources = balance_law.sources,
-        boundary_conditions = balance_law.boundary_conditions,
+        sources = (gravity = Gravity(),),
+        boundary_conditions = (DefaultBC(), DefaultBC()),
         initial_conditions = balance_law.initial_conditions,
         ref_state = balance_law.ref_state,
         parameters = balance_law.parameters, 
