@@ -15,6 +15,7 @@ using ClimateMachine.VariableTemplates
 using ClimateMachine.Mesh.Geometry
 using ClimateMachine.Mesh.Topologies
 using ClimateMachine.Mesh.Grids
+using ClimateMachine.Mesh.Filters
 using ClimateMachine.DGMethods
 using ClimateMachine.DGMethods.NumericalFluxes
 using ClimateMachine.BalanceLaws

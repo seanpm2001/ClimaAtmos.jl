@@ -182,9 +182,17 @@ end
 
 function create_callback(filter::PositivityPreservingCallback, simulation::Simulation{<:DiscontinuousGalerkinBackend}, odesolver)
     Q = simulation.state
-    grid = simulation.grid.numerical
+    rhs = simulation.rhs
+    if rhs isa SpaceDiscretization
+        grid = simulation.rhs.grid
+    elseif rhs isa Tuple 
+        grid = simulation.rhs[1].grid
+    else
+        println("rhs error => fail to initialize PositivityPreservingCallback")
+    end
+    grid = simulation.rhs[1].grid
     tmar_filter = EveryXSimulationSteps(1) do
-        Filters.apply!(Q, filter.filterstates, grid, TMARFilter())
+        ClimateMachine.Mesh.Filters.apply!(Q, filter.filterstates, grid, TMARFilter())
         end
     return tmar_filter
 end
