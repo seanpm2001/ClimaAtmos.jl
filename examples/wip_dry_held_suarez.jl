@@ -213,8 +213,6 @@ function calc_source!(
     # Apply Held-Suarez forcing
     source.ρu -= k_v * P * ρu
     source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
-    #=
-    =#
     return nothing
 end
 
