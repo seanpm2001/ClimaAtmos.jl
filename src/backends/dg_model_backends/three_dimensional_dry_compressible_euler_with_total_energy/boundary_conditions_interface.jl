@@ -13,13 +13,12 @@ function numerical_boundary_flux_first_order!(
     state1⁻::Vars{S},
     aux1⁻::Vars{A},
 ) where {S, A}
-    @info "default bc" maxlog = 1
     state⁺.ρ = state⁻.ρ
     state⁺.ρe = state⁻.ρe
 
     ρu⁻ = state⁻.ρu
-    
-    # project and reflect for impenetrable condition, but 
+
+    # project and reflect for impenetrable condition, but
     # leave tangential component untouched
     state⁺.ρu = ρu⁻ - n̂ ⋅ ρu⁻ .* SVector(n̂) - n̂ ⋅ ρu⁻ .* SVector(n̂)
     numerical_flux_first_order!(
@@ -51,7 +50,7 @@ function numerical_boundary_flux_first_order!(
     state1⁻::Vars{S},
     aux1⁻::Vars{A},
 ) where {S, A}
-    # Impenetrable free-slip condition to reflect and project momentum 
+    # Impenetrable free-slip condition to reflect and project momentum
     # at the boundary
     numerical_boundary_flux_first_order!(
         numerical_flux,
@@ -68,7 +67,7 @@ function numerical_boundary_flux_first_order!(
         state1⁻,
         aux1⁻,
     )
-    
+
     # Apply bulk laws using the tangential velocity as energy flux
     ρ = state⁻.ρ
     ρu = state⁻.ρu
@@ -83,7 +82,7 @@ function numerical_boundary_flux_first_order!(
     # magnitude of tangential velocity (usually called speed)
     u = ρu / ρ
     speed_tangential = norm((I - n̂ ⊗ n̂) * u)
-       
+
     # sensible heat flux
     cp = calc_heat_capacity_at_constant_pressure(eos, state⁻, parameters)
     T = calc_air_temperature(eos, state⁻, aux⁻, parameters)
@@ -93,17 +92,17 @@ function numerical_boundary_flux_first_order!(
 end
 
 function numerical_boundary_flux_second_order!(
-    ::Nothing, 
-    a, 
-    ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw}, 
+    ::Nothing,
+    a,
+    ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
     _...
-) 
+)
     return nothing
 end
 
 function boundary_conditions(
     balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw}
-) 
+)
     return balance_law.boundary_conditions
 end
 

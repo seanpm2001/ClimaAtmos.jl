@@ -72,7 +72,7 @@ parameters = (
     T_ref    = 255,
     τ_precip = 20.0,
     p0       = 1e5,
-    Cₑ       = 0.0044, 
+    Cₑ       = 0.0044,
     Cₗ       = 0.0044,
     Mᵥ       = 0.608,
 )
@@ -85,7 +85,7 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2), 
+	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2),
 	    vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
 	),
 )
@@ -141,7 +141,7 @@ uʳᵃᵈ(𝒫,λ,ϕ,r)   = w(𝒫,ϕ,r) + δw(𝒫,λ,ϕ,r)
 cv_m(𝒫,ϕ,r)  = 𝒫.cv_d + (𝒫.cv_v - 𝒫.cv_d) * q(𝒫,ϕ,r)
 R_m(𝒫,ϕ,r) = 𝒫.R_d * (1 + (𝒫.molmass_ratio - 1) * q(𝒫,ϕ,r))
 
-T(𝒫,ϕ,r) = Tᵥ(𝒫,ϕ,r) / (1 + 𝒫.Mᵥ * q(𝒫,ϕ,r)) 
+T(𝒫,ϕ,r) = Tᵥ(𝒫,ϕ,r) / (1 + 𝒫.Mᵥ * q(𝒫,ϕ,r))
 e_int(𝒫,λ,ϕ,r)  = cv_m(𝒫,ϕ,r) * (T(𝒫,ϕ,r) - 𝒫.T_0) + q(𝒫,ϕ,r) * 𝒫.e_int_v0
 e_kin(𝒫,λ,ϕ,r)  = 0.5 * ( uˡᵒⁿ(𝒫,λ,ϕ,r)^2 + uˡᵃᵗ(𝒫,λ,ϕ,r)^2 + uʳᵃᵈ(𝒫,λ,ϕ,r)^2 )
 e_pot(𝒫,λ,ϕ,r)  = 𝒫.g * r
@@ -173,7 +173,7 @@ FixedSST = BulkFormulaTemperature(
 struct HeldSuarezForcing{S} <: AbstractForcing
     parameters::S
 end
-    
+
 FT = Float64
 day = 86400
 held_suarez_parameters = (;
@@ -190,7 +190,7 @@ held_suarez_parameters = (;
     grav = parameters.g,
     cp_d = parameters.cp_d,
     cv_d = parameters.cv_d,
-    MSLP = parameters.p0,  
+    MSLP = parameters.p0,
 )
 
 function calc_source!(
@@ -200,15 +200,14 @@ function calc_source!(
     state,
     aux,
 )
-    @info "Held-Suarez Forcing activated" maxlog = 1
     FT = eltype(state)
-    
+
     _R_d  = hsf.parameters.R_d
     _day  = hsf.parameters.day
     _grav = hsf.parameters.grav
     _cp_d = hsf.parameters.cp_d
     _cv_d = hsf.parameters.cv_d
-    _p0   = hsf.parameters.MSLP  
+    _p0   = hsf.parameters.MSLP
 
     # Parameters
     T_ref = FT(255)
@@ -218,7 +217,7 @@ function calc_source!(
     ρu = state.ρu
     ρe = state.ρe
     Φ = aux.Φ
-    
+
     x = aux.x
     y = aux.y
     z = aux.z
@@ -296,10 +295,10 @@ simulation = Simulation(
     backend = backend,
     discretized_domain = discretized_domain,
     model = model,
-    splitting = IMEXSplitting( linear_model = :linear, ), 
+    splitting = IMEXSplitting( linear_model = :linear, ),
     timestepper = (
-        method = IMEX(), #SSPRK22Heuns, # 
-        start = 0.0, 
+        method = IMEX(), #SSPRK22Heuns, #
+        start = 0.0,
         finish = 24 * 3600,
         timestep = 10.0,
     ),
