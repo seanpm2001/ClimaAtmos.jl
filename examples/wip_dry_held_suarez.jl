@@ -54,7 +54,7 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2), 
+	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2),
 	    vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
 	),
 )
@@ -111,7 +111,7 @@ e_int(𝒫,λ,ϕ,r)  = (𝒫.R_d / 𝒫.κ - 𝒫.R_d) * (T(𝒫,ϕ,r) - 𝒫.T_
 e_kin(𝒫,λ,ϕ,r)  = 0.5 * ( uˡᵒⁿ(𝒫,λ,ϕ,r)^2 + uˡᵃᵗ(𝒫,λ,ϕ,r)^2 + uʳᵃᵈ(𝒫,λ,ϕ,r)^2 )
 e_pot(𝒫,λ,ϕ,r)  = 𝒫.g * r
 
-ρ₀(𝒫,λ,ϕ,r)    = p(𝒫,ϕ,r) / 𝒫.R_d / T(𝒫,ϕ,r) 
+ρ₀(𝒫,λ,ϕ,r)    = p(𝒫,ϕ,r) / 𝒫.R_d / T(𝒫,ϕ,r)
 ρuˡᵒⁿ(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * uˡᵒⁿ(𝒫,λ,ϕ,r)
 ρuˡᵃᵗ(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * uˡᵃᵗ(𝒫,λ,ϕ,r)
 ρuʳᵃᵈ(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * uʳᵃᵈ(𝒫,λ,ϕ,r)
@@ -146,7 +146,7 @@ held_suarez_parameters = (;
     grav = parameters.g,
     cp_d = parameters.cp_d,
     cv_d = parameters.cv_d,
-    MSLP = parameters.p0,  
+    MSLP = parameters.p0,
 )
 
 function calc_source!(
@@ -156,15 +156,14 @@ function calc_source!(
     state,
     aux,
 )
-    @info "Held-Suarez Forcing activated" maxlog = 1
     FT = eltype(state)
-    
+
     _R_d  = hsf.parameters.R_d
     _day  = hsf.parameters.day
     _grav = hsf.parameters.grav
     _cp_d = hsf.parameters.cp_d
     _cv_d = hsf.parameters.cv_d
-    _p0   = hsf.parameters.MSLP  
+    _p0   = hsf.parameters.MSLP
 
     # Parameters
     T_ref = FT(255)
@@ -174,7 +173,7 @@ function calc_source!(
     ρu = state.ρu
     ρe = state.ρe
     Φ = aux.Φ
-    
+
     x = aux.x
     y = aux.y
     z = aux.z
@@ -252,15 +251,15 @@ simulation = Simulation(
     model = model,
     splitting = IMEXSplitting( linear_model = :linear, ),
     timestepper = (
-        method = IMEX(), 
-        start = 0.0, 
+        method = IMEX(),
+        start = 0.0,
         finish = 24 * 3600,
         timestep = 30.0,
     ),
     callbacks = (
         Info(),
         # VTKState(iteration = Int(3600), filepath = "./out/"),
-        CFL(), 
+        CFL(),
     ),
 )
 
