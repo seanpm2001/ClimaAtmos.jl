@@ -35,13 +35,13 @@ parameters = (
     R_d      = get_planet_parameter(:R_d),
     R_v      = get_planet_parameter(:R_v),
     cv_d     = get_planet_parameter(:cv_d),
-    cv_v     = get_planet_parameter(:cv_v),
-    cv_l     = get_planet_parameter(:cv_l),
-    cv_i     = get_planet_parameter(:cv_i),
+    cv_v     = get_planet_parameter(:cv_d),# get_planet_parameter(:cv_v),
+    cv_l     = get_planet_parameter(:cv_d),# get_planet_parameter(:cv_l),
+    cv_i     = get_planet_parameter(:cv_d),# get_planet_parameter(:cv_i),
     cp_d     = get_planet_parameter(:cp_d),
-    cp_v     = get_planet_parameter(:cp_v),
-    cp_l     = get_planet_parameter(:cp_l),
-    cp_i     = get_planet_parameter(:cp_i),
+    cp_v     = get_planet_parameter(:cp_d),# get_planet_parameter(:cp_v),
+    cp_l     = get_planet_parameter(:cp_d),# get_planet_parameter(:cp_l),
+    cp_i     = get_planet_parameter(:cp_d),# get_planet_parameter(:cp_i),
     molmass_ratio = get_planet_parameter(:molmass_dryair)/get_planet_parameter(:molmass_water),
     γ        = get_planet_parameter(:cp_d)/get_planet_parameter(:cv_d),
     pₒ       = get_planet_parameter(:MSLP),
@@ -49,8 +49,8 @@ parameters = (
     Tₜᵣ      = get_planet_parameter(:T_triple),
     T_0      = get_planet_parameter(:T_0),
     LH_v0    = get_planet_parameter(:LH_v0),
-    e_int_v0 = get_planet_parameter(:e_int_v0),
-    e_int_i0 = get_planet_parameter(:e_int_i0),
+    e_int_v0 = 0.0,# get_planet_parameter(:e_int_v0),
+    e_int_i0 = 0.0,# get_planet_parameter(:e_int_i0),
     H        = 30e3,
     k        = 3.0,
     Γ        = 0.005,
@@ -85,8 +85,10 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2), 
-	    vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
+	#     horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2), 
+	#     vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
+	    horizontal = SpectralElementGrid(elements = 16, polynomial_order = 2), 
+	    vertical = SpectralElementGrid(elements = 8, polynomial_order = 2)
 	),
 )
 
@@ -163,6 +165,7 @@ e_pot(𝒫,λ,ϕ,r)  = 𝒫.g * r
 
 # set up boundary condition
 T_sfc(𝒫, ϕ) = 𝒫.ΔT * exp(-ϕ^2 / 2 / 𝒫.Δϕ^2) + 𝒫.Tₘᵢₙ
+# T_sfc(𝒫, ϕ) = 0.0 + T(𝒫,ϕ,𝒫.a)
 FixedSST = BulkFormulaTemperature(
     drag_coef_temperature = (params, ϕ) -> params.Cₑ,
     drag_coef_moisture = (params, ϕ) -> params.Cₗ,
@@ -301,12 +304,13 @@ simulation = Simulation(
         method = IMEX(), #SSPRK22Heuns, # 
         start = 0.0, 
         finish = 24 * 3600,
-        timestep = 10.0,
+        timestep = 30.0,
     ),
     callbacks = (
         Info(),
-        # VTKState(iteration = Int(floor(24*3600/5.0)), filepath = "./out/"),
+        # VTKState(iteration = Int(10), filepath = "./out/"),
         CFL(),
+	    PositivityPreservingCallback(),
     ),
 )
 
