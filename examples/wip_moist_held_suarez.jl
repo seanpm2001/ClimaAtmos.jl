@@ -48,7 +48,7 @@ parameters = (
     pₜᵣ      = get_planet_parameter(:press_triple),
     Tₜᵣ      = get_planet_parameter(:T_triple),
     T_0      = get_planet_parameter(:T_0),
-    LH_v0    = get_planet_parameter(:LH_v0),
+    LH_v0    = get_planet_parameter(:LH_v0),# 0.0,#
     e_int_v0 = 0.0,# get_planet_parameter(:e_int_v0),
     e_int_i0 = 0.0,# get_planet_parameter(:e_int_i0),
     H        = 30e3,
@@ -276,7 +276,7 @@ model = ModelSetup(
         sources = (
             coriolis = DeepShellCoriolis(),
             gravity = Gravity(),
-	    microphysics = ZeroMomentMicrophysics(),
+	        microphysics = ZeroMomentMicrophysics(),
             forcing = HeldSuarezForcing(held_suarez_parameters),
         ),
         ref_state = ref_state,

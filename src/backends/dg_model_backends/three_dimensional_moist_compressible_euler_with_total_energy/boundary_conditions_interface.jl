@@ -99,7 +99,11 @@ function numerical_boundary_flux_first_order!(
 
     fluxᵀn.ρ  = E / LH_v0
     fluxᵀn.ρe = E + H
-    fluxᵀn.ρq = E / LH_v0 
+    fluxᵀn.ρq = E / LH_v0
+    
+    # fluxᵀn.ρ  = ρ * Cₑ * speed_tangential * (q - q_tot_sfc)
+    # fluxᵀn.ρe = 0.0 + H
+    # fluxᵀn.ρq = ρ * Cₑ * speed_tangential * (q - q_tot_sfc)
 end
 
 function numerical_boundary_flux_second_order!(
