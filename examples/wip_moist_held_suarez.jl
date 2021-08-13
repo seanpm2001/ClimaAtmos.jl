@@ -309,7 +309,7 @@ simulation = Simulation(
         Info(),
         # VTKState(iteration = Int(10), filepath = "./out/"),
         CFL(),
-	    PositivityPreservingCallback(),
+	    # PositivityPreservingCallback(),
     ),
 )
 
