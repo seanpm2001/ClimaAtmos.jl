@@ -85,9 +85,9 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	#     horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2), 
+	#     horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2),
 	#     vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
-	    horizontal = SpectralElementGrid(elements = 16, polynomial_order = 2), 
+	    horizontal = SpectralElementGrid(elements = 16, polynomial_order = 2),
 	    vertical = SpectralElementGrid(elements = 8, polynomial_order = 2)
 	),
 )
@@ -316,5 +316,6 @@ simulation = Simulation(
 # run the simulation
 initialize!(simulation)
 evolve!(simulation)
+
 
 nothing
