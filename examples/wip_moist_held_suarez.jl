@@ -317,5 +317,4 @@ simulation = Simulation(
 initialize!(simulation)
 evolve!(simulation)
 
-
 nothing
