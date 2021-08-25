@@ -18,7 +18,7 @@ struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
 
 # set up backend
-backend = DiscontinuousGalerkinBackend(numerics = (flux = :lmars,),)
+backend = DiscontinuousGalerkinBackend(numerics = (flux = :roe,),)
 
 parameters = (
     a    = get_planet_parameter(:planet_radius),
@@ -257,13 +257,13 @@ simulation = Simulation(
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 24 * 3600,
+        finish = 10 * 24 * 3600,
         timestep = 30.0,
     ),
     callbacks = (
         Info(),
         # VTKState(iteration = Int(3600), filepath = "./out/"),
-        CFL(),
+        # CFL(),
     ),
 )
 
@@ -277,6 +277,6 @@ catch err
     showerror(stdout, err )
 end
 toc = time()
-println("The amount of time for the simulation was ", (toc - tic)/(3600), "hours")
+println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
 
 nothing
