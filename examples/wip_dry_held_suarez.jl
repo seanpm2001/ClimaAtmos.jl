@@ -156,6 +156,7 @@ function calc_source!(
     state,
     aux,
 )
+
     FT = eltype(state)
 
     _R_d  = hsf.parameters.R_d
@@ -201,9 +202,10 @@ function calc_source!(
     exner_p = σ^(_R_d / _cp_d)
     Δσ = (σ - σ_b) / (1 - σ_b)
     height_factor = max(0, Δσ)
-    T_equil = (T_equator - ΔT_y * sin(φ)^2 - Δθ_z * log(σ) * cos(φ)^2) * exner_p
+    T_equil = (T_equator - ΔT_y * sin(φ)*sin(φ) - Δθ_z * log(σ) * cos(φ)*cos(φ)) * exner_p
     T_equil = max(T_min, T_equil)
-    k_T = k_a + (k_s - k_a) * height_factor * cos(φ)^4
+
+    k_T = k_a + (k_s - k_a) * height_factor * cos(φ) * cos(φ) * cos(φ) * cos(φ) 
     k_v = k_f * height_factor
 
     # horizontal projection
@@ -212,7 +214,9 @@ function calc_source!(
 
     # Apply Held-Suarez forcing
     source.ρu -= k_v * P * ρu
+
     source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
+
     return nothing
 end
 
@@ -265,6 +269,14 @@ simulation = Simulation(
 
 # run the simulation
 initialize!(simulation)
-evolve!(simulation)
+tic = time()
+try
+    evolve!(simulation)
+catch err
+    @info "evolve has thrown an error"
+    showerror(stdout, err )
+end
+toc = time()
+println("The amount of time for the simulation was ", (toc - tic)/(3600), "hours")
 
 nothing
