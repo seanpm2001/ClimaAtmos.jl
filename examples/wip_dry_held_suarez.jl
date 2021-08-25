@@ -248,6 +248,33 @@ model = ModelSetup(
     parameters = parameters,
 )
 
+# set up shadyCFL
+function shady_timestep(discretized_domain::DiscretizedDomain; cfl = 16, sound_speed = 330)
+
+    height = domain.height
+    ne = discretized_domain.discretization.vertical.elements
+    np = discretized_domain.discretization.vertical.polynomial_order
+    vdt = height / ne / (np^2 + 1) / sound_speed * cfl
+
+    circumference = domain.radius * 2π
+    ne = discretized_domain.discretization.horizontal.elements
+    np = discretized_domain.discretization.horizontal.polynomial_order
+    hdt = circumference / ne / (np^2 + 1) / sound_speed * cfl
+
+    if vdt < hdt 
+        dt = vdt
+        @info "limited by vertical acoustic modes dt=$dt seconds"
+    else
+        dt = hdt
+        @info "limited by horizontal acoustic modes dt=$dt seconds"
+
+    end
+
+    return dt
+end
+
+dt = shady_timestep(discretized_domain)
+
 # set up simulation
 simulation = Simulation(
     backend = backend,
@@ -257,8 +284,8 @@ simulation = Simulation(
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 10 * 24 * 3600,
-        timestep = 30.0,
+        finish = 300 * 24 * 3600,
+        timestep = dt,
     ),
     callbacks = (
         Info(),
