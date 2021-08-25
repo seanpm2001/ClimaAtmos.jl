@@ -1,28 +1,21 @@
 module Aleph
 
-export function_documentation_template
+using Pkg
+export add_climate_machine
 
 """
-function_documentation_template(a; informative_keyword = "yes")
+add_climate_machine()
 
 # Description
-The goal of this function is to provide a template for all functions used
-in Aleph.jl
-
-# Arguments
-- `a` | Type: Any | An example function argument 
-
-# Keyword Arguments
-- `informative_keyword`. Default: "yes"
+Adds the right branch of ClimateMachine
 
 # Return 
-- π : a number
+- nothing
 
 """
-function function_documentation_template(a; informative_keyword = "yes")
-    println("This function is just an example. The input was ", a)
-    println("The informative keyword is ", informative_keyword)
-    return pi
+function add_climate_machine()
+    Pkg.add(url = "https://github.com/CliMA/ClimateMachine.jl.git#tb/refactoring_ans_sphere")
+    return nothing
 end
 
 end # module
