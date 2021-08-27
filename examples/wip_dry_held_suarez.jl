@@ -54,7 +54,7 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 15, polynomial_order = 2),
+	    horizontal = SpectralElementGrid(elements = 15, polynomial_order = 5),
 	    vertical = SpectralElementGrid(elements = 7, polynomial_order = 2)
 	),
 )
@@ -249,7 +249,7 @@ model = ModelSetup(
 )
 
 # set up shadyCFL
-function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 1.0, sound_speed = 330)
+function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.3, sound_speed = 330)
     # vertical cfl
     height = domain.height
     ne = discretized_domain.discretization.vertical.elements
@@ -275,7 +275,17 @@ function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl =
     return dt
 end
 
+function create_jld2_name(base_name, discretized_domain)
+    he = string(discretized_domain.discretization.horizontal.elements)
+    hp = string(discretized_domain.discretization.horizontal.polynomial_order)
+    ve = string(discretized_domain.discretization.vertical.elements)
+    vp = string(discretized_domain.discretization.vertical.polynomial_order)
+    return base_name * "_" * "he_" * he * "_" * "hp_" * hp * "_" * "ve_" * ve * "_" * "vp_" * vp * ".jld2"
+end
+
 dt = shady_timestep(discretized_domain)
+jld_it = floor(Int, 4 * 60 * 60 / dt) # every 4 hours
+jld_filepath = create_jld2_name("hs", discretized_domain)
 
 # set up simulation
 simulation = Simulation(
@@ -286,11 +296,12 @@ simulation = Simulation(
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 1200 * 24 * 3600,
+        finish = 300 * 24 * 3600,
         timestep = dt,
     ),
     callbacks = (
         Info(),
+        JLD2State(iteration = jld_it, filepath = jld_filepath),
         # VTKState(iteration = Int(3600), filepath = "./out/"),
         # CFL(),
     ),

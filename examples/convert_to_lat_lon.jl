@@ -1,5 +1,5 @@
 using JLD2
-filename = "hs.jdl2"
+filename = jld_filepath
 
 jl_file = jldopen(filename, "r+")
 it_keys = keys(jl_file["state"])
@@ -52,12 +52,17 @@ for jld_state in states
     JLD2.Group(lat_lon_file, jld_state)
 end
 JLD2.Group(lat_lon_file, "time")
+JLD2.Group(lat_lon_file, "grid")
+lat_lon_file["grid"]["latitude"] = lat_grd
+lat_lon_file["grid"]["longitude"] = long_grd
+lat_lon_file["grid"]["radius"] = rad_grd
 
 for it in it_keys
     println("starting ", it)
     # interpolate data
     test_state = ClimateMachine.CUDA.CuArray(jl_file["state"][it])
-    interpolate_local!(interpol, test_state, istate) # istate has linear indexing
+    interpolate_local!(interpol, test_state, istate) 
+    # istate has linear indexing
     # project to usual velocity components 
     project_cubed_sphere!(interpol, istate, (_ρu, _ρv, _ρw))
     # longitude latitude radial state
@@ -67,3 +72,4 @@ for it in it_keys
     end
     lat_lon_file["time"][it] = jl_file["time"][it]
 end
+close(lat_lon_file)
