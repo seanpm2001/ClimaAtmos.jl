@@ -18,7 +18,7 @@ struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
 
 # set up backend
-backend = DiscontinuousGalerkinBackend(numerics = (flux = :roe,),)
+backend = DiscontinuousGalerkinBackend(numerics = (flux = :refanov,),)
 
 parameters = (
     a    = get_planet_parameter(:planet_radius),
@@ -54,8 +54,8 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2),
-	    vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
+	    horizontal = SpectralElementGrid(elements = 15, polynomial_order = 2),
+	    vertical = SpectralElementGrid(elements = 7, polynomial_order = 2)
 	),
 )
 
@@ -202,7 +202,7 @@ function calc_source!(
     exner_p = σ^(_R_d / _cp_d)
     Δσ = (σ - σ_b) / (1 - σ_b)
     height_factor = max(0, Δσ)
-    T_equil = (T_equator - ΔT_y * sin(φ)*sin(φ) - Δθ_z * log(σ) * cos(φ)*cos(φ)) * exner_p
+    T_equil = (T_equator - ΔT_y * sin(φ) * sin(φ) - Δθ_z * log(σ) * cos(φ) * cos(φ)) * exner_p
     T_equil = max(T_min, T_equil)
 
     k_T = k_a + (k_s - k_a) * height_factor * cos(φ) * cos(φ) * cos(φ) * cos(φ) 
@@ -249,17 +249,19 @@ model = ModelSetup(
 )
 
 # set up shadyCFL
-function shady_timestep(discretized_domain::DiscretizedDomain; cfl = 16, sound_speed = 330)
-
+function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 1.0, sound_speed = 330)
+    # vertical cfl
     height = domain.height
     ne = discretized_domain.discretization.vertical.elements
     np = discretized_domain.discretization.vertical.polynomial_order
-    vdt = height / ne / (np^2 + 1) / sound_speed * cfl
-
+    vdt = height / ne / (np^2 + 1) / sound_speed * vcfl
+    @info "vertical cfl implies dt=$vdt"
+    # horizontal cfl
     circumference = domain.radius * 2π
-    ne = discretized_domain.discretization.horizontal.elements
+    ne = discretized_domain.discretization.horizontal.elements * 4 # since 4 faces on cubed sphere equator
     np = discretized_domain.discretization.horizontal.polynomial_order
-    hdt = circumference / ne / (np^2 + 1) / sound_speed * cfl
+    hdt = circumference / ne / (np^2 + 1) / sound_speed * hcfl
+    @info "horizontal cfl implies dt=$hdt"
 
     if vdt < hdt 
         dt = vdt
@@ -284,7 +286,7 @@ simulation = Simulation(
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 300 * 24 * 3600,
+        finish = 1200 * 24 * 3600,
         timestep = dt,
     ),
     callbacks = (
@@ -306,4 +308,9 @@ end
 toc = time()
 println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
 
-nothing
+#=
+# running more code 
+old_simulation_state = copy(simulation.state)
+simulation.state .= old_simulation_state
+evolve!(simulation)
+=#
