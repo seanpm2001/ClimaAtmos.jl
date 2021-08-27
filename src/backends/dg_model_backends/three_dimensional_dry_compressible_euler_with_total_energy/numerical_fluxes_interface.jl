@@ -421,6 +421,36 @@ function numerical_flux_first_order!(
     fluxᵀn.ρe -= c * Δρe * 0.5
 end
 
+# Refanov Hardcoding hack
+function numerical_flux_first_order!(
+    ::RefanovFlux,
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
+    fluxᵀn::Vars{S},
+    normal_vector::SVector,
+    state⁻::Vars{S},
+    aux⁻::Vars{A},
+    state⁺::Vars{S},
+    aux⁺::Vars{A},
+    t,
+    direction::HorizontalDirection,
+) where {S, A}
+
+    numerical_flux_first_order!(
+        RoeNumericalFlux(),
+        balance_law,
+        fluxᵀn,
+        normal_vector,
+        state⁻,
+        aux⁻,
+        state⁺,
+        aux⁺,
+        t,
+        direction,
+    ) 
+
+end
+
+
 function numerical_flux_second_order!(
     ::Nothing, 
     ::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw}, 
