@@ -88,6 +88,7 @@ lat_lon_file["grid"]["radius"] = rad_grd
 
 for it in it_keys
     println("starting ", it)
+    println("done with  ", parse(Int,it) / parse(Int,it_keys[end]) * 100, "%")
     # interpolate data
     local test_state = ClimateMachine.CUDA.CuArray(jl_file["state"][it])
     interpolate_local!(interpol, test_state, istate) 

@@ -123,6 +123,68 @@ function create_callback(output::JLD2State, simulation::Simulation{<:Discontinuo
     return jldcallback
 end
 
+#=
+Base.@kwdef struct AveragedState{𝒜, ℬ, 𝒞, 𝒟} <: AbstractCallback
+    iteration::𝒜
+    filepath::ℬ
+    overwrite::𝒞 = true
+    start_iteration::𝒟
+end
+=#
+
+function create_callback(output::AveragedState, simulation::Simulation{<:DiscontinuousGalerkinBackend}, odesolver)
+    # Initialize output
+    output.overwrite &&
+        isfile(output.filepath) &&
+        rm(output.filepath; force = output.overwrite)
+
+    Q = simulation.state
+    mpicomm = MPI.COMM_WORLD
+    iteration = output.iteration
+
+    steps = ClimateMachine.ODESolvers.getsteps(odesolver)
+    time = ClimateMachine.ODESolvers.gettime(odesolver)
+
+    file = jldopen(output.filepath, "a+")
+    # JLD2.Group(file, "state")
+    # JLD2.Group(file, "time")
+    
+    if output.start_iteration <= 0
+        file["state"] = Array(Q)
+        file["times"] = 0
+    else
+        file["state"] = Array(Q) .* 0.0
+        file["times"] = []
+    end
+    close(file)
+
+
+    jldcallback = ClimateMachine.GenericCallbacks.EveryXSimulationSteps(
+        iteration,
+    ) do (s = false)
+        steps = ClimateMachine.ODESolvers.getsteps(odesolver)
+        time = ClimateMachine.ODESolvers.gettime(odesolver)
+        @info steps, time
+        # a bit hacky but gets the job done. removes old file and creates new one
+        if steps > output.start_iteration
+            # open old file and grab data
+            file = jldopen(output.filepath, "a+")
+            oldQ = copy(file["state"])
+            oldt = file["times"]
+            close(file)
+            rm(output.filepath)
+            # put data in new file as a part of running average
+            new_file = jldopen(output.filepath, "a+")
+            new_file["state"] = Array(Q) + oldQ
+            new_file["times"] = (oldt..., time)
+            close(new_file)
+        end
+        return nothing
+    end
+
+    return jldcallback
+end
+
 function create_callback(output::VTKState, simulation::Simulation{<:DiscontinuousGalerkinBackend}, odesolver)
     # Initialize output
     output.overwrite &&

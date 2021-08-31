@@ -28,6 +28,14 @@ Base.@kwdef struct ReferenceStateUpdate{𝒜} <: AbstractCallback
     recompute::𝒜 = 20
 end
 
+
+Base.@kwdef struct AveragedState{𝒜, ℬ, 𝒞, 𝒟} <: AbstractCallback
+    iteration::𝒜
+    filepath::ℬ
+    overwrite::𝒞 = true
+    start_iteration::𝒟 = 0
+end
+
 function create_callbacks(simulation::Simulation, ode_solver)
     callbacks = simulation.callbacks
 
