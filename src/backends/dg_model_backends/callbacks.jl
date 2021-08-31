@@ -151,11 +151,13 @@ function create_callback(output::AveragedState, simulation::Simulation{<:Discont
     
     if output.start_iteration <= 0
         file["state"] = Array(Q)
-        file["times"] = 0
+        # file["times"] = 0
     else
         file["state"] = Array(Q) .* 0.0
-        file["times"] = []
+
+        # file["times"] = []
     end
+    file["times"] = 1
     close(file)
 
 
@@ -167,6 +169,7 @@ function create_callback(output::AveragedState, simulation::Simulation{<:Discont
         @info steps, time
         # a bit hacky but gets the job done. removes old file and creates new one
         if steps > output.start_iteration
+            @info "accumulating average"
             # open old file and grab data
             file = jldopen(output.filepath, "a+")
             oldQ = copy(file["state"])
@@ -176,7 +179,7 @@ function create_callback(output::AveragedState, simulation::Simulation{<:Discont
             # put data in new file as a part of running average
             new_file = jldopen(output.filepath, "a+")
             new_file["state"] = Array(Q) + oldQ
-            new_file["times"] = (oldt..., time)
+            new_file["times"] = time + 1
             close(new_file)
         end
         return nothing
