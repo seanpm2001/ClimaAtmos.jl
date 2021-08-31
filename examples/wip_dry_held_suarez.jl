@@ -54,7 +54,7 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 15, polynomial_order = 5),
+	    horizontal = SpectralElementGrid(elements = 15, polynomial_order = 2),
 	    vertical = SpectralElementGrid(elements = 7, polynomial_order = 2)
 	),
 )
@@ -249,7 +249,7 @@ model = ModelSetup(
 )
 
 # set up shadyCFL
-function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.3, sound_speed = 330)
+function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.2, sound_speed = 330)
     # vertical cfl
     height = domain.height
     ne = discretized_domain.discretization.vertical.elements
@@ -284,8 +284,11 @@ function create_jld2_name(base_name, discretized_domain)
 end
 
 dt = shady_timestep(discretized_domain)
-jld_it = floor(Int, 4 * 60 * 60 / dt) # every 4 hours
-jld_filepath = create_jld2_name("hs", discretized_domain)
+jld_it = floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
+jld_filepath = create_jld2_name("long_hs", discretized_domain)
+
+avg_start = floor(Int, 300 * 24 * 60 * 60 / dt) # start after 300 days
+jld_it_2 = floor(Int, 6 * 60 * 60 / dt) # save average every 6 hours
 
 # set up simulation
 simulation = Simulation(
@@ -296,12 +299,13 @@ simulation = Simulation(
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 300 * 24 * 3600,
+        finish = 1200 * 24 * 3600,
         timestep = dt,
     ),
     callbacks = (
         Info(),
         JLD2State(iteration = jld_it, filepath = jld_filepath),
+        AveragedState(iteration = jld_it_2, filepath = "avg_" * jld_filepath, start_iteration = avg_start),
         # VTKState(iteration = Int(3600), filepath = "./out/"),
         # CFL(),
     ),
