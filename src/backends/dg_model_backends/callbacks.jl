@@ -179,7 +179,7 @@ function create_callback(output::AveragedState, simulation::Simulation{<:Discont
             # put data in new file as a part of running average
             new_file = jldopen(output.filepath, "a+")
             new_file["state"] = Array(Q) + oldQ
-            new_file["times"] = time + 1
+            new_file["times"] = oldt + 1
             close(new_file)
         end
         return nothing
