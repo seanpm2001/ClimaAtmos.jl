@@ -18,6 +18,7 @@ filename = "hs_he_8_hp_5_ve_7_vp_2_lat_lon.jld2"
 # filename = "hs_he_8_hp_5_ve_5_vp_3_lat_lon.jld2"
 filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
 # filename = "long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
+# filename = "avg_long_hs_he_12_hp_3_ve_7_vp_2_lat_lon.jld2"
 jl_file = jldopen(filename, "r+")
 t_keys = keys(ρ_file)
 
@@ -61,6 +62,7 @@ global_clims = quantile.(Ref(state_file[t_keys[end]][:]), [0.1, 0.9])
 # symmetrize about 0
 maxc = maximum(abs.(global_clims))
 global_clims = (-maxc, maxc)
+# global_clims = (-13.5, 13.5)
 use_global_clims = false
 # global clims
 
@@ -99,9 +101,9 @@ fig[1,2+3*2] = Label(fig, s_string * ": zonal avg", textsize = 30)
 # update!(fig.scene)
 
 # sphere 
-height_index = 1
+height_index = 2
 axρ4 = fig[4,1:3] = LScene(fig) 
-fig[3,2] = Label(fig, s_string * ": sphere ", textsize = 30) 
+fig[3,2] = Label(fig, s_string * ": sphere at 1km ", textsize = 30) 
 # axρ4 = fig[3:4,1:3] = Axis3(fig, title = "ρv: sphere", titlesize = 30, show_axis=false) 
 slice4 = @lift($ρ[:,:, height_index])
 clims4 = @lift(quantile.(Ref($slice4[:]), [0.05,0.95]))
@@ -111,11 +113,102 @@ surface!(axρ4, x, y, z, color = slice4, colormap = :balance, colorrange = clims
 
 # left right bottom top for ax.padding = (0, 6, 16, 0)
 # axρ5 = fig[4,1+3*2:3+3*2] = LScene(fig) 
-axρ5 = fig[3:4,1+3:3+3*2] = Axis(fig, title = s_string * ":lat lon", titlesize = 30) 
+axρ5 = fig[3:4,1+3:3+3*2] = Axis(fig, title = s_string * ":lat lon at 1km", titlesize = 30) 
 # fig[3,2+3*2] = Label(fig, "ρv: latlon ", textsize = 30) 
 scene5 = heatmap!(axρ5, λ, ϕ, slice4, colormap = :balance, colorrange = clims4, interpolate = true, shading = false, show_axis=false)
 # scene5.padding = (0, 0, 0, 00)
 # update!(fig.scene)
+
+#=
+# usual height plot
+s_string = "u"
+slice_zonal = mean(jl_file[s_string]["0"][1:end-1, :, :], dims = 1)[1,:,:]
+p_coord = mean(jl_file["p"]["0"][1:end-1, :, :], dims = (1,2))[1,1,:]
+# , colorrange = [-28,28]
+heatmap(ϕ, -p_coord, slice_zonal, colormap = :balance, interpolate = true, shading = false, show_axis=false)
+
+fig, ax, hp = contour(ϕ, -p_coord, slice_zonal, levels= collect(4:4:28), colormap = :reds)
+contour!(ax, ϕ, -p_coord, slice_zonal, levels = [-8, -4], colormap = :blues)
+cplot = contour!(ax, ϕ, -p_coord, slice_zonal, levels = [0], color = :purple, linewidth = 3.0, visible = false)
+ax.title = "Zonal Velocity"
+ax.titlesize = 40
+ax.xlabel = "Latitude [ᵒ]"
+ax.ylabel = "Average Pressure [hPa]"
+ax.xlabelsize = 25
+ax.ylabelsize = 25 
+ax.xticks = ([-60, -30,0, 30, 60], ["60S", "30S", "0", "30N", "60N"])
+
+pressure_levels = [1000, 850, 700, 550, 400, 250, 100, 10]
+ax.yticks = (pressure_levels .* -1e2, string.(pressure_levels))
+
+
+for i in 1:3:length(segments)
+    if i in index_vals
+
+    else
+        text!(ax, [("$i", Point3(segments[i]..., 2f0))])
+    end
+end
+beginnings = Point2f0[]; colors = RGBAf0[]
+# First plot in contour is the line plot, first arguments are the points of the contour
+segments = cplot.plots[1][1][]
+index_vals = []
+for (i, p) in enumerate(segments)
+    # the segments are separated by NaN, which signals that a new contour starts
+    if isnan(p)
+        push!(beginnings, segments[i-1])
+        push!(index_vals, i)
+    end
+end
+text!(ax, [("hello", Point3(segments[64]..., 2f0))])
+sc = scatter!(ax, beginnings, markersize=30, color=(:white, 0.001), strokecolor=:white)
+anno = text!(ax, [(string(float(i)), Point3(p..., 2f0)) for (i, p) in enumerate(beginnings)], align=(:center, :center), color=:black)
+translate!(sc, 0, 0, 1)
+translate!(anno, 0, 0, 2)
+# Reshuffle the plot order, so that the scatter plot gets drawn before the line plot
+delete!(ax, sc)
+delete!(ax, cplot)
+delete!(ax, anno)
+push!(ax.scene, anno)
+push!(ax.scene, sc)
+push!(ax.scene, cplot)
+
+display(fig)
+
+=#
+
+#=
+x = range(-3, 3, length=200)
+y = range(-2, 2, length=100)
+z = @. x^2 + y'^2
+fig, ax, hp = heatmap(x, y, z)
+levels = 0:1:100
+cplot = contour!(ax, x, y, z, color=:black, levels=levels)
+
+beginnings = Point2f0[]; colors = RGBAf0[]
+# First plot in contour is the line plot, first arguments are the points of the contour
+segments = cplot.plots[1][1][]
+for (i, p) in enumerate(segments)
+    # the segments are separated by NaN, which signals that a new contour starts
+    if isnan(p)
+        push!(beginnings, segments[i-1])
+    end
+end
+sc = scatter!(ax, beginnings, markersize=30, color=(:white, 0.001), strokecolor=:white)
+anno = text!(ax, [(string(float(i)), Point3(p..., 2f0)) for (i, p) in enumerate(beginnings)], align=(:center, :center), color=:black)
+translate!(sc, 0, 0, 1)
+translate!(anno, 0, 0, 2)
+# Reshuffle the plot order, so that the scatter plot gets drawn before the line plot
+delete!(ax, sc)
+delete!(ax, cplot)
+delete!(ax, anno)
+push!(ax.scene, anno)
+push!(ax.scene, sc)
+push!(ax.scene, cplot)
+# move, so that text is in front
+
+fig
+=#
 
 #=
 tic = time()
