@@ -130,7 +130,7 @@ heatmap(ϕ, -p_coord, slice_zonal, colormap = :balance, interpolate = true, shad
 fig, ax, hp = contour(ϕ, -p_coord, slice_zonal, levels= collect(4:4:28), colormap = :reds)
 contour!(ax, ϕ, -p_coord, slice_zonal, levels = [-8, -4], colormap = :blues)
 cplot = contour!(ax, ϕ, -p_coord, slice_zonal, levels = [0], color = :purple, linewidth = 3.0, visible = false)
-ax.title = "Zonal Velocity"
+ax.title = "Zonal Velocity [m/s]"
 ax.titlesize = 40
 ax.xlabel = "Latitude [ᵒ]"
 ax.ylabel = "Average Pressure [hPa]"
@@ -142,16 +142,48 @@ pressure_levels = [1000, 850, 700, 550, 400, 250, 100, 10]
 ax.yticks = (pressure_levels .* -1e2, string.(pressure_levels))
 
 
+contour_levels = collect(-8:4:28)
+list_o_stuff = []
+for level in contour_levels
+    fig_t, ax_t, cp_t = contour(ϕ, -p_coord, slice_zonal, levels= [level], linewidth = 0)
+    segments = cp_t.plots[1][1][]
+    index_vals = []
+    for (i, p) in enumerate(segments)
+        # the segments are separated by NaN, which signals that a new contour starts
+        if isnan(p)
+            push!(beginnings, segments[i-1])
+            push!(index_vals, i)
+        end
+    end
+    push!(list_o_stuff, (; segments, beginnings, index_vals))
+end
+
+for contour_index in 1:length(contour_levels)
+
+    contour_val = contour_levels[contour_index]
+    segments = list_o_stuff[contour_index].segments
+
+    for index in list_o_stuff[contour_index].index_vals[1:end]
+        location = Point3(segments[index-1]..., 2f0)
+        # sc = scatter!(ax, location, markersize=30, color=(:white, 0.001), strokecolor=:white)
+        anno = text!(ax, [("$contour_val", location)], textsize = 20)
+        # translate!(sc, 0, 0, 1)
+        # translate!(anno, 0, 0, 2)
+    end
+end
+
 for i in 1:3:length(segments)
     if i in index_vals
-
     else
-        text!(ax, [("$i", Point3(segments[i]..., 2f0))])
+        sc = scatter!(ax, Point3(segments[i]..., 2f0), markersize=30, color=(:white, 0.001), strokecolor=:white)
+        anno = text!(ax, [("$i", Point3(segments[i]..., 2f0))])
+        translate!(sc, 0, 0, 1)
+        translate!(anno, 0, 0, 2)
     end
 end
 beginnings = Point2f0[]; colors = RGBAf0[]
 # First plot in contour is the line plot, first arguments are the points of the contour
-segments = cplot.plots[1][1][]
+segments = hp.plots[1][1][]
 index_vals = []
 for (i, p) in enumerate(segments)
     # the segments are separated by NaN, which signals that a new contour starts
