@@ -10,42 +10,24 @@ filename = "hs_lat_lon.jld2"
 filename = "hs_he_15_hp_5_ve_7_vp_2_lat_lon.jld2"
 filename = "hs_he_30_hp_2_ve_7_vp_2_lat_lon.jld2"
 filename = "hs_he_30_hp_3_ve_10_vp_2_lat_lon.jld2"
-filename = "hs_he_11_hp_3_ve_7_vp_2_lat_lon.jld2"
-filename = "hs_he_22_hp_1_ve_7_vp_2_lat_lon.jld2"
+# filename = "hs_he_11_hp_3_ve_7_vp_2_lat_lon.jld2"
+# filename = "hs_he_22_hp_1_ve_7_vp_2_lat_lon.jld2"
 # filename = "hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
+filename = "hs_he_45_hp_1_ve_7_vp_2_lat_lon.jld2"
+filename = "hs_he_8_hp_5_ve_7_vp_2_lat_lon.jld2"
+# filename = "hs_he_8_hp_5_ve_5_vp_3_lat_lon.jld2"
+filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
+# filename = "long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
 jl_file = jldopen(filename, "r+")
-ρ_file = jl_file["ρ"]
-ρu_file = jl_file["ρu"]
-ρv_file = jl_file["ρv"]
-ρw_file = jl_file["ρw"]
-ρe_file = jl_file["ρe"]
-p_file = jl_file["p"]
-T_file = jl_file["T"]
 t_keys = keys(ρ_file)
 
 lat_grid = jl_file["grid"]["latitude"]
 lon_grid = jl_file["grid"]["longitude"]
 rad_grid = jl_file["grid"]["radius"]
 
-# lat_grd = collect(-89:1:89) .* 1.0
-# long_grd = collect(-180:1:180) .* 1.0
-
 using GLMakie
-
-#=
-t_index = Node(1)
-t_key = @lift(t_keys[$t_index])
-state = @lift(ρe_file[$t_key][:,:,1])
-fig = heatmap(long_grd,lat_grd, state, colormap = :balance, interpolate = true)
-
-# movietime
-iterations = 1:length(t_keys)
-record(fig.figure, "makiehs.mp4", iterations, framerate=30) do i
-    t_index[] = i
-    println("finishing ", i)
-end
-=#
 using Statistics
+
 λ = lon_grid 
 ϕ = lat_grid
 r = rad_grid 
@@ -64,18 +46,22 @@ a_z = [m_r[k]*eps(1.0)                 for j in eachindex(λ), k in eachindex(r)
 # half annulus
 ha_x = [cosd(ϕ[j]) * m_r[k] for j in eachindex(ϕ), k in eachindex(r)]
 ha_y = [sind(ϕ[j]) * m_r[k] for j in eachindex(ϕ), k in eachindex(r)]
-ha_z = [m_r[k]*eps(1.0)*0     for j in eachindex(ϕ), k in eachindex(r)]
+ha_z = [m_r[k]*eps(1.0)*0   for j in eachindex(ϕ), k in eachindex(r)]
 
+# state_file[t_keys[1]]
 
-
-t_index = Node(30)
+t_index = Node(1)
 t_key = @lift(t_keys[$t_index])
-state_file = T_file
+
+s_string = "w" # state string
+state_file =  jl_file[s_string]
+# ρ  = @lift(jl_file["ee"][$t_key] - jl_file["e"][$t_key] .^2)
 ρ  = @lift(state_file[$t_key])
-global_clims = quantile.(Ref(state_file[t_keys[end]][:]), [0.05, 0.95])
+global_clims = quantile.(Ref(state_file[t_keys[end]][:]), [0.1, 0.9])
 # symmetrize about 0
 maxc = maximum(abs.(global_clims))
 global_clims = (-maxc, maxc)
+use_global_clims = false
 # global clims
 
 fig = Figure(resolution = (1100, 800)) 
@@ -85,9 +71,9 @@ axρ1 = fig[2,1:3] = LScene(fig)
 
 slice1 = @lift($ρ[:,ϕ_eq,:])
 clims1 = @lift(quantile.(Ref($slice1[:]), [0.05,0.95]))
-# clims1 = global_clims
+clims1 = use_global_clims ? global_clims : clims1 
 surface!(axρ1, a_x, a_y, a_z, color = slice1, colorrange = clims1, colormap = :balance, shading = false, show_axis=false)
-fig[1,2] = Label(fig, "ρv: lat slice at 45ᵒ", textsize = 30) 
+fig[1,2] = Label(fig, s_string * ": lat slice at 45ᵒ", textsize = 30) 
 rotate_cam!(fig.scene.children[1], (2*π/3, 0, 0))
 update!(fig.scene)
 
@@ -96,9 +82,9 @@ axρ2 = fig[2,1+3:3+3] = LScene(fig)
 
 slice2 = @lift($ρ[λ_eq,:,:])
 clims2 = @lift(quantile.(Ref($slice2[:]), [0.05,0.95]))
-# clims2 = global_clims
+clims2 = use_global_clims ? global_clims : clims2 
 surface!(axρ2, ha_x, ha_y, ha_z, color = slice2, colorrange = clims2, colormap = :balance, shading = false, show_axis=false)
-fig[1,2+3] = Label(fig, "ρv: lon slice at 25ᵒ", textsize = 30) 
+fig[1,2+3] = Label(fig, s_string * ": lon slice at 25ᵒ", textsize = 30) 
 # rotate_cam!(fig.scene.children[2], (2*π/3, 0, 0))
 # update!(fig.scene)
 
@@ -106,26 +92,26 @@ axρ3 = fig[2,1+3*2:3+3*2] = LScene(fig)
 λ_eq = argmin(abs.(λ .- 0)) 
 slice3 = @lift(mean($ρ[1:end-1,:,:], dims=1)[1,:,:])
 clims3 = @lift(quantile.(Ref($slice3[:]), [0.05,0.95]))
-# clims3 = global_clims
+clims3 = use_global_clims ? global_clims : clims3 
 surface!(axρ3, ha_x, ha_y, ha_z, color = slice3, colorrange = clims3, colormap = :balance, shading = false, show_axis=false)
-fig[1,2+3*2] = Label(fig, "ρv: zonal avg", textsize = 30) 
+fig[1,2+3*2] = Label(fig, s_string * ": zonal avg", textsize = 30) 
 # rotate_cam!(fig.scene.children[3], (2*π/3, 0, 0))
 # update!(fig.scene)
 
 # sphere 
 height_index = 1
 axρ4 = fig[4,1:3] = LScene(fig) 
-fig[3,2] = Label(fig, "ρv: sphere ", textsize = 30) 
+fig[3,2] = Label(fig, s_string * ": sphere ", textsize = 30) 
 # axρ4 = fig[3:4,1:3] = Axis3(fig, title = "ρv: sphere", titlesize = 30, show_axis=false) 
 slice4 = @lift($ρ[:,:, height_index])
 clims4 = @lift(quantile.(Ref($slice4[:]), [0.05,0.95]))
-# clims4 = global_clims
+clims4 = use_global_clims ? global_clims : clims4 
 surface!(axρ4, x, y, z, color = slice4, colormap = :balance, colorrange = clims4, shading = false, show_axis = false)
 
 
 # left right bottom top for ax.padding = (0, 6, 16, 0)
 # axρ5 = fig[4,1+3*2:3+3*2] = LScene(fig) 
-axρ5 = fig[3:4,1+3:3+3*2] = Axis(fig, title = "ρv:lat lon", titlesize = 30) 
+axρ5 = fig[3:4,1+3:3+3*2] = Axis(fig, title = s_string * ":lat lon", titlesize = 30) 
 # fig[3,2+3*2] = Label(fig, "ρv: latlon ", textsize = 30) 
 scene5 = heatmap!(axρ5, λ, ϕ, slice4, colormap = :balance, colorrange = clims4, interpolate = true, shading = false, show_axis=false)
 # scene5.padding = (0, 0, 0, 00)
