@@ -1,6 +1,9 @@
-filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
+# filename = "avg_long_hs_he_23_hp_1_ve_7_vp_2_lat_lon.jld2"
+# filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
 # filename = "avg_long_hs_he_12_hp_3_ve_7_vp_2_lat_lon.jld2"
+filename = "avg_long_hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
 # filename = "avg_long_hs_he_7_hp_6_ve_7_vp_2_lat_lon.jld2"
+
 jl_file = jldopen(filename, "r+")
 t_keys = keys(ρ_file)
 
@@ -30,7 +33,7 @@ ax.xlabel = "Latitude [ᵒ]"
 ax.ylabel = "Average Pressure [hPa]"
 ax.xlabelsize = 25
 ax.ylabelsize = 25 
-ax.xticks = ([-60, -30,0, 30, 60], ["60S", "30S", "0", "30N", "60N"])
+ax.xticks = ([-60, -30, 0, 30, 60], ["60S", "30S", "0", "30N", "60N"])
 
 pressure_levels = [1000, 850, 700, 550, 400, 250, 100, 10]
 ax.yticks = (pressure_levels .* -1e2, string.(pressure_levels))
@@ -54,6 +57,7 @@ for level in contour_levels
 end
 
 #=
+# debugging
 contour_index = 3
 contour_val = contour_levels[contour_index]
 segments = list_o_stuff[contour_index].segments
@@ -75,6 +79,7 @@ push!(ax.scene, anno)
 push!(ax.scene, sc)
 push!(ax.scene, cplot)
 =#
+
 using Random
 Random.seed!(300)
 for contour_index in 1:length(contour_levels)
@@ -85,7 +90,8 @@ for contour_index in 1:length(contour_levels)
     local indices = [0, list_o_stuff[contour_index].index_vals[1:end]...]
     for i in 1:length(indices)-1
         local index = rand(indices[i]+1:indices[i+1]-1) # choose random point on segment
-        local location = Point3(segments[index-1]..., 2f0)
+        local index = round(Int, 0.5 * indices[i] + 0.5 * indices[i+1]) # choose point in middle
+        local location = Point3(segments[index]..., 2f0)
         local sc = scatter!(ax, location, markersize=20, align = (:center, :center), color=(:white, 0.1), strokecolor=:white)
         local anno = text!(ax, [("$contour_val", location)], align = (:center, :center), textsize = 20)
         # translate!(sc, 0, 0, 1)
