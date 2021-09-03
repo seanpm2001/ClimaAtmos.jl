@@ -35,7 +35,7 @@ ax.xticks = ([-60, -30,0, 30, 60], ["60S", "30S", "0", "30N", "60N"])
 pressure_levels = [1000, 850, 700, 550, 400, 250, 100, 10]
 ax.yticks = (pressure_levels .* -1e2, string.(pressure_levels))
 
-
+# don't judge me
 contour_levels = collect(-8:4:28)
 list_o_stuff = []
 for level in contour_levels
