@@ -36,6 +36,16 @@ Base.@kwdef struct AveragedState{𝒜, ℬ, 𝒞, 𝒟} <: AbstractCallback
     start_iteration::𝒟 = 0
 end
 
+Base.@kwdef struct LatLonDiagnostics{𝒜, ℬ, 𝒞, 𝒟, ℰ} <: AbstractCallback
+    iteration::𝒜
+    filepath::ℬ
+    overwrite::𝒞 = true
+    start_iteration::𝒟 = 0
+    latitude::ℰ
+    longitude::ℰ
+    radius::ℰ
+end
+
 function create_callbacks(simulation::Simulation, ode_solver)
     callbacks = simulation.callbacks
 

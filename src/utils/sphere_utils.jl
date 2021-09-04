@@ -15,3 +15,40 @@ rfunc(p, x...) = ρuʳᵃᵈ(p, lon(x...), lat(x...), rad(x...)) * r̂(x...)
 λfunc(p, x...) = ρuˡᵒⁿ(p, lon(x...), lat(x...), rad(x...)) * λ̂(x...)
 
 ρu⃗(p, x...) = rfunc(p, x...) + ϕfunc(p, x...) + λfunc(p, x...)
+
+# Cubed Sphere Interpolation to Lat-Lon: Thanks Sriharsha Kandala!
+using ClimateMachine.Mesh.Interpolation
+import ClimateMachine.Mesh.Interpolation: InterpolationCubedSphere
+
+function InterpolationCubedSphere(simulation::Simulation; latitude = collect(-90:1:90) .* 1.0, longitude = collect(-180:1:180) .* 1.0, raditude = nothing)
+
+    grid = simulation.rhs[1].grid
+    domain = simulation.discretized_domain.domain
+
+    if raditude == nothing
+        raditude = collect(range(domain.radius, domain.radius + domain.height, length = 31))
+    else
+        nothing
+    end
+
+    # interface with interpolation code
+    vert_range = grid1d(
+        domain.radius, 
+        domain.radius + domain.height, 
+        nothing,
+        nelem = simulation.discretized_domain.discretization.vertical.elements,
+    )
+    @info "Creating interpolation object"
+    tic = time()
+    interpol = InterpolationCubedSphere(
+        grid,
+        vert_range,
+        simulation.discretized_domain.discretization.horizontal.elements,
+        latitude,
+        longitude,
+        raditude
+    ) 
+    toc = time()
+    @info "took $(toc-tic) seconds"
+    return interpol
+end

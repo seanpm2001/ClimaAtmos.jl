@@ -13,7 +13,7 @@ include("../src/backends/dg_model_backends/boilerplate.jl")
 include("../src/utils/sphere_utils.jl")
 
 # to be removed
-using CLIMAParameters#: AbstractEarthParameterSet
+using CLIMAParameters #: AbstractEarthParameterSet
 struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
 
@@ -51,14 +51,26 @@ domain = SphericalShell(
     radius = parameters.a,
     height = parameters.H,
 )
+
+# running on 0
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 15, polynomial_order = 2),
+	    horizontal = SpectralElementGrid(elements = 8, polynomial_order = 2),
 	    vertical = SpectralElementGrid(elements = 7, polynomial_order = 2)
 	),
 )
 
+#=
+# runnin on 1
+discretized_domain = DiscretizedDomain(
+    domain = domain,
+    discretization = (
+	    horizontal = SpectralElementGrid(elements = 30, polynomial_order = 2),
+	    vertical = SpectralElementGrid(elements = 7, polynomial_order = 2)
+	),
+)
+=#
 # set up initial condition
 # additional initial condition parameters
 T₀(𝒫)   = 0.5 * (𝒫.T_E + 𝒫.T_P)
@@ -249,7 +261,7 @@ model = ModelSetup(
 )
 
 # set up shadyCFL
-function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.2, sound_speed = 330)
+function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.15, sound_speed = 330)
     # vertical cfl
     height = domain.height
     ne = discretized_domain.discretization.vertical.elements
@@ -284,34 +296,49 @@ function create_jld2_name(base_name, discretized_domain)
 end
 
 dt = shady_timestep(discretized_domain)
+
 jld_it = floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
 jld_filepath = create_jld2_name("long_hs", discretized_domain)
 
-avg_start = floor(Int, 300 * 24 * 60 * 60 / dt) # start after 300 days
-jld_it_2 = floor(Int, 6 * 60 * 60 / dt) # save average every 6 hours
+avg_start = floor(Int, 200 * 24 * 60 * 60 / dt) # start after 300 days
+jld_it_2  = floor(Int, 6 * 60 * 60 / dt)      # save average every 6 hours
+
+lat_grd = collect(-90:1:90) .* 1.0
+long_grd = collect(-180:1:180) .* 1.0
+rad_grd = collect(domain.radius:1e3:(domain.radius + domain.height)) .* 1.0
+
+ll_cb = LatLonDiagnostics(iteration = jld_it_2, 
+filepath = "avg_" * jld_filepath,
+start_iteration = avg_start,
+latitude = lat_grd,
+longitude = long_grd,
+radius = rad_grd)
 
 # set up simulation
 simulation = Simulation(
     backend = backend,
     discretized_domain = discretized_domain,
     model = model,
-    splitting = IMEXSplitting( linear_model = :linear, ),
+    splitting = IMEXSplitting(linear_model = :linear, ),
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 1200 * 24 * 3600,
+        finish = 400 *  24 * 3600,
         timestep = dt,
     ),
     callbacks = (
         Info(),
         JLD2State(iteration = jld_it, filepath = jld_filepath),
-        AveragedState(iteration = jld_it_2, filepath = "avg_" * jld_filepath, start_iteration = avg_start),
+        ll_cb,
+        # DefaultDiagnostics(iteration = jld_it_2, filepath = "avg_" * jld_filepath, start_iteration = avg_start),
         # VTKState(iteration = Int(3600), filepath = "./out/"),
+        # AveragedState(iteration = jld_it_2, filepath = "avg_" * jld_filepath, start_iteration = avg_start),
         # CFL(),
     ),
 )
 
 # run the simulation
+
 initialize!(simulation)
 tic = time()
 try
