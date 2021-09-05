@@ -1,26 +1,65 @@
-# filename = "avg_long_hs_he_23_hp_1_ve_7_vp_2_lat_lon.jld2"
-# filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
-# filename = "avg_long_hs_he_12_hp_3_ve_7_vp_2_lat_lon.jld2"
-filename = "avg_long_hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
-# filename = "avg_long_hs_he_7_hp_6_ve_7_vp_2_lat_lon.jld2"
+using GLMakie
+using Statistics
+using JLD2
+
+
+filename = "avg_long_hs_he_10_hp_2_ve_7_vp_2.jld2"
+filename = "avg_long_hs_he_8_hp_2_ve_7_vp_2.jld2"
 
 jl_file = jldopen(filename, "r+")
-t_keys = keys(ρ_file)
 
 lat_grid = jl_file["grid"]["latitude"]
 lon_grid = jl_file["grid"]["longitude"]
 rad_grid = jl_file["grid"]["radius"]
 
-using GLMakie
-using Statistics
+
 
 λ = lon_grid 
 ϕ = lat_grid
 r = rad_grid 
 
-s_string = "u"
-slice_zonal = mean(jl_file[s_string]["0"][1:end-1, :, :], dims = 1)[1,:,:]
-p_coord = mean(jl_file["p"]["0"][1:end-1, :, :], dims = (1,2))[1,1,:]
+p0 = 1e5 # pressure bottom
+pH = 800 # pressure top
+H = rad_grid[end] - rad_grid[1] # height of domain
+sH = -H / log(pH/p0) # scale height
+# roughly p = p0 * exp(-z / sH), so log(p / p0) * sH = z
+p_coord = p0 * exp.( -(rad_grid .- rad_grid[1]) ./ sH)
+
+
+s_string = "wT" # grab state
+m_string = "moment_" * "$(length(s_string))"
+m_names = jl_file[m_string * "_names"]
+m_ind = findall(x->x==s_string, m_names)[1]
+state = jl_file[m_string][1:end-1, :, :, m_ind] 
+slice_zonal = mean(state, dims = 1)[1,:,:] ./ jl_file["times"]
+# p_coord = mean(jl_file["p"]["0"][1:end-1, :, :], dims = (1,2))[1,1,:]
+# , colorrange = [-28,28]
+# fig, ax, cplot_p = heatmap(ϕ, -p_coord, slice_zonal, colormap = :balance, interpolate = true)
+# contour!(ax, ϕ, -p_coord, slice_zonal, color = :black)
+fig, ax, cplot_p = contour(ϕ, p_coord, slice_zonal, color = :black, interpolate = true, colormap = :balance, show_axis = false)
+heatmap!(ax, ϕ, p_coord, slice_zonal, colormap = :balance, interpolate = true)
+
+ax.limits = (extrema(ϕ)..., extrema(p_coord)...)
+
+ax.title = s_string
+ax.titlesize = 40
+ax.xlabel = "Latitude [ᵒ]"
+ax.ylabel = "Stretched Heigh"
+ax.xlabelsize = 25
+ax.ylabelsize = 25 
+ax.xticks = ([-80, -60, -30, 0, 30, 60, 80], ["80S", "60S", "30S", "0", "30N", "60N", "80N"])
+pressure_levels = [1000, 850, 700, 550, 400, 250, 100, 10]
+ax.yticks = (pressure_levels .* 1e2, string.(pressure_levels))
+ax.yreversed = true
+
+#=
+s_string = "u" # grab state
+m_string = "moment_1" # search through first moment for the state
+m_names = jl_file[m_string * "_names"]
+m_ind = findall(x->x==s_string, m_names)[1]
+state = jl_file[m_string][1:end-1, :, :, m_ind] 
+slice_zonal = mean(state, dims = 1)[1,:,:] ./ jl_file["times"]
+# p_coord = mean(jl_file["p"]["0"][1:end-1, :, :], dims = (1,2))[1,1,:]
 # , colorrange = [-28,28]
 heatmap(ϕ, -p_coord, slice_zonal, colormap = :balance, interpolate = true, shading = false, show_axis=false)
 
@@ -30,7 +69,7 @@ cplot = contour!(ax, ϕ, -p_coord, slice_zonal, levels = [0], color = :purple, l
 ax.title = "Zonal Velocity [m/s]"
 ax.titlesize = 40
 ax.xlabel = "Latitude [ᵒ]"
-ax.ylabel = "Average Pressure [hPa]"
+ax.ylabel = "Stretched Height, p₀exp(-z / Hₛ) [hPa]"
 ax.xlabelsize = 25
 ax.ylabelsize = 25 
 ax.xticks = ([-60, -30, 0, 30, 60], ["60S", "30S", "0", "30N", "60N"])
@@ -55,30 +94,6 @@ for level in contour_levels
     end
     push!(list_o_stuff, (; segments, beginnings, index_vals))
 end
-
-#=
-# debugging
-contour_index = 3
-contour_val = contour_levels[contour_index]
-segments = list_o_stuff[contour_index].segments
-
-index = list_o_stuff[contour_index].index_vals[1]
-translate = Float32.([0,0]) # translate 2 degree to the left
-location = segments[index-40]
-t_location = Point2(location .- translate)
-d_location = Point3(location..., 3f0)
-sc = scatter!(ax, [d_location], markersize=30, color=(:white, 0.1), strokecolor=:white, align = (:center, :center))
-anno = text!(ax, [("$contour_val", d_location)], textsize = 20, align = (:center, :center), color = :black)
-# translate!(sc, 0, 0, 1)
-# translate!(anno, 0, 0, 2)
-
-delete!(ax, sc)
-delete!(ax, cplot)
-delete!(ax, anno)
-push!(ax.scene, anno)
-push!(ax.scene, sc)
-push!(ax.scene, cplot)
-=#
 
 using Random
 Random.seed!(300)
@@ -110,3 +125,4 @@ for contour_index in 1:length(contour_levels)
 
     end
 end
+=#

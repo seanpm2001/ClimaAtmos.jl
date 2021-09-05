@@ -19,8 +19,15 @@ filename = "hs_he_8_hp_5_ve_7_vp_2_lat_lon.jld2"
 filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
 # filename = "long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
 # filename = "avg_long_hs_he_12_hp_3_ve_7_vp_2_lat_lon.jld2"
+filename = "avg_long_hs_he_7_hp_6_ve_7_vp_2_lat_lon.jld2"
+# filename = "avg_long_hs_he_23_hp_1_ve_7_vp_2_lat_lon.jld2"
+filename = "avg_long_hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
+
+filename = "avg_long_hs_he_18_hp_4_ve_7_vp_2_lat_lon.jld2"
+
 jl_file = jldopen(filename, "r+")
-t_keys = keys(ρ_file)
+
+t_keys = keys(jl_file["ρ"])
 
 lat_grid = jl_file["grid"]["latitude"]
 lon_grid = jl_file["grid"]["longitude"]
@@ -54,7 +61,7 @@ ha_z = [m_r[k]*eps(1.0)*0   for j in eachindex(ϕ), k in eachindex(r)]
 t_index = Node(1)
 t_key = @lift(t_keys[$t_index])
 
-s_string = "w" # state string
+s_string = "u" # state string
 state_file =  jl_file[s_string]
 # ρ  = @lift(jl_file["ee"][$t_key] - jl_file["e"][$t_key] .^2)
 ρ  = @lift(state_file[$t_key])
@@ -226,8 +233,13 @@ for (i, p) in enumerate(segments)
         push!(beginnings, segments[i-1])
     end
 end
+# sc = scatter!(ax, beginnings, markersize=30, color=(:white, 0.001), strokecolor=:white)
+# anno = text!(ax, [(string(float(i)), Point3(p..., 2f0)) for (i, p) in enumerate(beginnings)], align=(:center, :center), color=:black)
+
 sc = scatter!(ax, beginnings, markersize=30, color=(:white, 0.001), strokecolor=:white)
 anno = text!(ax, [(string(float(i)), Point3(p..., 2f0)) for (i, p) in enumerate(beginnings)], align=(:center, :center), color=:black)
+
+
 translate!(sc, 0, 0, 1)
 translate!(anno, 0, 0, 2)
 # Reshuffle the plot order, so that the scatter plot gets drawn before the line plot
