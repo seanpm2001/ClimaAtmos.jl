@@ -1,4 +1,5 @@
 struct RefanovFlux <: NumericalFluxFirstOrder end 
+struct RoefanovFlux <: NumericalFluxFirstOrder end
 struct CentralVolumeFlux <: NumericalFluxFirstOrder end
 struct KGVolumeFlux <: NumericalFluxFirstOrder end
 struct LinearKGVolumeFlux <: NumericalFluxFirstOrder end
@@ -380,6 +381,58 @@ function numerical_flux_first_order!(
     state⁺::Vars{S},
     aux⁺::Vars{A},
     t,
+    direction,
+) where {S, A}
+
+    numerical_flux_first_order!(
+        CentralNumericalFluxFirstOrder(),
+        balance_law,
+        fluxᵀn,
+        normal_vector,
+        state⁻,
+        aux⁻,
+        state⁺,
+        aux⁺,
+        t,
+        direction,
+    )
+    eos = balance_law.equation_of_state
+    parameters = balance_law.parameters
+    
+    c⁻ = calc_ref_sound_speed(eos, state⁻, aux⁻, parameters)
+    c⁺ = calc_ref_sound_speed(eos, state⁺, aux⁺, parameters)
+    c = max(c⁻, c⁺)
+
+    # - states
+    ρ⁻ = state⁻.ρ
+    ρu⁻ = state⁻.ρu
+    ρe⁻ = state⁻.ρe
+
+    # + states
+    ρ⁺ = state⁺.ρ
+    ρu⁺ = state⁺.ρu
+    ρe⁺ = state⁺.ρe
+
+    Δρ = ρ⁺ - ρ⁻
+    Δρu = ρu⁺ - ρu⁻
+    Δρe = ρe⁺ - ρe⁻
+
+    fluxᵀn.ρ  -= c * Δρ  * 0.5
+    fluxᵀn.ρu -= c * Δρu * 0.5
+    fluxᵀn.ρe -= c * Δρe * 0.5
+
+end
+
+function numerical_flux_first_order!(
+    ::RoefanovFlux,
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
+    fluxᵀn::Vars{S},
+    normal_vector::SVector,
+    state⁻::Vars{S},
+    aux⁻::Vars{A},
+    state⁺::Vars{S},
+    aux⁺::Vars{A},
+    t,
     direction::Tuple{EveryDirection, VerticalDirection},
 ) where {S, A}
 
@@ -425,7 +478,7 @@ end
 
 # Refanov Hardcoding hack
 function numerical_flux_first_order!(
-    ::RefanovFlux,
+    ::RoefanovFlux,
     balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy, DryLinearBalanceLaw},
     fluxᵀn::Vars{S},
     normal_vector::SVector,

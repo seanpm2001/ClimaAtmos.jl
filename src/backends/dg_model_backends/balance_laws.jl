@@ -171,6 +171,9 @@ function create_numerical_flux(surface_flux)
     elseif surface_flux == :refanov 
         return RefanovFlux()
     else
+    elseif surface_flux == :roefanov 
+        return RoefanovFlux()
+    else
         return nothing
     end
 end
