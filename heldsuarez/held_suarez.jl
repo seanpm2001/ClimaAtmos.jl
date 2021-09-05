@@ -20,6 +20,7 @@ get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetP
 # set up shadyCFL: helper function
 function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.15, sound_speed = 330)
     # vertical cfl
+    domain = discretized_domain.domain
     height = domain.height
     ne = discretized_domain.discretization.vertical.elements
     np = discretized_domain.discretization.vertical.polynomial_order
@@ -45,12 +46,12 @@ function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl =
 end
 
 # create jld2 name: helper function
-function create_jld2_name(base_name, discretized_domain)
+function create_jld2_name(base_name, discretized_domain, numerical_flux)
     he = string(discretized_domain.discretization.horizontal.elements)
     hp = string(discretized_domain.discretization.horizontal.polynomial_order)
     ve = string(discretized_domain.discretization.vertical.elements)
     vp = string(discretized_domain.discretization.vertical.polynomial_order)
-    return base_name * "_" * "he_" * he * "_" * "hp_" * hp * "_" * "ve_" * ve * "_" * "vp_" * vp * ".jld2"
+    return base_name * "_" * "he_" * he * "_" * "hp_" * hp * "_" * "ve_" * ve * "_" * "vp_" * vp * "_" * string(numerical_flux) * ".jld2"
 end
 
 parameters = (
@@ -291,7 +292,7 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     dt = shady_timestep(discretized_domain)
 
     jld_it = floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
-    jld_filepath = create_jld2_name(jld_name, discretized_domain)
+    jld_filepath = create_jld2_name(jld_name, discretized_domain, flux)
 
     avg_start = floor(Int, 200 * 24 * 60 * 60 / dt) # start after 200 days
     jld_it_2  = floor(Int, 6 * 60 * 60 / dt)      # save average every 6 hours
@@ -300,7 +301,8 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     long_grd = collect(-180:1:180) .* 1.0
     rad_grd = collect(domain.radius:1e3:(domain.radius + domain.height)) .* 1.0
 
-    ll_cb = LatLonDiagnostics(iteration = jld_it_2, 
+    ll_cb = LatLonDiagnostics(
+    iteration = jld_it_2, 
     filepath = "avg_" * jld_filepath,
     start_iteration = avg_start,
     latitude = lat_grd,
