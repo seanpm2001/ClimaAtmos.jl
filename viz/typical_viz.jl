@@ -6,6 +6,10 @@ filename = "avg_long_hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
 # filename = "avg_long_hs_he_7_hp_6_ve_7_vp_2_lat_lon.jld2"
 # filename = "avg_long_hs_he_18_hp_4_ve_7_vp_2_lat_lon.jld2"
 
+filename = "avg_long_hs_he_30_hp_2_ve_7_vp_2_lat_lon.jld2"
+filename = "avg_long_hs_he_13_hp_6_ve_7_vp_2_lat_lon.jld2"
+filename = "avg_long_hs_he_18_hp_4_ve_7_vp_2_lat_lon.jld2"
+
 jl_file = jldopen(filename, "r+")
 t_keys = keys(jl_file["ρ"])
 
