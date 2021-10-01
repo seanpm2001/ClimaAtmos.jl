@@ -27,7 +27,7 @@ function create_dg_grid(
     end
 
     dimension = ndims(domain)
- 
+
     if (dimension < 2) || (dimension > 3)
         error_message = "SpectralElementGrid only works with dimensions 2 or 3. "
         error_message *= "The current dimension is " * string(ndims(domain))
@@ -93,8 +93,8 @@ function create_dg_grid(
     horizontal, vertical = new_polynomial_order
 
     Rrange = grid1d(
-        domain.radius, 
-        domain.radius + domain.height, 
+        domain.radius,
+        domain.radius + domain.height,
         grid_stretching,
         nelem = elements.vertical,
     )
@@ -111,7 +111,7 @@ function create_dg_grid(
         FloatType = FT,
         DeviceArray = array,
         polynomialorder = (horizontal, vertical),
-        meshwarp = equiangular_cubed_sphere_warp,
+        meshwarp = conformal_cubed_sphere_warp,
     )
 
     return grid
@@ -119,7 +119,7 @@ function create_dg_grid(
 end
 
 """
-    Conventions for polynomial order and overintegration order 
+    Conventions for polynomial order and overintegration order
 """
 function convention(
     a::NamedTuple{(:vertical, :horizontal), T},
