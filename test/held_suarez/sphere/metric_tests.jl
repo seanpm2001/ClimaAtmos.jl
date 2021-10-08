@@ -8,7 +8,8 @@ ClimateMachine.init()
 include("../boilerplate.jl") # most functions in vector fields, include("test/Numerics/DGMethods/compressible_navier_stokes_equations/boilerplate.jl")
 
 # Ω = Interval(0,1) × Interval(-1,1) × Interval(exp(1), π)
-Ω =  AtmosDomain(radius = 6e6, height = 3e3)
+radius = 6e6
+Ω =  AtmosDomain(radius = radius, height = 3e3)
 
 elements = (vertical = 10, horizontal = 15) # horizontal here means horizontal^2 * 6
 polynomialorder = (vertical = 1, horizontal = 6)
@@ -27,10 +28,23 @@ J = constructdeterminant(grid)
 exact = 4π/3 * ( (Ω.height + Ω.radius)^3  - (Ω.radius)^3 )
 volumeerror = ( sum(M) - exact ) / exact
 
+n_ijk = size(x)[1]
+n_e = size(x)[2]
 ijk = 1 # ijk max is size(x)[1]
 e = 1   # e max is size(x)[2]
 r⃗ = [x,y,z]
-position = getindex.(r⃗, Ref(ijk), Ref(e))
+
+for l in 1:n_e
+    for idx in 1:n_ijk
+        position = getindex.(r⃗, Ref(idx), Ref(l))
+        if position ≈ [-radius, 0.0, 0.0]
+            global e = l
+            global ijk = idx
+            @show position
+            break
+        end
+    end
+end
 
 fullJ  = getjacobian(grid, ijk, e)
 fulliJ = inv(getjacobian(grid, ijk, e))
@@ -41,7 +55,7 @@ display(gⁱᵏ / gⁱᵏ[1,1])
 ##
 porders = (polynomialorder.horizontal, polynomialorder.horizontal, polynomialorder.vertical)
 glnum = porders .+ 1
-n_e = size(x)[2]
+
 xreshape = reshape(x, (glnum..., n_e))
 yreshape = reshape(y, (glnum..., n_e))
 zreshape = reshape(z, (glnum..., n_e))
