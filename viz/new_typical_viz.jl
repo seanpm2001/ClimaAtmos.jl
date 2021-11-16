@@ -5,6 +5,8 @@ using JLD2
 
 filename = "avg_long_hs_he_10_hp_2_ve_7_vp_2.jld2"
 filename = "avg_long_hs_he_8_hp_2_ve_7_vp_2.jld2"
+filename = "avg_viz_he_14_hp_4_ve_6_vp_4_roefanov.jld2"
+filename = "hr_long_hs_he_9_hp_4_ve_16_vp_4_roefanov_lat_lon.jld2"
 
 # new versions 
 # filename = "avg_long_hs_he_45_hp_1_ve_7_vp_2.jld2"
@@ -66,7 +68,7 @@ function eddy_variance(m2_string, jl_file)
 end
 
 # playin around with different plotting: 
-add_labels = true
+add_labels = false
 s_string = "w" # grab state
 slice_zonal = grab_state(s_string, jl_file)
 # slice_zonal, s_string = eddy_variance(s_string, jl_file)
@@ -94,17 +96,43 @@ elseif s_string =="v'T'"
     contour_levels = collect(-21:3:21) # vT
 elseif s_string == "u'v'"
     contour_levels = collect(-30:10:30) # uv
+elseif s_string == "v"
+    contour_levels = collect(-0.5:0.25:0.5)
 else
-    contour_levels = collect(-30:1:30)
+    contour_levels = range(colorrange[1], colorrange[2], length = 21)
 end
 
+p_coord = grab_state("p", jl_file)[180, :]
+#=
+p_coord = grab_state("p", jl_file)
+Δp = p_coord[:,1:end-1] - p_coord[:,2:end]
+v = grab_state("v", jl_file)
+v̅ = (v[:,1:end-1] + v[:,2:end]) .* 0.5
+ṽ = rad_grid[1] / 9.81 * 2 * π * (reshape(cosd.(ϕ[2:end-1]), (361-2,1)) .* cumsum(v̅ .* Δp, dims = 2)[2:end-1,:])
+colorrange = extrema(ṽ)
+fig, ax, cplot = contour(ϕ[2:end-1], p_coord[180,1:end-1], ṽ, color = :black, levels =21, show_axis = false)
+hm = heatmap!(ax, ϕ[2:end-1], p_coord[180,1:end-1], ṽ, colorrange = colorrange, colormap = :balance, interpolate = true)
+Colorbar(fig[1,2], hm, ticks = -7.2e10:2.4e10:7.2e10)
 
+ax.limits = (extrema(ϕ[2:end-1])..., extrema(p_coord[1:end-1])...)
+ax.title = "meriodonal streamfunction"
+ax.titlesize = 40
+ax.xlabel = "Latitude [ᵒ]"
+ax.ylabel = "Stretched Height"
+ax.xlabelsize = 25
+ax.ylabelsize = 25 
+ax.xticks = ([-80, -60, -30, 0, 30, 60, 80], ["80S", "60S", "30S", "0", "30N", "60N", "80N"])
+pressure_levels = [1000, 850, 700, 550, 400, 250, 100, 10]
+ax.yticks = (pressure_levels .* 1e2, string.(pressure_levels))
+ax.yreversed = true
+
+=#
 
 # Makie.available_gradients()
 fig, ax, cplot = contour(ϕ, p_coord, slice_zonal, levels = contour_levels, color = :black, interpolate = true,  show_axis = false)
-hm = heatmap(ϕ, p_coord, slice_zonal, colorrange = colorrange, colormap = :balance, interpolate = true)
+hm = heatmap!(ax, ϕ, p_coord, slice_zonal, colorrange = colorrange, colormap = :balance, interpolate = true)
 # fig, ax, hm = heatmap(ϕ, p_coord, slice_zonal, colorrange = colorrange, colormap = :balance, interpolate = true)
-Colorbar(fig[1,2], hm, label = s_string, ticks = contour_levels)
+# Colorbar(fig[1,2], hm, label = s_string, ticks = contour_levels)
 
 ax.limits = (extrema(ϕ)..., extrema(p_coord)...)
 
@@ -162,7 +190,6 @@ for contour_index in 1:length(labeled_contours)
         push!(ax.scene, anno)
         push!(ax.scene, sc)
         push!(ax.scene, cplot)
-
 
     end
 end

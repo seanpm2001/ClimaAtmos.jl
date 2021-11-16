@@ -17,6 +17,8 @@ using CLIMAParameters #: AbstractEarthParameterSet
 struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
 
+const small_earth_γ = 20.0 
+
 # set up shadyCFL: helper function
 function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl = 0.15, sound_speed = 330)
     # vertical cfl
@@ -33,7 +35,7 @@ function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl =
     hdt = circumference / ne / (np^2 + 1) / sound_speed * hcfl
     @info "horizontal cfl implies dt=$hdt"
 
-    if vdt < hdt 
+    if vdt < hdt
         dt = vdt
         @info "limited by vertical acoustic modes dt=$dt seconds"
     else
@@ -55,8 +57,8 @@ function create_jld2_name(base_name, discretized_domain, numerical_flux)
 end
 
 parameters = (
-    a    = get_planet_parameter(:planet_radius),
-    Ω    = get_planet_parameter(:Omega),
+    a    = get_planet_parameter(:planet_radius) / small_earth_γ,
+    Ω    = get_planet_parameter(:Omega) * small_earth_γ,
     g    = get_planet_parameter(:grav),
     κ    = get_planet_parameter(:kappa_d),
     R_d  = get_planet_parameter(:R_d),
@@ -160,7 +162,7 @@ function calc_source!(
     T_equil = (T_equator - ΔT_y * sin(φ) * sin(φ) - Δθ_z * log(σ) * cos(φ) * cos(φ)) * exner_p
     T_equil = max(T_min, T_equil)
 
-    k_T = k_a + (k_s - k_a) * height_factor * cos(φ) * cos(φ) * cos(φ) * cos(φ) 
+    k_T = k_a + (k_s - k_a) * height_factor * cos(φ) * cos(φ) * cos(φ) * cos(φ)
     k_v = k_f * height_factor
 
     # horizontal projection
@@ -168,9 +170,9 @@ function calc_source!(
     P = I - k * k'
 
     # Apply Held-Suarez forcing
-    source.ρu -= k_v * P * ρu
+    source.ρu -= k_v * P * ρu * small_earth_γ
 
-    source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
+    source.ρe -= k_T * ρ * _cv_d * (T - T_equil) * small_earth_γ
 
     return nothing
 end
@@ -270,7 +272,7 @@ model = ModelSetup(
     parameters = parameters,
 )
 
-function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld_name = "long_hs", sim_days = 1200, dt = nothing, recompute_minutes = 30)
+function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, hcfl = 0.6, jld_name = "small_earth_hs", sim_days = 1200/small_earth_γ, dt = nothing, clusterpath = "/central/scratch/jiahe/smallEarth/")
     parameters = model.parameters
     # set up backend
     backend = DiscontinuousGalerkinBackend(numerics = (flux = flux,),)
@@ -290,40 +292,33 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     )
 
     if dt == nothing
-        dt = shady_timestep(discretized_domain)
-        println("shady dt = ", dt)
-    else
-        println("dt = ", dt)
+        dt = shady_timestep(discretized_domain, hcfl = hcfl)
     end
-    recompute = floor(Int, recompute_minutes * 60 / dt) # recompute fields at every 30 minutes
-    println("recomputing at ", recompute)
 
-    # CHANGE DEFAULT SAVING STUFF
-    jld_it = floor(Int, 6 * 60 * 60 / dt) # floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
+    jld_it = floor(Int, 50 * 24 * 60 * 60 / dt / small_earth_γ) # every rescaled 50 days
     jld_filepath = create_jld2_name(jld_name, discretized_domain, flux)
 
-    avg_start = floor(Int, 1200 * 24 * 60 * 60 / dt) # start after 1200 days
-    jld_it_2  = floor(Int, 6 * 60 * 60 / dt)        # save average every 6 hours
+    avg_start = floor(Int, 200 * 24 * 60 * 60 / dt / small_earth_γ) # start after rescaled 200 days
+    jld_it_2  = floor(Int, 24 * 60 * 60 / dt / small_earth_γ)       # save average every rescaled 24 hours
 
-    lat_grd = collect(-90:0.5:90) .* 1.0
-    long_grd = collect(-180:0.5:180) .* 1.0
-    rad_grd = collect(domain.radius:500:(domain.radius + domain.height)) .* 1.0
-    #=
+    lat_grd = collect(-90:1:90) .* 1.0
+    long_grd = collect(-180:1:180) .* 1.0
+    rad_grd = collect(domain.radius:5e2:(domain.radius + domain.height)) .* 1.0
+
     ll_cb = LatLonDiagnostics(
-    iteration = jld_it_2, 
-    filepath = "avg_" * jld_filepath,
+    iteration = jld_it_2,
+    filepath = "averages_" * jld_filepath,
     start_iteration = avg_start,
     latitude = lat_grd,
     longitude = long_grd,
     radius = rad_grd)
-    jl_cb = JLD2State(iteration = jld_it, filepath = jld_filepath),
-    =#
+
     # set up simulation
     simulation = Simulation(
         backend = backend,
         discretized_domain = discretized_domain,
         model = model,
-        splitting = IMEXSplitting(linear_model = :verylinear, ),
+        splitting = IMEXSplitting(linear_model = :linear, ),
         timestepper = (
             method = IMEX(),
             start = 0.0,
@@ -332,7 +327,84 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
         ),
         callbacks = (
             Info(),
-            ReferenceStateUpdate(recompute = recompute),
+            ll_cb,
+            # JLD2State(iteration = jld_it, filepath = "small_earth.jld2"),
+            # VTKState(iteration = Int(floor(5*24*3600/dt)), filepath = clusterpath * "/IMEX/"),
+        ),
+    )
+
+    # run the simulation
+    initialize!(simulation)
+    tic = time()
+    try
+        evolve!(simulation)
+    catch err
+        @info "evolve has thrown an error"
+        showerror(stdout, err )
+    end
+    toc = time()
+    println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
+
+end
+
+
+function explicit_held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld_name = "long_hs", sim_days = 1200/small_earth_γ, dt = nothing, clusterpath = "/central/scratch/jiahe/smallEarth/")
+    parameters = model.parameters
+    # set up backend
+    backend = DiscontinuousGalerkinBackend(numerics = (flux = flux,),)
+
+    # Set up grid
+    domain = SphericalShell(
+        radius = parameters.a,
+        height = parameters.H,
+    )
+
+    discretized_domain = DiscretizedDomain(
+        domain = domain,
+        discretization = (
+            horizontal = SpectralElementGrid(elements = he, polynomial_order = hp),
+            vertical = SpectralElementGrid(elements = ve, polynomial_order = vp)
+        ),
+    )
+
+    if dt == nothing
+        dt = shady_timestep(discretized_domain, vcfl = 0.3, hcfl = 0.3)
+    end
+
+    jld_it = floor(Int, 50 * 24 * 60 * 60 / dt / small_earth_γ) # every 5 days
+    jld_filepath = create_jld2_name(jld_name, discretized_domain, flux)
+
+    avg_start = floor(Int, 200 * 24 * 60 * 60 / dt / small_earth_γ) # start after 20 days
+    jld_it_2  = floor(Int, 6 * 60 * 60 / dt / small_earth_γ)      # save average every 6 hours
+
+    lat_grd = collect(-90:1:90) .* 1.0
+    long_grd = collect(-180:1:180) .* 1.0
+    rad_grd = collect(domain.radius:1e3:(domain.radius + domain.height)) .* 1.0
+#=
+    ll_cb = LatLonDiagnostics(
+    iteration = jld_it_2,
+    filepath = clusterpath * "/IMEX/" * "avg_" * jld_filepath,
+    start_iteration = avg_start,
+    latitude = lat_grd,
+    longitude = long_grd,
+    radius = rad_grd)
+=#
+    # set up simulation
+    simulation = Simulation(
+        backend = backend,
+        discretized_domain = discretized_domain,
+        model = model,
+        timestepper = (
+            method = SSPRK22Heuns,
+            start = 0.0,
+            finish = sim_days *  24 * 3600,
+            timestep = dt,
+        ),
+        callbacks = (
+            Info(),
+            # VTKState(iteration = Int(floor(5*24*3600/dt)), filepath = clusterpath * "/IMEX/"),
+            # JLD2State(iteration = jld_it, filepath = clusterpath * "/IMEX/" * jld_filepath),
+            # ll_cb,
         ),
     )
 

@@ -18,7 +18,7 @@ vert_range = grid1d(
         nelem = discretized_domain.discretization.vertical.elements,
 )
 # create new grid info
-lat_grd = collect(-89:1:89) .* 1.0
+lat_grd = collect(-90:1:90) .* 1.0
 long_grd = collect(-180:1:180) .* 1.0
 rad_grd = collect(domain.radius:1e3:(domain.radius + domain.height)) .* 1.0
 tic = time()

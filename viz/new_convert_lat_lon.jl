@@ -1,4 +1,4 @@
-filename = "hr_long_hs_he_9_hp_4_ve_16_vp_4_roefanov.jld2"
+filename = "viz_he_18_hp_4_ve_6_vp_4_roefanov.jld2"
 # write function to reconstruct grid
 function reconstruct_info(filename)
     split_string = split(split(filename, "he_")[2], "_")
@@ -10,6 +10,16 @@ function reconstruct_info(filename)
 end
 gridinfo = reconstruct_info(filename)
 
+filename = "small_earth.jld2"
+fhdof = 90
+vdof = 30
+hp = 4
+vp = 4
+he = ceil(Int, fhdof / (hp+1))
+ve = ceil(Int, vdof / (vp+1))
+gridinfo = (;he=he, hp = hp, ve = ve, vp = vp)
+include("../smallearth/smallearth.jl")
+#=
 include("../src/interface/domains.jl")
 include("../src/interface/models.jl")
 include("../src/interface/physics.jl")
@@ -22,8 +32,10 @@ include("../src/interface/simulations.jl")
 include("../src/interface/callbacks.jl")
 include("../src/backends/dg_model_backends/boilerplate.jl")
 include("../src/utils/sphere_utils.jl")
-
+=#
 # to be removed
+
+#=
 using CLIMAParameters #: AbstractEarthParameterSet
 struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
@@ -53,6 +65,7 @@ parameters = (
     p0 = 1e5,
     T_ref = 255,
 )
+=#
 
 domain = SphericalShell(radius = parameters.a, height = parameters.H)
 discretized_domain = DiscretizedDomain(
@@ -73,7 +86,6 @@ it_keys = keys(jl_file["state"])
 test_state = ClimateMachine.CUDA.CuArray(jl_file["state"][it_keys[1]])
 # Create Interpolation Structure
 
-
 vert_range = grid1d(
         domain.radius, 
         domain.radius + domain.height, 
@@ -83,7 +95,7 @@ vert_range = grid1d(
 # create new grid info
 lat_grd = collect(-90:1:90) .* 1.0
 long_grd = collect(-180:1:180) .* 1.0
-rad_grd = collect(domain.radius:250:(domain.radius + domain.height)) .* 1.0
+rad_grd = collect(domain.radius:1e3:(domain.radius + domain.height)) .* 1.0
 tic = time()
 println("creating interpolation object")
 # first three arguments are from the old grid 

@@ -277,10 +277,12 @@ function create_callback(update_ref::ReferenceStateUpdate, simulation::Simulatio
     step =  update_ref.recompute
     dg = simulation.rhs[2]
     balance_law = dg.balance_law
+    @info "activating reference state update"
 
-    relinearize = EveryXSimulationSteps(step) do       
+    relinearize = EveryXSimulationSteps(step) do    
+ 
         t = gettime(odesolver)
-        
+        # @info "relinearizing at t=$t"
         update_auxiliary_state!(update_ref_state!, dg, balance_law, Q, t)
 
         α = odesolver.dt * odesolver.RKA_implicit[2, 2]
