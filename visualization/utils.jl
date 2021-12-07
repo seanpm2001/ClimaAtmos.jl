@@ -2,6 +2,7 @@ using GLMakie
 using LaTeXStrings
 using JLD2
 using Random
+using Statistics 
 
 """
 function mega_viz!(ax, ϕ, p_coord, slice_zonal, contour_levels, colorrange; 
