@@ -1,6 +1,6 @@
 include("utils.jl")
 
-filename = "avg_earth_hs_he_12_hp_4_ve_12_vp_4_roefanov.jld2"
+filename = "averages_small_earth_long_hs_he_12_hp_4_ve_12_vp_4_roefanov.jld2"
 
 fig = Figure(resolution = (1700+600, 1000+400))
 add_label = true
@@ -63,7 +63,8 @@ colorrange = (-60, 60)
 λ, ϕ, r, p_coord = grab_grid(jl_file)
 push!(state_names, s_string)
 ax4 = fig[jj,ii] = Axis(fig,title = state_names[i], titlesize = 40)
-contour_heatmap!(ax4, ϕ, p_coord, slice_zonal, contour_levels, colorrange, add_labels = add_label)
+contour_heatmap!(ax4, ϕ, p_coord, slice_zonal, contour_levels, colorrange,
+                 add_labels = add_label, random_seed = 1)
 
 i = 5
 ii = (i-1)%3 + 1 # +1 on why 1 based indexing is wrong
