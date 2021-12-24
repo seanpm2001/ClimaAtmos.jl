@@ -1,29 +1,23 @@
+using JLD2, GLMakie
 using JLD2
+
+filename = "earth_hs_he_5_hp_5_ve_5_vp_5_roefanov_lat_lon.jld2"
+# filename = "earth_lat_lon.jld2"
+filename = "small_earth_lat_lon.jld2"
+##
 #=
-filename = "hs_data.jld2"
-jl_file = jldopen(filename, "r+")
-all_state_data = jl_file["all_state_data"]
-heatmap(all_state_data[:,:,1,end], colormap = :balance, interpolate = true)
+# save reduced data 
+file = jldopen("reduced_data", "a+")
+JLD2.Group(file, "grid")
+JLD2.Group(file, "T")
+for t_key in keys(jl_file["T"])
+    file["T"][t_key] = jl_file["T"][t_key][:,:,1:4]
+end
+for grid_key in keys(jl_file["grid"])
+    file["grid"][grid_key] = jl_file["grid"][grid_key]
+end
 =#
-
-filename = "hs_lat_lon.jld2"
-filename = "hs_he_15_hp_5_ve_7_vp_2_lat_lon.jld2"
-filename = "hs_he_30_hp_2_ve_7_vp_2_lat_lon.jld2"
-filename = "hs_he_30_hp_3_ve_10_vp_2_lat_lon.jld2"
-# filename = "hs_he_11_hp_3_ve_7_vp_2_lat_lon.jld2"
-# filename = "hs_he_22_hp_1_ve_7_vp_2_lat_lon.jld2"
-# filename = "hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
-filename = "hs_he_45_hp_1_ve_7_vp_2_lat_lon.jld2"
-filename = "hs_he_8_hp_5_ve_7_vp_2_lat_lon.jld2"
-# filename = "hs_he_8_hp_5_ve_5_vp_3_lat_lon.jld2"
-filename = "avg_long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
-# filename = "long_hs_he_15_hp_2_ve_7_vp_2_lat_lon.jld2"
-# filename = "avg_long_hs_he_12_hp_3_ve_7_vp_2_lat_lon.jld2"
-filename = "avg_long_hs_he_7_hp_6_ve_7_vp_2_lat_lon.jld2"
-# filename = "avg_long_hs_he_23_hp_1_ve_7_vp_2_lat_lon.jld2"
-filename = "avg_long_hs_he_9_hp_4_ve_7_vp_2_lat_lon.jld2"
-
-filename = "avg_long_hs_he_18_hp_4_ve_7_vp_2_lat_lon.jld2"
+##
 
 jl_file = jldopen(filename, "r+")
 
@@ -58,22 +52,24 @@ ha_z = [m_r[k]*eps(1.0)*0   for j in eachindex(ϕ), k in eachindex(r)]
 
 # state_file[t_keys[1]]
 
-t_index = Node(1)
+t_index = Node(length(t_keys)) #length(t_keys) is last value
 t_key = @lift(t_keys[$t_index])
 
-s_string = "u" # state string
+s_string = "ρw" # state string
 state_file =  jl_file[s_string]
 # ρ  = @lift(jl_file["ee"][$t_key] - jl_file["e"][$t_key] .^2)
 ρ  = @lift(state_file[$t_key])
 global_clims = quantile.(Ref(state_file[t_keys[end]][:]), [0.1, 0.9])
 # symmetrize about 0
-maxc = maximum(abs.(global_clims))
-global_clims = (-maxc, maxc)
+# maxc = maximum(abs.(global_clims))
+# global_clims = (-maxc, maxc)
 # global_clims = (-13.5, 13.5)
 use_global_clims = false
-# global clims
+# global_clims = (-20, 20)
+# global_clims = (84464, 90103)
 
-fig = Figure(resolution = (1100, 800)) 
+fig = Figure(resolution = (1100, 800))
+colormap = :balance # :thermal # :balance # :Blues_9 #:thermal
 # slices
 axρ1 = fig[2,1:3] = LScene(fig)
 ϕ_eq = argmin(abs.(ϕ .- 45)) 
@@ -81,7 +77,7 @@ axρ1 = fig[2,1:3] = LScene(fig)
 slice1 = @lift($ρ[:,ϕ_eq,:])
 clims1 = @lift(quantile.(Ref($slice1[:]), [0.05,0.95]))
 clims1 = use_global_clims ? global_clims : clims1 
-surface!(axρ1, a_x, a_y, a_z, color = slice1, colorrange = clims1, colormap = :balance, shading = false, show_axis=false)
+surface!(axρ1, a_x, a_y, a_z, color = slice1, colorrange = clims1, colormap = colormap, shading = false, show_axis=false)
 fig[1,2] = Label(fig, s_string * ": lat slice at 45ᵒ", textsize = 30) 
 rotate_cam!(fig.scene.children[1], (2*π/3, 0, 0))
 update!(fig.scene)
@@ -92,7 +88,7 @@ axρ2 = fig[2,1+3:3+3] = LScene(fig)
 slice2 = @lift($ρ[λ_eq,:,:])
 clims2 = @lift(quantile.(Ref($slice2[:]), [0.05,0.95]))
 clims2 = use_global_clims ? global_clims : clims2 
-surface!(axρ2, ha_x, ha_y, ha_z, color = slice2, colorrange = clims2, colormap = :balance, shading = false, show_axis=false)
+surface!(axρ2, ha_x, ha_y, ha_z, color = slice2, colorrange = clims2, colormap = colormap, shading = false, show_axis=false)
 fig[1,2+3] = Label(fig, s_string * ": lon slice at 25ᵒ", textsize = 30) 
 # rotate_cam!(fig.scene.children[2], (2*π/3, 0, 0))
 # update!(fig.scene)
@@ -102,7 +98,7 @@ axρ3 = fig[2,1+3*2:3+3*2] = LScene(fig)
 slice3 = @lift(mean($ρ[1:end-1,:,:], dims=1)[1,:,:])
 clims3 = @lift(quantile.(Ref($slice3[:]), [0.05,0.95]))
 clims3 = use_global_clims ? global_clims : clims3 
-surface!(axρ3, ha_x, ha_y, ha_z, color = slice3, colorrange = clims3, colormap = :balance, shading = false, show_axis=false)
+surface!(axρ3, ha_x, ha_y, ha_z, color = slice3, colorrange = clims3, colormap = colormap, shading = false, show_axis=false)
 fig[1,2+3*2] = Label(fig, s_string * ": zonal avg", textsize = 30) 
 # rotate_cam!(fig.scene.children[3], (2*π/3, 0, 0))
 # update!(fig.scene)
@@ -111,20 +107,35 @@ fig[1,2+3*2] = Label(fig, s_string * ": zonal avg", textsize = 30)
 height_index = 2
 axρ4 = fig[4,1:3] = LScene(fig) 
 fig[3,2] = Label(fig, s_string * ": sphere at 1km ", textsize = 30) 
+
 # axρ4 = fig[3:4,1:3] = Axis3(fig, title = "ρv: sphere", titlesize = 30, show_axis=false) 
 slice4 = @lift($ρ[:,:, height_index])
 clims4 = @lift(quantile.(Ref($slice4[:]), [0.05,0.95]))
 clims4 = use_global_clims ? global_clims : clims4 
-surface!(axρ4, x, y, z, color = slice4, colormap = :balance, colorrange = clims4, shading = false, show_axis = false)
+surface!(axρ4, x, y, z, color = slice4, colormap = colormap, colorrange = clims4, shading = false, show_axis = false)
 
 
 # left right bottom top for ax.padding = (0, 6, 16, 0)
-# axρ5 = fig[4,1+3*2:3+3*2] = LScene(fig) 
-axρ5 = fig[3:4,1+3:3+3*2] = Axis(fig, title = s_string * ":lat lon at 1km", titlesize = 30) 
+# axρ5 = fig[4,1+3*2:3+3*2] = LScene(fig) # s_string * ":lat lon at 1km" * 
+x = "an equation"
+titlestring =  L" \langle T \rangle"
+axρ5 = fig[3:4,1+3:3+3*2] = Axis(fig, title = titlestring, titlesize = 30) 
 # fig[3,2+3*2] = Label(fig, "ρv: latlon ", textsize = 30) 
-scene5 = heatmap!(axρ5, λ, ϕ, slice4, colormap = :balance, colorrange = clims4, interpolate = true, shading = false, show_axis=false)
+scene5 = heatmap!(axρ5, λ, ϕ, slice4, colormap = colormap, colorrange = clims4, interpolate = true, shading = false, show_axis=false)
 # scene5.padding = (0, 0, 0, 00)
 # update!(fig.scene)
+
+
+#=
+tic = time()
+iterations = 1:length(t_keys)
+record(fig, "temperature_smallearth_sphere.mp4", iterations, framerate=30) do i
+    t_index[] = i
+    println("finishing ", i)
+end
+toc = time()
+println("the time for generating the figure is ", (toc - tic)/60, "minutes")
+=#
 
 #=
 # usual height plot
@@ -254,16 +265,7 @@ push!(ax.scene, cplot)
 fig
 =#
 
-#=
-tic = time()
-iterations = 1:length(t_keys)
-record(fig, "makiehs_sphere.mp4", iterations, framerate=30) do i
-    t_index[] = i
-    println("finishing ", i)
-end
-toc = time()
-println("the time for generating the figure is ", (toc - tic)/60, "minutes")
-=#
+
 
 #=
 t_index = Node(1)

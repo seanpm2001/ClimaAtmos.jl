@@ -45,6 +45,31 @@ function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl =
     return dt
 end
 
+function legit_timestep(discretized_domain::DiscretizedDomain, backend::AbstractBackend; vcfl = 16.0, hcfl = 0.4, sound_speed = 330)
+    numerical_grid = create_grid(backend, discretized_domain);
+    cₛ = sound_speed
+    Δxᵥ = min_node_distance(numerical_grid, VerticalDirection())
+    Δxₕ = min_node_distance(numerical_grid, HorizontalDirection()) 
+    vdt =  (Δxᵥ / cₛ) * vcfl
+    hdt =  (Δxₕ / cₛ) * hcfl
+
+
+    println("The vertical minimum grid spacing is ", Δxᵥ , " meters" )
+    println("The horizontal minimum grid spacing is ", Δxₕ / 1e3 , " kilometers")
+    println("The vertical CFL is ", vcfl)
+    println("The horizontal CFL is ", hcfl)
+
+    if vdt < hdt
+        dt = vdt
+        @info "limited by vertical acoustic modes dt=$dt seconds"
+    else
+        dt = hdt
+        @info "limited by horizontal acoustic modes dt=$dt seconds"
+
+    end
+    return dt
+end
+
 # create jld2 name: helper function
 function create_jld2_name(base_name, discretized_domain, numerical_flux)
     he = string(discretized_domain.discretization.horizontal.elements)
@@ -270,7 +295,7 @@ model = ModelSetup(
     parameters = parameters,
 )
 
-function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld_name = "long_hs", sim_days = 1200, dt = nothing, recompute_minutes = 30)
+function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld_name = "long_hs", sim_days = 1200, dt = nothing, recompute_minutes = 30, vcfl = 16, hcfl = 0.15, sound_speed = 330)
     parameters = model.parameters
     # set up backend
     backend = DiscontinuousGalerkinBackend(numerics = (flux = flux,),)
@@ -290,8 +315,11 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     )
 
     if dt == nothing
-        dt = shady_timestep(discretized_domain)
-        println("shady dt = ", dt)
+        # dt = shady_timestep(discretized_domain)
+        # println("shady dt = ", dt)
+        dt = legit_timestep(discretized_domain, backend, vcfl = vcfl, hcfl = hcfl, sound_speed = sound_speed)
+        dt = minimum([dt, 60.0])
+        println("legit dt = ", dt)
     else
         println("dt = ", dt)
     end
@@ -299,16 +327,16 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     println("recomputing at ", recompute)
 
     # CHANGE DEFAULT SAVING STUFF
-    jld_it = floor(Int, 6 * 60 * 60 / dt) # floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
+    jld_it = floor(Int, 50 * 60 * 60 / dt) # floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
     jld_filepath = create_jld2_name(jld_name, discretized_domain, flux)
 
-    avg_start = floor(Int, 1200 * 24 * 60 * 60 / dt) # start after 1200 days
-    jld_it_2  = floor(Int, 6 * 60 * 60 / dt)        # save average every 6 hours
+    avg_start = floor(Int, 200 * 24 * 60 * 60 / dt) # start after 200 days
+    jld_it_2  = floor(Int, 4*6 * 60 * 60 / dt)        # save average every 4*6 hours
 
-    lat_grd = collect(-90:0.5:90) .* 1.0
-    long_grd = collect(-180:0.5:180) .* 1.0
+    lat_grd = collect(-90:1.0:90) .* 1.0
+    long_grd = collect(-180:1.0:180) .* 1.0
     rad_grd = collect(domain.radius:500:(domain.radius + domain.height)) .* 1.0
-    #=
+    
     ll_cb = LatLonDiagnostics(
     iteration = jld_it_2, 
     filepath = "avg_" * jld_filepath,
@@ -316,8 +344,9 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     latitude = lat_grd,
     longitude = long_grd,
     radius = rad_grd)
-    jl_cb = JLD2State(iteration = jld_it, filepath = jld_filepath),
-    =#
+
+    jl_cb = JLD2State(iteration = jld_it, filepath = jld_filepath)
+    
     # set up simulation
     simulation = Simulation(
         backend = backend,
@@ -333,6 +362,8 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
         callbacks = (
             Info(),
             ReferenceStateUpdate(recompute = recompute),
+            # ll_cb,
+            jl_cb,
         ),
     )
 
@@ -347,5 +378,34 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, jld
     end
     toc = time()
     println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
+
+    # Check the domain average 
+    #=
+    initialize!(simulation)
+    numerical_grid = create_grid(backend, discretized_domain)
+    M = massmatrix(numerical_grid)
+    ρᴮ  = simulation.state[:,1,:]
+    ρeᴮ = simulation.state[:,5,:]
+    ρ̅ᴮ  = sum(M .* ρᴮ) / sum(M)
+    ρ̅e̅ᴮ = sum(M .* ρeᴮ) / sum(M)
+
+    tic = time()
+    try
+        evolve!(simulation)
+    catch err
+        @info "evolve has thrown an error"
+        showerror(stdout, err )
+    end
+    toc = time()
+    println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
+
+    ρᴬ  = simulation.state[:,1,:]
+    ρeᴬ = simulation.state[:,5,:]
+    ρ̅ᴬ  = sum(M .* ρᴬ)  / sum(M)
+    ρ̅e̅ᴬ = sum(M .* ρeᴬ) / sum(M)
+
+    println("The change in mass is ", abs(ρ̅ᴬ-ρ̅ᴮ)/ρ̅ᴬ )
+    println("The change in total energy is ", abs(ρ̅e̅ᴬ-ρ̅e̅ᴮ)/ρ̅e̅ᴬ )
+    =#
 
 end

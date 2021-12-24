@@ -29,6 +29,7 @@ jl_file = jldopen(filename, "r+")
 s_string = "T"
 slice_zonal = grab_state(s_string, jl_file)
 colorrange, contour_levels, s_string = plot_helper(s_string, slice_zonal)
+colorrange = (180,310)
 λ, ϕ, r, p_coord = grab_grid(jl_file)
 push!(state_names, s_string)
 ax2 = fig[jj,ii] = Axis(fig,title = state_names[i], titlesize = 40)
@@ -92,7 +93,7 @@ s_string = "vv"
 slice_zonal2, s_string = eddy_variance(s_string, jl_file)
 
 slice_zonal = 0.5 .* (slice_zonal1 + slice_zonal2)
-colorrange = extrema(slice_zonal)
+colorrange = (0, 360) # modify to extrema 
 
 s_string = L"\langle (u' u' + v' v')/2 \rangle"
 push!(state_names, s_string)

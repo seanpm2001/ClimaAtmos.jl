@@ -47,6 +47,31 @@ function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl =
     return dt
 end
 
+function legit_timestep(discretized_domain::DiscretizedDomain, backend::AbstractBackend; vcfl = 16, hcfl = 0.4, sound_speed = 330)
+    numerical_grid = create_grid(backend, discretized_domain);
+    cₛ = sound_speed
+    Δxᵥ = min_node_distance(numerical_grid, VerticalDirection())
+    Δxₕ = min_node_distance(numerical_grid, HorizontalDirection()) 
+    vdt =  (Δxᵥ / cₛ) * vcfl
+    hdt =  (Δxₕ / cₛ) * hcfl
+
+
+    println("The vertical minimum grid spacing is ", Δxᵥ , " meters" )
+    println("The horizontal minimum grid spacing is ", Δxₕ / 1e3 , " kilometers")
+    println("The vertical CFL is ", vcfl)
+    println("The horizontal CFL is ", hcfl)
+
+    if vdt < hdt
+        dt = vdt
+        @info "limited by vertical acoustic modes dt=$dt seconds"
+    else
+        dt = hdt
+        @info "limited by horizontal acoustic modes dt=$dt seconds"
+
+    end
+    return dt
+end
+
 # create jld2 name: helper function
 function create_jld2_name(base_name, discretized_domain, numerical_flux)
     he = string(discretized_domain.discretization.horizontal.elements)
@@ -272,7 +297,7 @@ model = ModelSetup(
     parameters = parameters,
 )
 
-function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, hcfl = 0.6, jld_name = "small_earth_hs", sim_days = 1200/small_earth_γ, dt = nothing, clusterpath = "/central/scratch/jiahe/smallEarth/")
+function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, hcfl = 0.6, vcfl = 15, jld_name = "small_earth_hs", sim_days = 1200/small_earth_γ, dt = nothing, clusterpath = "/central/scratch/jiahe/smallEarth/")
     parameters = model.parameters
     # set up backend
     backend = DiscontinuousGalerkinBackend(numerics = (flux = flux,),)
@@ -292,7 +317,8 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, hcf
     )
 
     if dt == nothing
-        dt = shady_timestep(discretized_domain, hcfl = hcfl)
+        # dt = shady_timestep(discretized_domain, hcfl = hcfl)
+        dt = legit_timestep(discretized_domain, backend, hcfl = hcfl, vcfl = vcfl)
     end
 
     jld_it = floor(Int, 50 * 24 * 60 * 60 / dt / small_earth_γ) # every rescaled 50 days
@@ -327,8 +353,9 @@ function held_suarez(model; flux = :refanov, he = 8, hp = 2, ve = 7, vp = 2, hcf
         ),
         callbacks = (
             Info(),
-            ll_cb,
-            # JLD2State(iteration = jld_it, filepath = "small_earth.jld2"),
+            # ll_cb,
+            JLD2State(iteration = jld_it, filepath = jld_filepath),
+            # ReferenceStateUpdate(recompute = 20),
             # VTKState(iteration = Int(floor(5*24*3600/dt)), filepath = clusterpath * "/IMEX/"),
         ),
     )

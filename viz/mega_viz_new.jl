@@ -3,8 +3,8 @@ using GLMakie
 using Statistics
 using JLD2
 
-Random.seed!(12345)
-function mega_viz!(ax, ϕ, p_coord, slice_zonal, contour_levels, colorrange; add_labels = false, title_string = "", colormap = :balance)
+
+function mega_viz!(ax, ϕ, p_coord, slice_zonal, contour_levels, colorrange; add_labels = false, title_string = "", colormap = :balance, heuristic = 1, random_seed = 12345)
     cplot = contour!(ax, ϕ, p_coord, slice_zonal, levels = contour_levels, color = :black, interpolate = true,  show_axis = false)
     hm = heatmap!(ax, ϕ, p_coord, slice_zonal, colorrange = colorrange, colormap = colormap, interpolate = true)
 
@@ -22,6 +22,7 @@ function mega_viz!(ax, ϕ, p_coord, slice_zonal, contour_levels, colorrange; add
     ax.yreversed = true
 
     # hack 
+    Random.seed!(random_seed)
     if add_labels
         list_o_stuff = []
         labeled_contours = contour_levels[1:1:end]
@@ -55,7 +56,13 @@ function mega_viz!(ax, ϕ, p_coord, slice_zonal, contour_levels, colorrange; add
                 α = contour_index % 2 == 0 ? 0.15 : 0.85
                 α = rand([α,β])
                 local index3 = round(Int, α * (indices[i]+1)+ (1-α) * (indices[i+1]-1)) # choose point in middle
-                local index  = index3 # rand([index1, index2]) # choose between random point and point in middle
+                if heuristic == 3
+                    local index  = index3 # rand([index1, index2]) # choose between random point and point in middle
+                elseif heuristic == 1
+                    local index  = index1 
+                elseif heuristic == 2
+                    local index  = index2
+                end
                 # end of heuristics
                 local location = Point3(segments[index]..., 2f0)
                 local sc = scatter!(ax, location, markersize=20, align = (:center, :center), color=(:white, 0.1), strokecolor=:white)
@@ -72,6 +79,7 @@ function mega_viz!(ax, ϕ, p_coord, slice_zonal, contour_levels, colorrange; add
         end
     end # end of adding labels
 end
+
 
 filename = "avg_long_hs_he_10_hp_2_ve_7_vp_2.jld2"
 filename = "avg_long_hs_he_8_hp_2_ve_7_vp_2.jld2"
@@ -96,7 +104,9 @@ push!(filename, "avg_long_hs_he_23_hp_3_ve_8_vp_3.jld2")
 push!(filename, "avg_long_hs_he_7_hp_2_ve_8_vp_3.jld2")
 push!(filename, "avg_long_hs_he_3_hp_6_ve_8_vp_3.jld2")
 
-# checking super low rez 
+# checking super low rez, 24 dof horizontal and 30 dof vertical
+# perhaps do 1, 4, and 5, (2 * 3 * 5), 
+# 10
 push!(filename, "avg_long_hs_he_6_hp_3_ve_6_vp_4_refanov.jld2")
 push!(filename, "avg_long_hs_he_8_hp_2_ve_6_vp_4_refanov.jld2")
 push!(filename, "avg_long_hs_he_8_hp_2_ve_6_vp_4_roefanov.jld2")
@@ -114,6 +124,9 @@ push!(filename, "avg_hr_long_hs_he_9_hp_4_ve_16_vp_4_roefanov.jld2") # 19
 
 # check new ic 
 push!(filename, "avg_new_ic_hs_he_12_hp_3_ve_6_vp_4_roefanov.jld2") # 20
+
+# small planet
+push!(filename, "averages_small_earth_long_hs_he_12_hp_4_ve_12_vp_4_roefanov.jld2") # 21
 
 title_names = []
 # 3
@@ -148,9 +161,58 @@ push!(title_names, "jordan level vert")
 
 # 
 push!(title_names, "he 12 hp 3 ve 6 vp 4 new ic")
+push!(title_names, "12 hp 4 ve 12 vp 4 roefanov small planet")
 
 # filename = ["checkme.jld2" for i in 1:6]
 
+# 22
+push!(filename, "avg_earth_hs_he_12_hp_4_ve_12_vp_4_roefanov.jld2") 
+push!(title_names, "12 hp 4 ve 12 vp 4 roefanov planet")
+
+# comparison starts here
+# 23
+push!(filename, "averages_small_earth_long_hs_he_23_hp_1_ve_20_vp_1_roefanov.jld2")
+push!(title_names, "hs_he_23_hp_1_ve_20_vp_1_roefanov")
+
+# 24
+push!(filename, "averages_small_earth_long_hs_he_23_hp_1_ve_8_vp_4_roefanov.jld2")
+push!(title_names, "hs_he_23_hp_1_ve_8_vp_4_roefanov")
+
+# 25
+push!(filename, "averages_small_earth_long_hs_he_9_hp_4_ve_20_vp_1_roefanov.jld2")
+push!(title_names, "hs_he_9_hp_4_ve_20_vp_1_roefanov")
+
+# 26 
+push!(filename, "averages_small_earth_long_hs_he_9_hp_4_ve_8_vp_4_roefanov.jld2")
+push!(title_names, "hs_he_9_hp_4_ve_8_vp_4_roefanov")
+
+# 27 
+push!(filename, "averages_small_earth_long_hs_he_5_hp_8_ve_20_vp_1_roefanov.jld2")
+push!(title_names, "hs_he_5_hp_8_ve_20_vp_1_roefanov")
+
+# 28
+push!(filename, "averages_small_earth_long_hs_he_5_hp_8_ve_10_vp_3_roefanov.jld2")
+push!(title_names, "he_5_hp_8_ve_10_vp_3")
+
+# 29 # Back to Earth
+push!(filename, "avg_earth_hs_he_15_hp_1_ve_15_vp_1_roefanov.jld2")
+push!(title_names, "he_15_hp_1_ve_15_vp_1")
+
+# 30 
+push!(filename, "avg_earth_hs_he_10_hp_2_ve_10_vp_2_roefanov.jld2")
+push!(title_names, "he_10_hp_2_ve_10_vp_2")
+
+# 31 
+push!(filename, "avg_earth_hs_he_6_hp_4_ve_15_vp_1_roefanov.jld2")
+push!(title_names, "avg_earth_hs_he_6_hp_4_ve_15_vp_1_roefanov")
+
+# 32 
+push!(filename, "avg_earth_hs_he_6_hp_4_ve_6_vp_4_roefanov.jld2")
+push!(title_names, "he_6_hp_4_ve_6_vp_4")
+
+# 33
+push!(filename, "avg_earth_hs_he_5_hp_5_ve_5_vp_5_roefanov.jld2")
+push!(title_names, "he_5_hp_5_ve_5_vp_5")
 
 # convenience functions 
 function grab_state(s_string, jl_file)
@@ -223,9 +285,11 @@ end
 
 # Fixed File looking over states: 
 # start here
-fig = Figure(resolution = (1700, 1000))
+fig = Figure(resolution = (1700+600, 1000+400))
 add_label = true
-fi = 19
+# fi = 22
+fi = 33
+# fi = 14
 println("looking at ", title_names[fi])
 state_names = []
 
@@ -318,8 +382,6 @@ push!(state_names, s_string)
 ax6 = fig[jj,ii] = Axis(fig)
 mega_viz!(ax6, ϕ, p_coord, slice_zonal, contour_levels, colorrange, add_labels = add_label, title_string = state_names[i], colormap = :thermometer)
 hideydecorations!(ax6, grid = false)
-
-
 
 # playin around with different plotting: 
 #=

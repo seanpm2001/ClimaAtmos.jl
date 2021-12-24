@@ -2,11 +2,13 @@
 function create_grid(::DiscontinuousGalerkinBackend, discretized_domain)
     elements = get_elements(discretized_domain)
     polynomial_order = get_polynomial_order(discretized_domain)
+    grid_stretching = get_grid_stretching(discretized_domain)
 
     return create_dg_grid(
         discretized_domain.domain, 
         elements = elements,
         polynomial_order = polynomial_order,
+        grid_stretching = grid_stretching,
     )
 end
 
@@ -43,7 +45,7 @@ function create_linear_rhs(model::ModelSetup, splitting::IMEXSplitting; domain, 
     rhs = VESDGModel(
         linear_balance_law,
         grid,
-        surface_numerical_flux_first_order = RefanovFlux(),
+        surface_numerical_flux_first_order = RoefanovFlux(),
         volume_numerical_flux_first_order = volume_flux,
     )
 
@@ -90,6 +92,15 @@ function get_elements(discretized_domain::DiscretizedDomain{<:SphericalShell})
     horizontal_elements =discretized_domain.discretization.horizontal.elements
     vertical_elements = discretized_domain.discretization.vertical.elements
     return (vertical = vertical_elements, horizontal = horizontal_elements)
+end
+
+function get_grid_stretching(discretized_domain::DiscretizedDomain)
+    if haskey(discretized_domain.discretization, :grid_stretching)
+        grid_stretching = discretized_domain.discretization.grid_stretching
+    else
+        grid_stretching = nothing
+    end
+    return grid_stretching
 end
 
 function get_polynomial_order(discretized_domain::DiscretizedDomain{<:ProductDomain})

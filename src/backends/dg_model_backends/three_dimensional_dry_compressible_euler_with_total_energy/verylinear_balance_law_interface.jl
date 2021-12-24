@@ -188,6 +188,7 @@ function source!(
     _...
 )
     sources = balance_law.sources
+    # not called
     #=
     ntuple(Val(length(sources))) do s
         Base.@_inline_meta

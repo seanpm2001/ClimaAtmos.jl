@@ -31,7 +31,7 @@ push!(filename, "avg_earth_hs_he_5_hp_5_ve_5_vp_5_roefanov.jld2")
 push!(title_names, "pₕ = 5, pᵥ = 5")
 
 
-colorrange = (0, 360)
+colorrange = (0, 360) # modify to extrema of "truth"
 contour_levels = [0, 40, 80, 160, 240, 320]
 fig = Figure(resolution = (1700+600, 1000+400))
 add_label = true

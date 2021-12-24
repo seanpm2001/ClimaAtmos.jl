@@ -18,7 +18,7 @@ struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
 
 # set up backend
-backend = DiscontinuousGalerkinBackend(numerics = (flux = :lmars,),)
+backend = DiscontinuousGalerkinBackend(numerics = (flux = :refanov,),)
 
 # Set up parameters
 parameters = (
@@ -52,7 +52,7 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 32, polynomial_order = 2), 
+	    horizontal = SpectralElementGrid(elements = 30, polynomial_order = 2), 
 	    vertical = SpectralElementGrid(elements = 10, polynomial_order = 2)
 	),
 )
@@ -160,7 +160,7 @@ simulation = Simulation(
     ),
     callbacks = (
         Info(),
-        VTKState(iteration = Int(3600), filepath = "./out/"),
+        # VTKState(iteration = Int(3600), filepath = "./out/"),
         CFL(), 
     ),
 )

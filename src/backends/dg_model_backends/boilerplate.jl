@@ -76,6 +76,7 @@ include("temperature_profiles.jl")
 include("balance_laws.jl")
 include("callbacks.jl")
 include("../../utils/operations.jl")
+include("../../utils/dg_grid_utils.jl")
 
 # TODO! Remove this.
 dirs = ["three_dimensional_dry_compressible_euler_with_total_energy/", 

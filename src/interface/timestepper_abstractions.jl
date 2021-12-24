@@ -30,9 +30,14 @@ end
 Base.@kwdef struct IMEX{ℱ}
     method::ℱ
 end
+# ARK1ForwardBackwardEuler
+# ARK2ImplicitExplicitMidpoint
+# ARK2GiraldoKellyConstantinescu # by far the best
+# ARK548L2SA2KennedyCarpenter
+# ARK437L2SA1KennedyCarpenter
 
 function IMEX()
-    return IMEX(ARK2GiraldoKellyConstantinescu)
+    return IMEX(ARK2GiraldoKellyConstantinescu )
 end
 
 function construct_odesolver(::NoSplitting, simulation)

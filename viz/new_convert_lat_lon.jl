@@ -1,4 +1,8 @@
-filename = "viz_he_18_hp_4_ve_6_vp_4_roefanov.jld2"
+# filename = "viz_he_18_hp_4_ve_6_vp_4_roefanov.jld2"
+# filename = "avg_earth_hs_he_12_hp_4_ve_12_vp_4_roefanov.jld2"
+# filename = "earth_hs_he_5_hp_5_ve_5_vp_5_roefanov.jld2"
+filename = "earth_hs_he_12_hp_4_ve_12_vp_4_roefanov.jld2"
+
 # write function to reconstruct grid
 function reconstruct_info(filename)
     split_string = split(split(filename, "he_")[2], "_")
@@ -9,17 +13,19 @@ function reconstruct_info(filename)
     return (;he=he, hp = hp, ve = ve, vp = vp)
 end
 gridinfo = reconstruct_info(filename)
-
+# filename = "earth.jld2"
+#=
 filename = "small_earth.jld2"
-fhdof = 90
-vdof = 30
+fhdof = 60 # face horizontal degrees of freedom
+vdof = 60
 hp = 4
 vp = 4
 he = ceil(Int, fhdof / (hp+1))
 ve = ceil(Int, vdof / (vp+1))
 gridinfo = (;he=he, hp = hp, ve = ve, vp = vp)
 include("../smallearth/smallearth.jl")
-#=
+=#
+
 include("../src/interface/domains.jl")
 include("../src/interface/models.jl")
 include("../src/interface/physics.jl")
@@ -32,10 +38,9 @@ include("../src/interface/simulations.jl")
 include("../src/interface/callbacks.jl")
 include("../src/backends/dg_model_backends/boilerplate.jl")
 include("../src/utils/sphere_utils.jl")
-=#
+
 # to be removed
 
-#=
 using CLIMAParameters #: AbstractEarthParameterSet
 struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
@@ -65,7 +70,7 @@ parameters = (
     p0 = 1e5,
     T_ref = 255,
 )
-=#
+
 
 domain = SphericalShell(radius = parameters.a, height = parameters.H)
 discretized_domain = DiscretizedDomain(

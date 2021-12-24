@@ -26,6 +26,14 @@ function create_callback(::Info, simulation::Simulation{<:DiscontinuousGalerkinB
                 energy
             )
 
+            @info @sprintf(
+                """The simulation is 
+                percent complete = %8.4f percent
+                """,
+                ClimateMachine.ODESolvers.gettime(odesolver)/timeend * 100,
+            )
+
+
             if isnan(energy)
                 error("NaNs")
             end

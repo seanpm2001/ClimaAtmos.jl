@@ -8,12 +8,16 @@ vdofs = [60] # vertical degrees of freedom
 hps = [4] # horizontal polynomial order
 vps = [4] # vertical polynomial order
 
+# hs_he_23_hp_1_ve_8_vp_4_roefanov failed 
+# hps = 8, vps = 4, never ran too many resources?
+
+# DONT FORGET TO CHANGE DIAGNOSTICS
 for flux in fluxes, fhdof in fhdofs, vdof in vdofs, hp in hps, vp in vps
     he = ceil(Int, fhdof / (hp+1))
     ve = ceil(Int, vdof / (vp+1))
     descriptor = (he = he, hp = hp, ve = ve, vp = vp, jld_name = "small_earth_long_hs", flux = flux)
     println("currently doing ", descriptor)
-    held_suarez(model, hcfl = 0.25, sim_days = 1200.0 / small_earth_γ, he = he, hp = hp, ve = ve,
+    held_suarez(model, dt = 2.0, hcfl = 0.3, sim_days = 300.0 / small_earth_γ, he = he, hp = hp, ve = ve,
         vp = vp, jld_name = "small_earth_long_hs", flux = flux)
 end
 

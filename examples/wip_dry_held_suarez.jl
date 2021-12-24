@@ -18,7 +18,7 @@ struct PlanetParameterSet <: AbstractEarthParameterSet end
 get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetParameterSet())
 
 # set up backend
-backend = DiscontinuousGalerkinBackend(numerics = (flux = :refanov,),)
+backend = DiscontinuousGalerkinBackend(numerics = (flux = :roefanov,),)
 
 parameters = (
     a    = get_planet_parameter(:planet_radius),
@@ -56,8 +56,8 @@ domain = SphericalShell(
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
-	    horizontal = SpectralElementGrid(elements = 8, polynomial_order = 2),
-	    vertical = SpectralElementGrid(elements = 7, polynomial_order = 2)
+	    horizontal = SpectralElementGrid(elements = 10, polynomial_order = 4),
+	    vertical = SpectralElementGrid(elements = 6, polynomial_order = 4)
 	),
 )
 
@@ -297,14 +297,34 @@ end
 
 dt = shady_timestep(discretized_domain)
 
+
+dt = 60
+recompute = floor(Int, 30 * 60 / dt) # recompute fields at every 30 minutes
+# recompute = 1000
+println("recomputing at ", recompute)
+
+numerical_grid = create_grid(backend, discretized_domain);
+cₛ = 330
+Δxᵥ = min_node_distance(numerical_grid, VerticalDirection())
+Δxₕ = min_node_distance(numerical_grid, HorizontalDirection()) 
+vCFL = dt / (Δxᵥ / cₛ)
+hCFL = dt / (Δxₕ / cₛ)
+
+
+println("The vertical minimum grid spacing is ", Δxᵥ , " meters" )
+println("The horizontal minimum grid spacing is ", Δxₕ / 1e3 , " kilometers")
+println("The vertical CFL is ", vCFL)
+println("The horizontal CFL is ", hCFL)
+
+#=
 jld_it = floor(Int, 50 * 24 * 60 * 60 / dt) # every 50 days
 jld_filepath = create_jld2_name("long_hs", discretized_domain)
 
 avg_start = floor(Int, 200 * 24 * 60 * 60 / dt) # start after 300 days
 jld_it_2  = floor(Int, 6 * 60 * 60 / dt)      # save average every 6 hours
 
-lat_grd = collect(-90:1:90) .* 1.0
-long_grd = collect(-180:1:180) .* 1.0
+lat_grd = collect(-90:1.0:90) .* 1.0
+long_grd = collect(-180:1.0:180) .* 1.0
 rad_grd = collect(domain.radius:1e3:(domain.radius + domain.height)) .* 1.0
 
 ll_cb = LatLonDiagnostics(iteration = jld_it_2, 
@@ -313,29 +333,40 @@ start_iteration = avg_start,
 latitude = lat_grd,
 longitude = long_grd,
 radius = rad_grd)
+=#
+
+
 
 # set up simulation
 simulation = Simulation(
     backend = backend,
     discretized_domain = discretized_domain,
     model = model,
-    splitting = IMEXSplitting(linear_model = :linear, ),
+    splitting = IMEXSplitting(linear_model = :verylinear, ),
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 400 *  24 * 3600,
+        finish = 100 *  24 * 3600,
         timestep = dt,
     ),
     callbacks = (
         Info(),
-        JLD2State(iteration = jld_it, filepath = jld_filepath),
-        ll_cb,
+        ReferenceStateUpdate(recompute = recompute),
+        # JLD2State(iteration = jld_it, filepath = jld_filepath),
+        # ll_cb,
         # DefaultDiagnostics(iteration = jld_it_2, filepath = "avg_" * jld_filepath, start_iteration = avg_start),
         # VTKState(iteration = Int(3600), filepath = "./out/"),
         # AveragedState(iteration = jld_it_2, filepath = "avg_" * jld_filepath, start_iteration = avg_start),
         # CFL(),
     ),
 )
+
+# Check the domain average 
+M = massmatrix(numerical_grid)
+ρᴮ  = simulation.state[:,1,:]
+ρeᴮ = simulation.state[:,5,:]
+ρ̅ᴮ  = sum(M .* ρᴮ) / sum(M)
+ρ̅e̅ᴮ = sum(M .* ρeᴮ) / sum(M)
 
 # run the simulation
 
@@ -350,6 +381,13 @@ end
 toc = time()
 println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
 
+ρᴬ  = simulation.state[:,1,:]
+ρeᴬ = simulation.state[:,5,:]
+ρ̅ᴬ  = sum(M .* ρᴬ)  / sum(M)
+ρ̅e̅ᴬ = sum(M .* ρeᴬ) / sum(M)
+
+println("The change in mass is ", abs(ρ̅ᴬ-ρ̅ᴮ)/ρ̅ᴬ )
+println("The change in total energy is ", abs(ρ̅e̅ᴬ-ρ̅e̅ᴮ)/ρ̅e̅ᴬ )
 #=
 # running more code 
 old_simulation_state = copy(simulation.state)

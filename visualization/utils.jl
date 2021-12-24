@@ -139,7 +139,7 @@ function plot_helper(s_string, slice_zonal)
     # contour_levels = collect(0:20:120)
     if s_string == "u"
         contour_levels = collect(-8:4:28) # u-velocity 
-        latex_string = L"\langle u \rangle"
+        latex_string = L"$\langle u$ $\rangle$"
     elseif s_string == "T"
         contour_levels = collect(190:10:300) # T
         latex_string = L"$\langle T$ $\rangle$"

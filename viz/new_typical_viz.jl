@@ -108,13 +108,13 @@ p_coord = grab_state("p", jl_file)
 Δp = p_coord[:,1:end-1] - p_coord[:,2:end]
 v = grab_state("v", jl_file)
 v̅ = (v[:,1:end-1] + v[:,2:end]) .* 0.5
-ṽ = rad_grid[1] / 9.81 * 2 * π * (reshape(cosd.(ϕ[2:end-1]), (361-2,1)) .* cumsum(v̅ .* Δp, dims = 2)[2:end-1,:])
+ṽ = rad_grid[1] / 9.81 * 2 * π * (reshape(cosd.(ϕ), (361,1)) .* cumsum(v̅ .* Δp, dims = 2))
 colorrange = extrema(ṽ)
-fig, ax, cplot = contour(ϕ[2:end-1], p_coord[180,1:end-1], ṽ, color = :black, levels =21, show_axis = false)
-hm = heatmap!(ax, ϕ[2:end-1], p_coord[180,1:end-1], ṽ, colorrange = colorrange, colormap = :balance, interpolate = true)
+fig, ax, cplot = contour(ϕ, p_coord[180,1:end-1], ṽ, color = :black, levels =21, show_axis = false)
+hm = heatmap!(ax, ϕ, p_coord[180,1:end-1], ṽ, colorrange = colorrange, colormap = :balance, interpolate = true)
 Colorbar(fig[1,2], hm, ticks = -7.2e10:2.4e10:7.2e10)
 
-ax.limits = (extrema(ϕ[2:end-1])..., extrema(p_coord[1:end-1])...)
+ax.limits = (extrema(ϕ)..., extrema(p_coord[1:end-1])...)
 ax.title = "meriodonal streamfunction"
 ax.titlesize = 40
 ax.xlabel = "Latitude [ᵒ]"

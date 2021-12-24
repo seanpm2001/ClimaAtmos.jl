@@ -80,6 +80,14 @@ end
     return (ρe + p) / ρ
 end
 
+@inline function calc_ref_enthalpy(eos::DryIdealGas, state, aux, params)
+    ρ  = aux.ref_state.ρ
+    ρe = aux.ref_state.ρe
+    p = aux.ref_state.p
+
+    return (ρe + p) / ρ
+end
+
 @inline function calc_heat_capacity_at_constant_pressure(::DryIdealGas, state, params)
     return params.cp_d
 end
