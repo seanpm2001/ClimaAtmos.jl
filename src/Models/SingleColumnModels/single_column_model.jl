@@ -10,6 +10,9 @@ Base.@kwdef struct SingleColumnModel{D, BC, P} <: AbstractSingleColumnModel
     parameters::P
 end
 
+abstract type AbstractTurbConvModel end
+struct ConstantDiffusivityModel <: AbstractTurbConvModel end
+
 function Models.variable_names(::SingleColumnModel)
     base_vars = (:ρ, :uv, :w, :ρθ)
     thermo_vars = (:ρθ,)
@@ -139,9 +142,53 @@ function Models.make_ode_function(model::SingleColumnModel)
             Geometry.WVector(-(If(ρθ / ρ) * ∂f(Π(ρθ))) - ∂f(Φ(zc))) +
             divf(ν * ∂c(w)) - Af(w, w),
         )
+        compute_sgs_fluxes(model::SingleColumnModel, sgs_model::AbstractTurbConvModel)
 
         return dY
     end
 
     return rhs!
+end
+
+
+function compute_sgs_fluxes(model::SingleColumnModel, sgs_model::ConstantDiffusivityModel)
+    FT = eltype(model.domain)
+
+    sgs_fluxes!(Y, Ya, t) = begin
+        FT = eltype(Y)
+
+        # model specific parameters
+        ν = model.parameters.ν
+
+        # components
+        Ym = Y.base
+        ρ = Ym.ρ
+        uv = Ym.uv
+        w = Ym.w
+        ρθ = Y.thermodynamics.ρθ
+
+        # potential temperature
+        flux_bottom = get_boundary_flux(model, bc_ρθ.bottom, ρθ, Y, Ya)
+        flux_top = get_boundary_flux(model, bc_ρθ.top, ρθ, Y, Ya)
+        ∂f = Operators.GradientC2F()
+        # TODO!: Undesirable casting to vector required
+        @. θ_sgs_flux = -Geometry.WVector(ν * ∂f(ρθ / ρ))
+
+        # uv
+        flux_bottom = get_boundary_flux(model, bc_uv.bottom, uv, Y, Ya)
+        flux_top = uvg
+        bcs_bottom = Operators.SetValue(flux_bottom)
+        bcs_top = Operators.SetValue(flux_top) # this needs abstraction
+        ∂f = Operators.GradientC2F(bottom = bcs_bottom, top = bcs_top)
+        @. uv_sgs_flux = - ν * ∂f(uv)
+
+        # w
+        flux_bottom = get_boundary_flux(model, bc_w.bottom, w, Y, Ya)
+        flux_top = get_boundary_flux(model, bc_w.top, w, Y, Ya)
+        ∂c = Operators.GradientF2C()
+        @. w_sgs_flux = -ν * ∂c(w)
+        return θ_sgs_flux, uv_sgs_flux, w_sgs_flux
+    end
+
+    return sgs_flux!
 end
