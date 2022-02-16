@@ -45,7 +45,10 @@ y_domain = IntervalDomain(min = 0, max = parameters.ymax, periodic = true)
 z_domain = IntervalDomain(min = 0, max = parameters.zmax, periodic = false)
 discretized_domain = DiscretizedDomain(
     domain = x_domain × y_domain × z_domain,
-    discretization = SpectralElementGrid(elements = (10, 1, 10), polynomial_order = (4, 4, 4),),
+    discretization = (
+        elements = (80, 1, 80),
+        polynomial_order = (4, 4, 4),
+        grid_stretching = nothing,),
 )
 
 # set up inital condition
@@ -71,13 +74,19 @@ model = ModelSetup(
         sources = (gravity = Gravity(),),
         ref_state = NoReferenceState(),
     ),
-    boundary_conditions = (0, 0, 1, 1, DefaultBC(), DefaultBC()),
+    boundary_conditions = (DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC()),
     initial_conditions = (
         ρ = ρ₀, ρu = ρu₀, ρe = ρe₀,
     ),
     parameters = parameters,
 )
 
+end_time = 4000.0
+Δt = 0.063
+iteration_partition = 100
+iterations = floor(Int, end_time / Δt / iteration_partition)
+
+jl_cb = JLD2State(iteration = iterations, filepath = "rising_bubble_4.jld2")
 
 
 # set up simulation
@@ -88,8 +97,8 @@ simulation = Simulation(
     timestepper = (
         method = SSPRK22Heuns,
         start = 0.0,
-        finish = end_time,
-        timestep = Δt,
+        finish = 4000.0,
+        timestep = 0.063 / 4,
     ),
     callbacks = (
         Info(),
@@ -101,5 +110,3 @@ simulation = Simulation(
 # run the simulation
 initialize!(simulation)
 evolve!(simulation)
-
-nothing

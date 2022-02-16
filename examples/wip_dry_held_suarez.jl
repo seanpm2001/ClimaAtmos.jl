@@ -21,26 +21,26 @@ get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetP
 backend = DiscontinuousGalerkinBackend(numerics = (flux = :roefanov,),)
 
 parameters = (
-    a    = get_planet_parameter(:planet_radius),
-    Ω    = get_planet_parameter(:Omega),
-    g    = get_planet_parameter(:grav),
-    κ    = get_planet_parameter(:kappa_d),
-    R_d  = get_planet_parameter(:R_d),
+    a = get_planet_parameter(:planet_radius),
+    Ω = get_planet_parameter(:Omega),
+    g = get_planet_parameter(:grav),
+    κ = get_planet_parameter(:kappa_d),
+    R_d = get_planet_parameter(:R_d),
     cv_d = get_planet_parameter(:cv_d),
     cp_d = get_planet_parameter(:cp_d),
-    γ    = get_planet_parameter(:cp_d)/get_planet_parameter(:cv_d),
-    H    = 30e3,
-    pₒ   = 1.0e5,
-    k    = 3.0,
-    Γ    = 0.005,
-    T_0  = 0.0,
-    T_E  = 310.0,
-    T_P  = 240.0,
-    b    = 2.0,
-    z_t  = 15e3,
-    λ_c  = π / 9,
-    ϕ_c  = 2 * π / 9,
-    V_p  = 1.0,
+    γ = get_planet_parameter(:cp_d) / get_planet_parameter(:cv_d),
+    H = 30e3,
+    pₒ = 1.0e5,
+    k = 3.0,
+    Γ = 0.005,
+    T_0 = 0.0,
+    T_E = 310.0,
+    T_P = 240.0,
+    b = 2.0,
+    z_t = 15e3,
+    λ_c = π / 9,
+    ϕ_c = 2 * π / 9,
+    V_p = 1.0,
     day = 86400,
     p0 = 1e5,
     T_ref = 255,
@@ -53,12 +53,23 @@ domain = SphericalShell(
 )
 
 # running on 0
+#=
+# works
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
 	    horizontal = SpectralElementGrid(elements = 10, polynomial_order = 4),
 	    vertical = SpectralElementGrid(elements = 6, polynomial_order = 4)
 	),
+)
+=#
+discretized_domain = DiscretizedDomain(
+    domain = domain,
+    discretization = (
+        horizontal = SpectralElementGrid(elements = 16, polynomial_order = 5),
+        vertical = SpectralElementGrid(elements = 4, polynomial_order = 4),
+        grid_stretching = SingleExponentialStretching(2.5), # SingleExponentialStretching(1.7),
+    ),
 )
 
 #=
@@ -73,68 +84,68 @@ discretized_domain = DiscretizedDomain(
 =#
 # set up initial condition
 # additional initial condition parameters
-T₀(𝒫)   = 0.5 * (𝒫.T_E + 𝒫.T_P)
-A(𝒫)    = 1.0 / 𝒫.Γ
-B(𝒫)    = (T₀(𝒫) - 𝒫.T_P) / T₀(𝒫) / 𝒫.T_P
-C(𝒫)    = 0.5 * (𝒫.k + 2) * (𝒫.T_E - 𝒫.T_P) / 𝒫.T_E / 𝒫.T_P
-H(𝒫)    = 𝒫.R_d * T₀(𝒫) / 𝒫.g
-d_0(𝒫)  = 𝒫.a / 6
+T₀(𝒫) = 0.5 * (𝒫.T_E + 𝒫.T_P)
+A(𝒫) = 1.0 / 𝒫.Γ
+B(𝒫) = (T₀(𝒫) - 𝒫.T_P) / T₀(𝒫) / 𝒫.T_P
+C(𝒫) = 0.5 * (𝒫.k + 2) * (𝒫.T_E - 𝒫.T_P) / 𝒫.T_E / 𝒫.T_P
+H(𝒫) = 𝒫.R_d * T₀(𝒫) / 𝒫.g
+d_0(𝒫) = 𝒫.a / 6
 
 # convenience functions that only depend on height
-τ_z_1(𝒫,r)   = exp(𝒫.Γ * (r - 𝒫.a) / T₀(𝒫))
-τ_z_2(𝒫,r)   = 1 - 2 * ((r - 𝒫.a) / 𝒫.b / H(𝒫))^2
-τ_z_3(𝒫,r)   = exp(-((r - 𝒫.a) / 𝒫.b / H(𝒫))^2)
-τ_1(𝒫,r)     = 1 / T₀(𝒫) * τ_z_1(𝒫,r) + B(𝒫) * τ_z_2(𝒫,r) * τ_z_3(𝒫,r)
-τ_2(𝒫,r)     = C(𝒫) * τ_z_2(𝒫,r) * τ_z_3(𝒫,r)
-τ_int_1(𝒫,r) = A(𝒫) * (τ_z_1(𝒫,r) - 1) + B(𝒫) * (r - 𝒫.a) * τ_z_3(𝒫,r)
-τ_int_2(𝒫,r) = C(𝒫) * (r - 𝒫.a) * τ_z_3(𝒫,r)
-F_z(𝒫,r)     = (1 - 3 * ((r - 𝒫.a) / 𝒫.z_t)^2 + 2 * ((r - 𝒫.a) / 𝒫.z_t)^3) * ((r - 𝒫.a) ≤ 𝒫.z_t)
+τ_z_1(𝒫, r) = exp(𝒫.Γ * (r - 𝒫.a) / T₀(𝒫))
+τ_z_2(𝒫, r) = 1 - 2 * ((r - 𝒫.a) / 𝒫.b / H(𝒫))^2
+τ_z_3(𝒫, r) = exp(-((r - 𝒫.a) / 𝒫.b / H(𝒫))^2)
+τ_1(𝒫, r) = 1 / T₀(𝒫) * τ_z_1(𝒫, r) + B(𝒫) * τ_z_2(𝒫, r) * τ_z_3(𝒫, r)
+τ_2(𝒫, r) = C(𝒫) * τ_z_2(𝒫, r) * τ_z_3(𝒫, r)
+τ_int_1(𝒫, r) = A(𝒫) * (τ_z_1(𝒫, r) - 1) + B(𝒫) * (r - 𝒫.a) * τ_z_3(𝒫, r)
+τ_int_2(𝒫, r) = C(𝒫) * (r - 𝒫.a) * τ_z_3(𝒫, r)
+F_z(𝒫, r) = (1 - 3 * ((r - 𝒫.a) / 𝒫.z_t)^2 + 2 * ((r - 𝒫.a) / 𝒫.z_t)^3) * ((r - 𝒫.a) ≤ 𝒫.z_t)
 
 # convenience functions that only depend on longitude and latitude
-d(𝒫,λ,ϕ)     = 𝒫.a * acos(sin(ϕ) * sin(𝒫.ϕ_c) + cos(ϕ) * cos(𝒫.ϕ_c) * cos(λ - 𝒫.λ_c))
-c3(𝒫,λ,ϕ)    = cos(π * d(𝒫,λ,ϕ) / 2 / d_0(𝒫))^3
-s1(𝒫,λ,ϕ)    = sin(π * d(𝒫,λ,ϕ) / 2 / d_0(𝒫))
-cond(𝒫,λ,ϕ)  = (0 < d(𝒫,λ,ϕ) < d_0(𝒫)) * (d(𝒫,λ,ϕ) != 𝒫.a * π)
+d(𝒫, λ, ϕ) = 𝒫.a * acos(sin(ϕ) * sin(𝒫.ϕ_c) + cos(ϕ) * cos(𝒫.ϕ_c) * cos(λ - 𝒫.λ_c))
+c3(𝒫, λ, ϕ) = cos(π * d(𝒫, λ, ϕ) / 2 / d_0(𝒫))^3
+s1(𝒫, λ, ϕ) = sin(π * d(𝒫, λ, ϕ) / 2 / d_0(𝒫))
+cond(𝒫, λ, ϕ) = (0 < d(𝒫, λ, ϕ) < d_0(𝒫)) * (d(𝒫, λ, ϕ) != 𝒫.a * π)
 
 # base-state thermodynamic variables
-I_T(𝒫,ϕ,r)   = (cos(ϕ) * r / 𝒫.a)^𝒫.k - 𝒫.k / (𝒫.k + 2) * (cos(ϕ) * r / 𝒫.a)^(𝒫.k + 2)
-T(𝒫,ϕ,r)     = (τ_1(𝒫,r) - τ_2(𝒫,r) * I_T(𝒫,ϕ,r))^(-1) * (𝒫.a/r)^2
-p(𝒫,ϕ,r)     = 𝒫.pₒ * exp(-𝒫.g / 𝒫.R_d * (τ_int_1(𝒫,r) - τ_int_2(𝒫,r) * I_T(𝒫,ϕ,r)))
-θ(𝒫,ϕ,r)     = T(𝒫,ϕ,r) * (𝒫.pₒ / p(𝒫,ϕ,r))^𝒫.κ
+I_T(𝒫, ϕ, r) = (cos(ϕ) * r / 𝒫.a)^𝒫.k - 𝒫.k / (𝒫.k + 2) * (cos(ϕ) * r / 𝒫.a)^(𝒫.k + 2)
+T(𝒫, ϕ, r) = (τ_1(𝒫, r) - τ_2(𝒫, r) * I_T(𝒫, ϕ, r))^(-1) * (𝒫.a / r)^2
+p(𝒫, ϕ, r) = 𝒫.pₒ * exp(-𝒫.g / 𝒫.R_d * (τ_int_1(𝒫, r) - τ_int_2(𝒫, r) * I_T(𝒫, ϕ, r)))
+θ(𝒫, ϕ, r) = T(𝒫, ϕ, r) * (𝒫.pₒ / p(𝒫, ϕ, r))^𝒫.κ
 
 # base-state velocity variables
-U(𝒫,ϕ,r)  = 𝒫.g * 𝒫.k / 𝒫.a * τ_int_2(𝒫,r) * T(𝒫,ϕ,r) * ((cos(ϕ) * r / 𝒫.a)^(𝒫.k - 1) - (cos(ϕ) * r / 𝒫.a)^(𝒫.k + 1))
-u(𝒫,ϕ,r)  = -𝒫.Ω * r * cos(ϕ) + sqrt((𝒫.Ω * r * cos(ϕ))^2 + r * cos(ϕ) * U(𝒫,ϕ,r))
-v(𝒫,ϕ,r)  = 0.0
-w(𝒫,ϕ,r)  = 0.0
+U(𝒫, ϕ, r) = 𝒫.g * 𝒫.k / 𝒫.a * τ_int_2(𝒫, r) * T(𝒫, ϕ, r) * ((cos(ϕ) * r / 𝒫.a)^(𝒫.k - 1) - (cos(ϕ) * r / 𝒫.a)^(𝒫.k + 1))
+u(𝒫, ϕ, r) = -𝒫.Ω * r * cos(ϕ) + sqrt((𝒫.Ω * r * cos(ϕ))^2 + r * cos(ϕ) * U(𝒫, ϕ, r))
+v(𝒫, ϕ, r) = 0.0
+w(𝒫, ϕ, r) = 0.0
 
 # velocity perturbations
-δu(𝒫,λ,ϕ,r)  = -16 * 𝒫.V_p / 3 / sqrt(3) * F_z(𝒫,r) * c3(𝒫,λ,ϕ) * s1(𝒫,λ,ϕ) * (-sin(𝒫.ϕ_c) * cos(ϕ) + cos(𝒫.ϕ_c) * sin(ϕ) * cos(λ - 𝒫.λ_c)) / sin(d(𝒫,λ,ϕ) / 𝒫.a) * cond(𝒫,λ,ϕ)
-δv(𝒫,λ,ϕ,r)  = 16 * 𝒫.V_p / 3 / sqrt(3) * F_z(𝒫,r) * c3(𝒫,λ,ϕ) * s1(𝒫,λ,ϕ) * cos(𝒫.ϕ_c) * sin(λ - 𝒫.λ_c) / sin(d(𝒫,λ,ϕ) / 𝒫.a) * cond(𝒫,λ,ϕ)
-δw(𝒫,λ,ϕ,r)  = 0.0
+δu(𝒫, λ, ϕ, r) = -16 * 𝒫.V_p / 3 / sqrt(3) * F_z(𝒫, r) * c3(𝒫, λ, ϕ) * s1(𝒫, λ, ϕ) * (-sin(𝒫.ϕ_c) * cos(ϕ) + cos(𝒫.ϕ_c) * sin(ϕ) * cos(λ - 𝒫.λ_c)) / sin(d(𝒫, λ, ϕ) / 𝒫.a) * cond(𝒫, λ, ϕ)
+δv(𝒫, λ, ϕ, r) = 16 * 𝒫.V_p / 3 / sqrt(3) * F_z(𝒫, r) * c3(𝒫, λ, ϕ) * s1(𝒫, λ, ϕ) * cos(𝒫.ϕ_c) * sin(λ - 𝒫.λ_c) / sin(d(𝒫, λ, ϕ) / 𝒫.a) * cond(𝒫, λ, ϕ)
+δw(𝒫, λ, ϕ, r) = 0.0
 
 # CliMA prognostic variables
 # compute the total energy
-uˡᵒⁿ(𝒫,λ,ϕ,r)   = u(𝒫,ϕ,r) + δu(𝒫,λ,ϕ,r)
-uˡᵃᵗ(𝒫,λ,ϕ,r)   = v(𝒫,ϕ,r) + δv(𝒫,λ,ϕ,r)
-uʳᵃᵈ(𝒫,λ,ϕ,r)   = w(𝒫,ϕ,r) + δw(𝒫,λ,ϕ,r)
+uˡᵒⁿ(𝒫, λ, ϕ, r) = u(𝒫, ϕ, r) + δu(𝒫, λ, ϕ, r)
+uˡᵃᵗ(𝒫, λ, ϕ, r) = v(𝒫, ϕ, r) + δv(𝒫, λ, ϕ, r)
+uʳᵃᵈ(𝒫, λ, ϕ, r) = w(𝒫, ϕ, r) + δw(𝒫, λ, ϕ, r)
 
-e_int(𝒫,λ,ϕ,r)  = (𝒫.R_d / 𝒫.κ - 𝒫.R_d) * (T(𝒫,ϕ,r) - 𝒫.T_0)
-e_kin(𝒫,λ,ϕ,r)  = 0.5 * ( uˡᵒⁿ(𝒫,λ,ϕ,r)^2 + uˡᵃᵗ(𝒫,λ,ϕ,r)^2 + uʳᵃᵈ(𝒫,λ,ϕ,r)^2 )
-e_pot(𝒫,λ,ϕ,r)  = 𝒫.g * r
+e_int(𝒫, λ, ϕ, r) = (𝒫.R_d / 𝒫.κ - 𝒫.R_d) * (T(𝒫, ϕ, r) - 𝒫.T_0)
+e_kin(𝒫, λ, ϕ, r) = 0.5 * (uˡᵒⁿ(𝒫, λ, ϕ, r)^2 + uˡᵃᵗ(𝒫, λ, ϕ, r)^2 + uʳᵃᵈ(𝒫, λ, ϕ, r)^2)
+e_pot(𝒫, λ, ϕ, r) = 𝒫.g * r
 
-ρ₀(𝒫,λ,ϕ,r)    = p(𝒫,ϕ,r) / 𝒫.R_d / T(𝒫,ϕ,r)
-ρuˡᵒⁿ(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * uˡᵒⁿ(𝒫,λ,ϕ,r)
-ρuˡᵃᵗ(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * uˡᵃᵗ(𝒫,λ,ϕ,r)
-ρuʳᵃᵈ(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * uʳᵃᵈ(𝒫,λ,ϕ,r)
+ρ₀(𝒫, λ, ϕ, r) = p(𝒫, ϕ, r) / 𝒫.R_d / T(𝒫, ϕ, r)
+ρuˡᵒⁿ(𝒫, λ, ϕ, r) = ρ₀(𝒫, λ, ϕ, r) * uˡᵒⁿ(𝒫, λ, ϕ, r)
+ρuˡᵃᵗ(𝒫, λ, ϕ, r) = ρ₀(𝒫, λ, ϕ, r) * uˡᵃᵗ(𝒫, λ, ϕ, r)
+ρuʳᵃᵈ(𝒫, λ, ϕ, r) = ρ₀(𝒫, λ, ϕ, r) * uʳᵃᵈ(𝒫, λ, ϕ, r)
 
-ρe(𝒫,λ,ϕ,r) = ρ₀(𝒫,λ,ϕ,r) * (e_int(𝒫,λ,ϕ,r) + e_kin(𝒫,λ,ϕ,r) + e_pot(𝒫,λ,ϕ,r))
+ρe(𝒫, λ, ϕ, r) = ρ₀(𝒫, λ, ϕ, r) * (e_int(𝒫, λ, ϕ, r) + e_kin(𝒫, λ, ϕ, r) + e_pot(𝒫, λ, ϕ, r))
 
 # Cartesian Representation (boiler plate really)
-ρ₀ᶜᵃʳᵗ(𝒫, x...)  = ρ₀(𝒫, lon(x...), lat(x...), rad(x...))
-ρu₀ᶜᵃʳᵗ(𝒫, x...) = (   ρuʳᵃᵈ(𝒫, lon(x...), lat(x...), rad(x...)) * r̂(x...)
-                     + ρuˡᵃᵗ(𝒫, lon(x...), lat(x...), rad(x...)) * ϕ̂(x...)
-                     + ρuˡᵒⁿ(𝒫, lon(x...), lat(x...), rad(x...)) * λ̂(x...) )
+ρ₀ᶜᵃʳᵗ(𝒫, x...) = ρ₀(𝒫, lon(x...), lat(x...), rad(x...))
+ρu₀ᶜᵃʳᵗ(𝒫, x...) = (ρuʳᵃᵈ(𝒫, lon(x...), lat(x...), rad(x...)) * r̂(x...)
+                    + ρuˡᵃᵗ(𝒫, lon(x...), lat(x...), rad(x...)) * ϕ̂(x...)
+                    + ρuˡᵒⁿ(𝒫, lon(x...), lat(x...), rad(x...)) * λ̂(x...))
 ρe₀ᶜᵃʳᵗ(𝒫, x...) = ρe(𝒫, lon(x...), lat(x...), rad(x...))
 
 # Held-Suarez forcing
@@ -153,12 +164,12 @@ held_suarez_parameters = (;
     T_equator = FT(315),
     T_min = FT(200),
     σ_b = FT(7 / 10),
-    R_d  = parameters.R_d,
-    day  = parameters.day,
+    R_d = parameters.R_d,
+    day = parameters.day,
     grav = parameters.g,
     cp_d = parameters.cp_d,
     cv_d = parameters.cv_d,
-    MSLP = parameters.p0,
+    MSLP = parameters.p0
 )
 
 function calc_source!(
@@ -171,12 +182,12 @@ function calc_source!(
 
     FT = eltype(state)
 
-    _R_d  = hsf.parameters.R_d
-    _day  = hsf.parameters.day
+    _R_d = hsf.parameters.R_d
+    _day = hsf.parameters.day
     _grav = hsf.parameters.grav
     _cp_d = hsf.parameters.cp_d
     _cv_d = hsf.parameters.cv_d
-    _p0   = hsf.parameters.MSLP
+    _p0 = hsf.parameters.MSLP
 
     # Parameters
     T_ref = FT(255)
@@ -190,15 +201,15 @@ function calc_source!(
     x = aux.x
     y = aux.y
     z = aux.z
-    coord = @SVector[x,y,z]
+    coord = @SVector [x, y, z]
 
     p = calc_pressure(balance_law.equation_of_state, state, aux, balance_law.parameters)
     T = p / (ρ * _R_d)
 
     # Held-Suarez parameters
-    k_a  = hsf.parameters.k_a
-    k_f  = hsf.parameters.k_f
-    k_s  = hsf.parameters.k_s
+    k_a = hsf.parameters.k_a
+    k_f = hsf.parameters.k_f
+    k_s = hsf.parameters.k_s
     ΔT_y = hsf.parameters.ΔT_y
     Δθ_z = hsf.parameters.Δθ_z
     T_equator = hsf.parameters.T_equator
@@ -217,7 +228,7 @@ function calc_source!(
     T_equil = (T_equator - ΔT_y * sin(φ) * sin(φ) - Δθ_z * log(σ) * cos(φ) * cos(φ)) * exner_p
     T_equil = max(T_min, T_equil)
 
-    k_T = k_a + (k_s - k_a) * height_factor * cos(φ) * cos(φ) * cos(φ) * cos(φ) 
+    k_T = k_a + (k_s - k_a) * height_factor * cos(φ) * cos(φ) * cos(φ) * cos(φ)
     k_v = k_f * height_factor
 
     # horizontal projection
@@ -225,8 +236,9 @@ function calc_source!(
     P = I - k * k'
 
     # Apply Held-Suarez forcing
-    source.ρu -= k_v * P * ρu
-
+    # source.ρu -= k_v * P * ρu
+    # source.ρu -= k_v * ρu # Just to see if vertical damping does anything
+    source.ρu -= k_f * σ * P * ρu # sponge it to the top
     source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
 
     return nothing
@@ -275,7 +287,7 @@ function shady_timestep(discretized_domain::DiscretizedDomain; vcfl = 16, hcfl =
     hdt = circumference / ne / (np^2 + 1) / sound_speed * hcfl
     @info "horizontal cfl implies dt=$hdt"
 
-    if vdt < hdt 
+    if vdt < hdt
         dt = vdt
         @info "limited by vertical acoustic modes dt=$dt seconds"
     else
@@ -298,7 +310,8 @@ end
 dt = shady_timestep(discretized_domain)
 
 
-dt = 60
+dt = 70
+println("dt is ", dt)
 recompute = floor(Int, 30 * 60 / dt) # recompute fields at every 30 minutes
 # recompute = 1000
 println("recomputing at ", recompute)
@@ -306,13 +319,13 @@ println("recomputing at ", recompute)
 numerical_grid = create_grid(backend, discretized_domain);
 cₛ = 330
 Δxᵥ = min_node_distance(numerical_grid, VerticalDirection())
-Δxₕ = min_node_distance(numerical_grid, HorizontalDirection()) 
+Δxₕ = min_node_distance(numerical_grid, HorizontalDirection())
 vCFL = dt / (Δxᵥ / cₛ)
 hCFL = dt / (Δxₕ / cₛ)
 
 
-println("The vertical minimum grid spacing is ", Δxᵥ , " meters" )
-println("The horizontal minimum grid spacing is ", Δxₕ / 1e3 , " kilometers")
+println("The vertical minimum grid spacing is ", Δxᵥ, " meters")
+println("The horizontal minimum grid spacing is ", Δxₕ / 1e3, " kilometers")
 println("The vertical CFL is ", vCFL)
 println("The horizontal CFL is ", hCFL)
 
@@ -342,11 +355,11 @@ simulation = Simulation(
     backend = backend,
     discretized_domain = discretized_domain,
     model = model,
-    splitting = IMEXSplitting(linear_model = :verylinear, ),
+    splitting = IMEXSplitting(linear_model = :verylinear,),
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 100 *  24 * 3600,
+        finish = 1200 * 24 * 3600,
         timestep = dt,
     ),
     callbacks = (
@@ -363,9 +376,9 @@ simulation = Simulation(
 
 # Check the domain average 
 M = massmatrix(numerical_grid)
-ρᴮ  = simulation.state[:,1,:]
-ρeᴮ = simulation.state[:,5,:]
-ρ̅ᴮ  = sum(M .* ρᴮ) / sum(M)
+ρᴮ = simulation.state[:, 1, :]
+ρeᴮ = simulation.state[:, 5, :]
+ρ̅ᴮ = sum(M .* ρᴮ) / sum(M)
 ρ̅e̅ᴮ = sum(M .* ρeᴮ) / sum(M)
 
 # run the simulation
@@ -376,18 +389,18 @@ try
     evolve!(simulation)
 catch err
     @info "evolve has thrown an error"
-    showerror(stdout, err )
+    showerror(stdout, err)
 end
 toc = time()
-println("The amount of time for the simulation was ", (toc - tic)/(3600), " hours")
+println("The amount of time for the simulation was ", (toc - tic) / (3600), " hours")
 
-ρᴬ  = simulation.state[:,1,:]
-ρeᴬ = simulation.state[:,5,:]
-ρ̅ᴬ  = sum(M .* ρᴬ)  / sum(M)
+ρᴬ = simulation.state[:, 1, :]
+ρeᴬ = simulation.state[:, 5, :]
+ρ̅ᴬ = sum(M .* ρᴬ) / sum(M)
 ρ̅e̅ᴬ = sum(M .* ρeᴬ) / sum(M)
 
-println("The change in mass is ", abs(ρ̅ᴬ-ρ̅ᴮ)/ρ̅ᴬ )
-println("The change in total energy is ", abs(ρ̅e̅ᴬ-ρ̅e̅ᴮ)/ρ̅e̅ᴬ )
+println("The change in mass is ", abs(ρ̅ᴬ - ρ̅ᴮ) / ρ̅ᴬ)
+println("The change in total energy is ", abs(ρ̅e̅ᴬ - ρ̅e̅ᴮ) / ρ̅e̅ᴬ)
 #=
 # running more code 
 old_simulation_state = copy(simulation.state)

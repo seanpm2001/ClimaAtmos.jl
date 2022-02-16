@@ -11,7 +11,7 @@ include("../src/backends/dg_model_backends/backend_hook.jl")
 include("../src/interface/callbacks.jl")
 include("../src/backends/dg_model_backends/boilerplate.jl")
 include("../src/utils/sphere_utils.jl")
-
+# ClimateMachine.init(; disable_gpu = false);
 # to be removed
 using CLIMAParameters #: AbstractEarthParameterSet
 struct PlanetParameterSet <: AbstractEarthParameterSet end
@@ -49,6 +49,8 @@ domain = SphericalShell(
     radius = parameters.a,
     height = parameters.H,
 )
+#=
+# works
 discretized_domain = DiscretizedDomain(
     domain = domain,
     discretization = (
@@ -57,7 +59,26 @@ discretized_domain = DiscretizedDomain(
         grid_stretching = nothing, # SingleExponentialStretching(1.5),
     ),
 )
-
+=#
+#=
+works
+discretized_domain = DiscretizedDomain(
+    domain = domain,
+    discretization = (
+        horizontal = SpectralElementGrid(elements = 12, polynomial_order = 3),
+        vertical = SpectralElementGrid(elements = 8, polynomial_order = 3),
+        grid_stretching = SingleExponentialStretching(1.7),
+    ),
+)
+=#
+discretized_domain = DiscretizedDomain(
+    domain = domain,
+    discretization = (
+        horizontal = SpectralElementGrid(elements = 6, polynomial_order = 3),
+        vertical = SpectralElementGrid(elements = 5, polynomial_order = 3),
+        grid_stretching = SingleExponentialStretching(1.7),
+    ),
+)
 # set up initial condition
 # additional initial condition parameters
 T₀(𝒫) = 0.5 * (𝒫.T_E + 𝒫.T_P)
@@ -151,7 +172,7 @@ model = ModelSetup(
     ),
     parameters = parameters,
 )
-dt = 80.0
+dt = 40.0 # 80.0
 recompute = floor(Int, 40 * 60 / dt) # recompute fields at every 40 minutes
 println("recomputing at ", recompute)
 # set up simulation
@@ -163,7 +184,7 @@ simulation = Simulation(
     timestepper = (
         method = IMEX(),
         start = 0.0,
-        finish = 10 * 24 * 3600,
+        finish = 10 * 10 * 10 * 24 * 3600,
         timestep = dt,
     ),
     callbacks = (
