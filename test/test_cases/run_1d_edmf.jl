@@ -362,8 +362,6 @@ function run(sim::Simulation1d; time_run = true)
     end
 end
 
-main(namelist; kwargs...) = @timev main1d(namelist; kwargs...)
-
 nc_results_file(stats::NetCDFIO_Stats) = stats.path_plus_file
 nc_results_file(::Nothing) =
     @info "The simulation was run without IO, so no nc files were exported"
@@ -371,7 +369,7 @@ nc_results_file(::Nothing) =
 to_svec(x::AbstractArray) = SA.SVector{length(x)}(x)
 to_svec(x::Tuple) = SA.SVector{length(x)}(x)
 
-function main1d(namelist; time_run = true)
+function main(namelist; time_run = true)
     edmf_turb_dict = namelist["turbulence"]["EDMF_PrognosticTKE"]
     for key in keys(edmf_turb_dict)
         entry = edmf_turb_dict[key]
@@ -400,7 +398,7 @@ best_mse = all_best_mse["Bomex"]
 println("Running $case_name...")
 namelist = NameList.default_namelist(case_name)
 namelist["meta"]["uuid"] = "01"
-ds_tc_filename, return_code = main(namelist)
+ds_tc_filename, return_code = @timev main(namelist)
 
 computed_mse = compute_mse_wrapper(
     case_name,
