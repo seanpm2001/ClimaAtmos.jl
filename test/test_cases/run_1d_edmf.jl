@@ -368,7 +368,7 @@ nc_results_file(::Nothing) =
 to_svec(x::AbstractArray) = SA.SVector{length(x)}(x)
 to_svec(x::Tuple) = SA.SVector{length(x)}(x)
 
-function main(namelist; time_run = true)
+function main(namelist, param_set; time_run = true)
     edmf_turb_dict = namelist["turbulence"]["EDMF_PrognosticTKE"]
     for key in keys(edmf_turb_dict)
         entry = edmf_turb_dict[key]
@@ -376,7 +376,6 @@ function main(namelist; time_run = true)
             edmf_turb_dict[key] = to_svec(entry)
         end
     end
-    param_set = create_parameter_set(namelist)
     sim = Simulation1d(namelist, param_set)
     initialize(sim)
     if time_run
@@ -398,7 +397,8 @@ best_mse = all_best_mse["Bomex"]
 println("Running $case_name...")
 namelist = NameList.default_namelist(case_name)
 namelist["meta"]["uuid"] = "01"
-ds_tc_filename, return_code = @timev main(namelist)
+param_set = create_parameter_set(namelist)
+ds_tc_filename, return_code = @timev main(namelist, param_set)
 
 computed_mse = compute_mse_wrapper(
     case_name,
