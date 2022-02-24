@@ -72,9 +72,8 @@ struct Simulation1d{IONT, G, S, C, EDMF, PM, D, TIMESTEPPING, STATS, PS}
     dt_min::Float64
 end
 
-function Simulation1d(namelist)
+function Simulation1d(namelist, param_set)
     TC = TurbulenceConvection
-    param_set = create_parameter_set(namelist)
 
     FT = Float64
     skip_io = namelist["stats_io"]["skip"]
@@ -377,7 +376,8 @@ function main(namelist; time_run = true)
             edmf_turb_dict[key] = to_svec(entry)
         end
     end
-    sim = Simulation1d(namelist)
+    param_set = create_parameter_set(namelist)
+    sim = Simulation1d(namelist, param_set)
     initialize(sim)
     if time_run
         return_code = @timev run(sim; time_run)
