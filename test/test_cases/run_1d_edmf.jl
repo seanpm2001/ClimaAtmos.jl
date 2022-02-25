@@ -368,6 +368,16 @@ nc_results_file(::Nothing) =
 to_svec(x::AbstractArray) = SA.SVector{length(x)}(x)
 to_svec(x::Tuple) = SA.SVector{length(x)}(x)
 
+
+include(joinpath(tc_dir, "driver", "generate_namelist.jl"))
+include(joinpath(tc_dir, "post_processing", "compute_mse.jl"))
+include(joinpath(tc_dir, "post_processing", "mse_tables.jl"))
+import .NameList
+
+namelist = NameList.default_namelist(case_name)
+namelist["meta"]["uuid"] = "01"
+param_set = create_parameter_set(namelist)
+
 function main(namelist, param_set; time_run = true)
     edmf_turb_dict = namelist["turbulence"]["EDMF_PrognosticTKE"]
     for key in keys(edmf_turb_dict)
@@ -387,17 +397,9 @@ function main(namelist, param_set; time_run = true)
     return nc_results_file(sim.Stats), return_code
 end
 
-include(joinpath(tc_dir, "driver", "generate_namelist.jl"))
-include(joinpath(tc_dir, "post_processing", "compute_mse.jl"))
-include(joinpath(tc_dir, "post_processing", "mse_tables.jl"))
-import .NameList
-
 best_mse = all_best_mse["Bomex"]
 
 println("Running $case_name...")
-namelist = NameList.default_namelist(case_name)
-namelist["meta"]["uuid"] = "01"
-param_set = create_parameter_set(namelist)
 ds_tc_filename, return_code = @timev main(namelist, param_set)
 
 computed_mse = compute_mse_wrapper(
