@@ -1,5 +1,7 @@
 using JLD2, GLMakie
 c_file = jldopen("interpolated_convection_3.jld2", "a+")
+c_file = jldopen("/home/sandre/Repositories/ClimaAtmos.jl/new_interpolated_convection_1.jld2", "a+")
+c_file = jldopen("/home/sandre/Repositories/ClimaAtmos.jl/new_interpolated_convection_1.jld2", "a+")
 
 time_keys = keys(c_file["state"])
 

@@ -42,6 +42,7 @@ parameters = (
     pₛ = get_planet_parameter(:MSLP),
     Tₛ = 300.0,
     ϵ = 1e-0,
+    ρₛ = 1.27,
 )
 
 # set up grid
@@ -68,8 +69,8 @@ discretized_domain = DiscretizedDomain(
 # ρ₀(p, x, y, z) = (-p.g / p.cp_d * z / p.Tₛ + 1.0)^(-(p.cp_d / p.R_d + 1))
 # p₀(p, x, y, z) = p.R_d * ρ₀(p, x, y, z) * T₀(p, x, y, z)
 
-ρ₀(p, x, y, z) = 1.0 - 0.3 * z / p.zmax
-p₀(p, x, y, z) = -p.g * (z - 0.3 / 2 * z^2 / p.zmax) + p.pₒ
+ρ₀(p, x, y, z) = (1.0 - 0.3 * z / p.zmax) * p.ρₛ
+p₀(p, x, y, z) = -p.g * (z - 0.3 / 2 * z^2 / p.zmax) * p.ρₛ + p.pₒ
 T₀(p, x, y, z) = p₀(p, x, y, z) / (ρ₀(p, x, y, z) * p.R_d)
 
 ρu₀(p, x, y, z) = 0.01 * @SVector [randn(), randn(), randn()]
@@ -124,7 +125,7 @@ function calc_source!(
     Q₀ = 100.0
     ℓ = 100.0
 
-    radiation_profile = Q₀ / ℓ * exp(-z / ℓ) * 1e1
+    radiation_profile = Q₀ / ℓ * exp(-z / ℓ) * 4.0
 
     L = 2.56e3
     γ = 0.2 * L
@@ -132,8 +133,8 @@ function calc_source!(
     λ = 1 / 10.0
 
     # Apply convective forcing
-    source.ρu += λ * damping_profile * ρu 
-    source.ρe += ρ * radiation_profile 
+    source.ρu += λ * damping_profile * ρu
+    source.ρe += ρ * radiation_profile
 
     return nothing
 end
@@ -159,38 +160,36 @@ model = ModelSetup(
 )
 
 
-end_time = 60 * 60 * 8
-Δt = 0.02
-iteration_partition = 100
-iterations = floor(Int, end_time / Δt / iteration_partition)
-
+end_time = 60 * 60 * 4 # 60 * 60 * 8 could probably be divided by 2
 
 numerical_grid = create_grid(backend, discretized_domain);
 cₛ = 330
 Δxᵥ = min_node_distance(numerical_grid, VerticalDirection())
 Δxₕ = min_node_distance(numerical_grid, HorizontalDirection())
-Δt = (Δxᵥ / cₛ) * 0.1
+Δt = (Δxᵥ / cₛ) * 1.8 # (Δxᵥ / cₛ) * 0.1
 println("The timestep is ", Δt)
 vCFL = Δt / (Δxᵥ / cₛ)
 hCFL = Δt / (Δxₕ / cₛ)
 
-iteration_partition = 1000
+iteration_partition = 10 # for videos 1000
 iterations = floor(Int, end_time / Δt / iteration_partition)
 
 
 println("vcfl is ", vCFL)
 println("hcfl is ", hCFL)
 
-filename = "convection_1.jld2"
+filename = "convection_just_tryin.jld2"
 jl_cb = JLD2State(iteration = iterations, filepath = filename)
 
+# methods = (LSRK144NiegemannDiehlBusch, SSPRK22Heuns)
+# cfl (0.2, 0.2)
 # set up simulation
 simulation = Simulation(
     backend = backend,
     discretized_domain = discretized_domain,
     model = model,
     timestepper = (
-        method = SSPRK22Heuns,
+        method = LSRK144NiegemannDiehlBusch,
         start = 0.0,
         finish = end_time,
         timestep = Δt,
@@ -207,6 +206,6 @@ tic = Base.time()
 initialize!(simulation)
 evolve!(simulation)
 toc = Base.time()
-println("The amount of time for the simulation is ", (toc - tic)/60, " minutes")
+println("The amount of time for the simulation is ", (toc - tic) / 60, " minutes")
 
-include("convection_to_uniform.jl")
+# include("viz/convection_to_uniform.jl")
