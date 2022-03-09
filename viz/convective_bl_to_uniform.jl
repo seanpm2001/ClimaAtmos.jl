@@ -1,13 +1,13 @@
-bubble_file = jldopen("rising_bubble_5.jld2", "a+")
+bubble_file = jldopen("convection_3.jld2", "a+")
 
 ib = InterpolationBrick(
     simulation,
-    xlength = 8*64,
-    ylength = 2,
-    zlength = 8*64
+    xlength = 64,
+    ylength = 64,
+    zlength = 64
 )
 
-ib_file = jldopen("interpolated_rising_bubble_5.jld2", "a+")
+ib_file = jldopen("interpolated_convection_3.jld2", "a+")
 JLD2.Group(ib_file, "state")
 JLD2.Group(ib_file, "time")
 JLD2.Group(ib_file, "grid")

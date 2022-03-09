@@ -48,33 +48,37 @@ function create_callback(::CFL, simulation::Simulation{<:DiscontinuousGalerkinBa
     # timeend = simulation.time.finish
     # mpicomm = MPI.COMM_WORLD
     # starttime = Ref(now())
-    cbcfl = EveryXSimulationSteps(100) do
-            simtime = gettime(odesolver)
+    cbcfl = EveryXSimulationSteps(400) do
+        simtime = gettime(odesolver)
 
-            @views begin
-                ρ = Array(Q.data[:, 1, :])
-                ρu = Array(Q.data[:, 2, :])
-                ρv = Array(Q.data[:, 3, :])
-                ρw = Array(Q.data[:, 4, :])
-            end
-
-            u = ρu ./ ρ
-            v = ρv ./ ρ
-            w = ρw ./ ρ
-
-            # TODO! transform onto sphere
-
-            ue = extrema(u)
-            ve = extrema(v)
-            we = extrema(w)
-
-            @info @sprintf """CFL
-                    simtime = %.16e
-                    u = (%.4e, %.4e)
-                    v = (%.4e, %.4e)
-                    w = (%.4e, %.4e)
-                    """ simtime ue... ve... we...
+        @views begin
+            ρ = Array(Q.data[:, 1, :])
+            ρu = Array(Q.data[:, 2, :])
+            ρv = Array(Q.data[:, 3, :])
+            ρw = Array(Q.data[:, 4, :])
         end
+
+        u = ρu ./ ρ
+        v = ρv ./ ρ
+        w = ρw ./ ρ
+
+        # ω = Array(Q.weights)
+        # ekin = (u .^ 2 + v .^ 2 + w .^ 2) ./ 2
+        # ∫ekin = sum(ω .* ekin) / sum(ω .* (ekin * 0 .+1 ))
+
+        ue = extrema(u)
+        ve = extrema(v)
+        we = extrema(w)
+        ρe = extrema(ρ)
+
+        @info @sprintf """CFL
+                simtime = %.16e
+                u = (%.4e, %.4e)
+                v = (%.4e, %.4e)
+                w = (%.4e, %.4e)
+                ρ = (%.4e, %.4e)
+                """ simtime ue... ve... we... ρe...
+    end
 
     return cbcfl
 end
