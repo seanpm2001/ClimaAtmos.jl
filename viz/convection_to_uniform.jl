@@ -7,13 +7,13 @@ ib = InterpolationBrick(
     zlength = 128
 )
 geopotential = simulation.rhs.state_auxiliary.Φ
-
+println("createing ", "new_" * "interpolated_" * filename)
 ib_file = jldopen("new_" * "interpolated_" * filename, "a+")
 JLD2.Group(ib_file, "state")
 JLD2.Group(ib_file, "time")
 JLD2.Group(ib_file, "grid")
 
-
+ib_file["parameters"] = parameters
 ib_file["grid"]["x"] = ib.x1g
 ib_file["grid"]["y"] = ib.x2g
 ib_file["grid"]["z"] = ib.x3g
