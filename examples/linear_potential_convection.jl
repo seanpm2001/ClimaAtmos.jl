@@ -11,8 +11,8 @@ include("../src/interface/simulations.jl")
 include("../src/interface/callbacks.jl")
 include("../src/backends/dg_model_backends/boilerplate.jl")
 
-filename = "linear_potential_temperature_even_stronger_diff.jld2"
-
+filename = "high_resolution_layer.jld2"
+println("simulating ", filename)
 # set up backend
 backend = DiscontinuousGalerkinBackend(numerics = (flux = :roe,),)
 
@@ -23,7 +23,7 @@ get_planet_parameter(p::Symbol) = getproperty(CLIMAParameters.Planet, p)(PlanetP
 
 parameters = (
     R_d = get_planet_parameter(:R_d),
-    pₒ = get_planet_parameter(:MSLP),
+    pₒ = 1e5, # get_planet_parameter(:MSLP),
     κ = get_planet_parameter(:kappa_d),
     g = get_planet_parameter(:grav),
     cp_d = get_planet_parameter(:cp_d),
@@ -39,12 +39,11 @@ parameters = (
     zmax = 2.56e3,
     θₐ = 2.0,
     cₛ = 340,
-    pₛ = get_planet_parameter(:MSLP),
-    Tₛ = 300.0,
+    Tₛ = 300.0, # 300.0,
     ϵ = 1e-0,
     ρₛ = 1.27,
     scale_height = 8e3,
-    Δθ = 60.0,
+    Δθ = 5.0,
 )
 
 # set up grid
@@ -54,7 +53,7 @@ z_domain = IntervalDomain(min = 0.0, max = parameters.zmax, periodic = false)
 discretized_domain = DiscretizedDomain(
     domain = x_domain × y_domain × z_domain,
     discretization = (
-        elements = (16, 16, 16),
+        elements = (50 , 50 , 64),
         polynomial_order = (3, 3, 3),
         grid_stretching = nothing,),
 )
@@ -95,9 +94,9 @@ T₀(p, x, y, z) = (p₀(p, x, y, z) / p.pₒ)^(p.R_d / p.cp_d) * θ₀(p, x, y,
 
 e_pot(p, x, y, z) = p.g * z
 e_int(p, x, y, z) = p.cv_d * (T₀(p, x, y, z) - p.T_0)
-e_kin(p, x, y, z) = 0.0
+e_kin(p, x, y, z) = 0.5 * (ρu₀(p, x, y, z)' *  ρu₀(p, x, y, z) )/ ρ₀(p, x, y, z)^2
 
-ρe₀(p, x, y, z) = ρ₀(p, x, y, z) * (e_kin(p, x, y, z) + e_int(p, x, y, z) + e_pot(p, x, y, z)) + rand()
+ρe₀(p, x, y, z) = ρ₀(p, x, y, z) * (e_kin(p, x, y, z) + e_int(p, x, y, z) + e_pot(p, x, y, z)) 
 
 #=
 π_exn(p, x, y, z) = 1.0 - p.g / (p.cp_d * θ₀(p, x, y, z)) * z
@@ -143,10 +142,10 @@ function calc_source!(
     Q₀ = 100.0
     ℓ = 100.0
 
-    radiation_profile = Q₀ / ℓ * exp(-z / ℓ) * 4.0
+    radiation_profile = Q₀ / ℓ * exp(-z / ℓ)
 
     L = 2.56e3
-    γ = 0.2 * L
+    γ = 0.01 * L # 0.2 * L
     damping_profile = -exp(-(L - z) / γ)
     λ = 1 / 10.0
 
@@ -171,14 +170,13 @@ model = ModelSetup(
         ),
         ref_state = NoReferenceState(),
     ),
-    boundary_conditions = (DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC()),
+    boundary_conditions = (DefaultBC(), DefaultBC(), DefaultBC(), DefaultBC(), HackBC(), DefaultBC()),
     initial_conditions = (
         ρ = ρ₀, ρu = ρu₀, ρe = ρe₀,
     ), parameters = parameters,
 )
 
-
-end_time = 60 * 60 * 4 # 60 * 60 * 8 could probably be divided by 2
+end_time = 60 * 60 * 3 # 60 * 60 * 8 could probably be divided by 2
 
 numerical_grid = create_grid(backend, discretized_domain);
 cₛ = 330

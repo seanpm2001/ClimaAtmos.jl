@@ -168,10 +168,12 @@ function create_numerical_flux(surface_flux)
         return LMARSNumericalFlux()
     elseif surface_flux == :roe
         return RoeNumericalFlux()
-    elseif surface_flux == :refanov 
+    elseif surface_flux == :refanov
         return RefanovFlux()
-    elseif surface_flux == :roefanov 
+    elseif surface_flux == :roefanov
         return RoefanovFlux()
+    elseif surface_flux == :rusanov
+        return RusanovNumericalFlux()
     else
         return nothing
     end

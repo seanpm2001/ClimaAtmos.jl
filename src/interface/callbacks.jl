@@ -20,23 +20,23 @@ Base.@kwdef struct JLD2State{𝒜,ℬ,𝒞} <: AbstractCallback
     overwrite::𝒞 = true
 end
 
-Base.@kwdef struct PositivityPreservingCallback{𝒜} <: AbstractCallback 
+Base.@kwdef struct PositivityPreservingCallback{𝒜} <: AbstractCallback
     filterstates::𝒜 = 6:6
 end
 
-Base.@kwdef struct ReferenceStateUpdate{𝒜} <: AbstractCallback 
+Base.@kwdef struct ReferenceStateUpdate{𝒜} <: AbstractCallback
     recompute::𝒜 = 20
 end
 
 
-Base.@kwdef struct AveragedState{𝒜, ℬ, 𝒞, 𝒟} <: AbstractCallback
+Base.@kwdef struct AveragedState{𝒜,ℬ,𝒞,𝒟} <: AbstractCallback
     iteration::𝒜
     filepath::ℬ
     overwrite::𝒞 = true
     start_iteration::𝒟 = 0
 end
 
-Base.@kwdef struct LatLonDiagnostics{𝒜, ℬ, 𝒞, 𝒟, ℰ} <: AbstractCallback
+Base.@kwdef struct LatLonDiagnostics{𝒜,ℬ,𝒞,𝒟,ℰ} <: AbstractCallback
     iteration::𝒜
     filepath::ℬ
     overwrite::𝒞 = true
@@ -44,6 +44,16 @@ Base.@kwdef struct LatLonDiagnostics{𝒜, ℬ, 𝒞, 𝒟, ℰ} <: AbstractCall
     latitude::ℰ
     longitude::ℰ
     radius::ℰ
+end
+
+Base.@kwdef struct BoxDiagnostics{𝒜,ℬ,𝒞,𝒟,ℰ} <: AbstractCallback
+    iteration::𝒜
+    filepath::ℬ
+    overwrite::𝒞 = true
+    start_iteration::𝒟 = 0
+    x::ℰ
+    y::ℰ
+    z::ℰ
 end
 
 function create_callbacks(simulation::Simulation, ode_solver)

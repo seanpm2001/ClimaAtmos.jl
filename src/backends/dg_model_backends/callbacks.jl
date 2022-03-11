@@ -500,3 +500,70 @@ function create_callback(output::LatLonDiagnostics, simulation::Simulation{<:Dis
 
     return jldcallback
 end
+
+
+function create_callback(output::BoxDiagnostics, simulation::Simulation{<:DiscontinuousGalerkinBackend}, odesolver)
+    # Initialize output
+    output.overwrite &&
+        isfile(output.filepath) &&
+        rm(output.filepath; force = output.overwrite)
+
+    Q = simulation.state
+    geopotential = simulation.rhs.state_auxiliary.Φ # capital \Phi
+
+    parameters = simulation.model.parameters
+
+    x = output.x
+    y = output.y
+    z = output.z
+
+    ib = InterpolationBrick(
+        simulation,
+        xlength = x,
+        ylength = y,
+        zlength = z
+    )
+
+    istate = ClimateMachine.CUDA.CuArray(similar(Q, interpol.Npl, 7)) # 7 because, ρ, ρu, ρv, ρw, ρe, p, T
+
+    mpicomm = MPI.COMM_WORLD
+    iteration = output.iteration
+
+
+    steps = ClimateMachine.ODESolvers.getsteps(odesolver)
+    time = ClimateMachine.ODESolvers.gettime(odesolver)
+
+    file = jldopen(output.filepath, "a+")
+    JLD2.Group(file, "state")
+    JLD2.Group(file, "time")
+
+    moment_1, names = get_state(Q, geopotential, parameters)
+    istate = similar(moment_1, ib.Npl, size(state)[2])
+    interpolate_local!(ib, state, istate)
+    new_istate = Array(accumulate_interpolated_data(MPI.COMM_WORLD, ib, istate))
+
+    file["state"][string(steps)] = new_istate
+    file["time"][string(steps)] = time
+    file["names"] = names
+    close(file)
+
+
+    jldcallback = ClimateMachine.GenericCallbacks.EveryXSimulationSteps(
+        iteration,
+    ) do (s = false)
+        steps = ClimateMachine.ODESolvers.getsteps(odesolver)
+        time = ClimateMachine.ODESolvers.gettime(odesolver)
+        moment_1, _ = get_state(Q, geopotential, parameters)
+        istate = similar(moment_1, ib.Npl, size(state)[2])
+        interpolate_local!(ib, state, istate)
+        new_istate = Array(accumulate_interpolated_data(MPI.COMM_WORLD, ib, istate))
+        @info steps, time
+        file = jldopen(output.filepath, "a+")
+        file["state"][string(steps)] = new_istate
+        file["time"][string(steps)] = time
+        close(file)
+        return nothing
+    end
+
+    return jldcallback
+end

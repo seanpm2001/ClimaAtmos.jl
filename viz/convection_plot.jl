@@ -3,12 +3,34 @@ filepath = "/home/sandre/Repositories/ClimaAtmos.jl/"
 # jl_file = jldopen("/home/sandre/Repositories/ClimaAtmos.jl/interpolated_convection_3.jld2", "a+")
 # jl_file = jldopen("/home/sandre/Repositories/ClimaAtmos.jl/new_interpolated_convection_1.jld2", "a+")
 # jl_file = jldopen("/home/sandre/Repositories/ClimaAtmos.jl/new_interpolated_convection_more_gridpoints.jld2", "a+")
-jl_file = jldopen(filepath * "new_interpolated_convection_fixed_higher_resolution.jld2")
+filename = "new_interpolated_convection_fixed_higher_resolution.jld2"
 # jl_file = jldopen(filepath * "new_interpolated_linear_potential_temperature.jld2")
 # jl_file = jldopen("/home/sandre/Repositories/ClimaAtmos.jl/new_interpolated_convection_just_tryin.jld2", "a+")
-filename = "new_interpolated_linear_potential_temperature_stronger_diff.jld2"
+# filename = "new_interpolated_linear_potential_temperature_stronger_diff.jld2"
+# filename = "new_interpolated_linear_potential_temperature_even_stronger_diff.jld2"
+# filename = "new_interpolated_linear_potential_temperature_2.jld2"
+# filename = "new_interpolated_linear_potential_temperature_weaker_forcing.jld2"
+# filename = "interpolated_linear_potential_temperature_weaker_forcing.jld2"
+# filename = "interpolated_linear_potential_temperature_smaller_decay.jld2"
+# filename = "newinterpolated_linear_potential_temperature_smaller_decay.jld2"
+# filename = "interpolated_linear_potential_temperature_bc.jld2"
+# filename = "interpolated_linear_potential_temperature_bc_hr.jld2"
+# filename = "interpolated_linear_potential_temperature_bc_p1.jld2"
+# filename = "interpolated_linear_potential_temperature_bc_p2.jld2"
+# filename = "interpolated_linear_potential_temperature_bc_p4.jld2"
+# filename = "interpolated_linear_potential_temperature_shifted.jld2"
+# filename = "interpolated_linear_potential_temperature_shifted_3.jld2"
+# filename = "interpolated_linear_potential_temperature_p1_bigdiff.jld2"
+# filename = "interpolated_linear_potential_temperature_new_surface_temp.jld2"
+# filename = "interpolated_linear_potential_temperature_new_ic.jld2"
+filename = "interpolated_linear_potential_temperature_new_shift_4.jld2"
+filename = "interpolated_linear_potential_temperature_new_pressure.jld2"
+filename = "interpolated_linear_potential_temperature_p1_hr.jld2"
+filename = "interpolated_linear_potential_temperature_no_noise_on_v.jld2"
+filename = "interpolated_linear_potential_temperature_rusanov.jld2"
+filename = "interpolated_linear_potential_temperature_less_damping_top.jld2"
 jl_file = jldopen(filepath * filename)
-println(" looking at " , filename)
+println(" looking at ", filename)
 tkeys = keys(jl_file["state"])
 # state = jl_file["state"][tkeys[end]]
 # temperature drops by about 70 Kelvin in 10km (linearish)
@@ -69,7 +91,7 @@ end
 =#
 # wmax = maximum(abs.(w))
 clims = (-7, 7) # w
-plot_state = @lift($θ[:, :, 1:div(length(z), 2)])
+plot_state = @lift($w[:, :, 1:div(length(z), 2)])
 # clims = (351.71910286663194, 424.3662951232513)# @lift(extrema($plot_state))
 # clims = (385.1117930486359, 388.04880802838943)
 clims = @lift((quantile($plot_state[:], 0.01), quantile($plot_state[:], 0.95)))
@@ -81,27 +103,31 @@ tindex[] = length(tkeys)
 
 # scatter(mean(θ[], dims = (1,2))[1,1,:], collect(1:128))
 
-options = (; ylabel = "height", ylabelsize = 32,
+options = (; titlesize = 30, ylabelsize = 32,
     xlabelsize = 32, xgridstyle = :dash, ygridstyle = :dash, xtickalign = 1,
     xticksize = 30, ytickalign = 1, yticksize = 30,
     xticklabelsize = 30, yticklabelsize = 30)
 
-# tindex[] = 2
-statfig = Figure(resolution = (1800, 800));
-stat_ax1 = Axis(statfig[1, 1]; title = "⟨θ⟩", options...)
+# tindex[] = 6
+statfig = Figure(resolution = (2000, 500));
+stat_ax1 = Axis(statfig[1, 1]; title = "⟨θ⟩", ylabel = "height", options...)
 stat_ax2 = Axis(statfig[1, 2]; title = "⟨θ'w'⟩", options...)
 stat_ax3 = Axis(statfig[1, 3]; title = "⟨w'w'⟩", options...)
 stat_ax4 = Axis(statfig[1, 4]; title = "⟨θ'θ'⟩", options...)
 w̅ = mean(w[], dims = (1, 2))[1, 1, :]
 θ̅ = mean(θ[], dims = (1, 2))[1, 1, :]
+T̅ = mean(T[], dims = (1, 2))[1, 1, :]
+
 θw = mean(θ[] .* w[], dims = (1, 2))[1, 1, :]
 ww = mean(w[] .* w[], dims = (1, 2))[1, 1, :]
 θθ = mean(θ[] .* θ[], dims = (1, 2))[1, 1, :]
+wT = mean(w[] .* T[], dims = (1, 2))[1, 1, :]
 lines!(stat_ax1, θ̅, z)
 lines!(stat_ax1, mean(θ₀, dims = (1, 2))[1, 1, :], z, color = :red)
-# xlims!(stat_ax1, (305, 308))
-# ylims!(stat_ax1, (0, 2000))
-scatter!(stat_ax2, θw .- (w̅ .* θ̅), z)
+# xlims!(stat_ax1, (315, 330))
+# ylims!(stat_ax1, (0, 1200))
+# scatter!(stat_ax2, θw .- (w̅ .* θ̅), z)
+scatter!(stat_ax2, wT .- (w̅ .* T̅), z)
 scatter!(stat_ax3, ww .- (w̅ .* w̅), z)
 scatter!(stat_ax4, θθ .- (θ̅ .* θ̅), z)
 
@@ -119,7 +145,9 @@ R = 287
 cp = 1004
 p0 = 1e5
 g = 9.8
-Γ = 10 / 2e3
+Δθ = 100
+zmax = 2.56e3
+Γ = Δθ / zmax
 θ0 = 300
 θnew = @. θ0 + Γ * z
 pnew = @. p0 * (g / (-Γ * cp) * log(θnew / θ0) + 1)^(cp / R)
@@ -128,15 +156,7 @@ Tnew = @. (pnew / p0)^(R / cp) * θnew
 ρnew = @. pnew / (R * Tnew)
 ρnew_check = @. 1 / (-g) * p0 * (cp / R) * (g / (-Γ * cp) * log(θnew / θ0) + 1)^(cp / R - 1) * (g / (-Γ * cp) * Γ / θnew)
 =#
-#=
-R = 287
-cp = 1004
-p0 = 1e5
-g = 9.8
-Γ = 10 / 2e3
-θ0 = 300
-p = p0 * (g / (Γ * cp ) * ln(1 - Γ/θ0 * z) + 1)^(cp/R)
-=#
+
 #=
 framerate = 30
 record(fig, "theta_convection.mp4", 1:length(tkeys), framerate = framerate) do t

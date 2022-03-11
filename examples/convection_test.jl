@@ -11,8 +11,6 @@ include("../src/interface/simulations.jl")
 include("../src/interface/callbacks.jl")
 include("../src/backends/dg_model_backends/boilerplate.jl")
 
-# based on https://github.com/ali-ramadhan/Atmosfoolery.jl/blob/master/sandbox/dry_convection.jl
-
 # set up backend
 backend = DiscontinuousGalerkinBackend(numerics = (flux = :roe,),)
 
@@ -52,7 +50,7 @@ z_domain = IntervalDomain(min = 0.0, max = parameters.zmax, periodic = false)
 discretized_domain = DiscretizedDomain(
     domain = x_domain × y_domain × z_domain,
     discretization = (
-        elements = (16, 16, 16),
+        elements = (16*3, 16*3, 16*4),
         polynomial_order = (3, 3, 3),
         grid_stretching = nothing,),
 )
@@ -81,17 +79,6 @@ e_kin(p, x, y, z) = 0.0
 
 ρe₀(p, x, y, z) = ρ₀(p, x, y, z) * (e_kin(p, x, y, z) + e_int(p, x, y, z) + e_pot(p, x, y, z)) + rand()
 
-#=
-π_exn(p, x, y, z) = 1.0 - p.g / (p.cp_d * θ₀(p, x, y, z)) * z
-
-e_pot(p, x, y, z) = p.g * z
-e_int(p, x, y, z) = p.cv_d * (θ₀(p, x, y, z) * π_exn(p, x, y, z) - p.T_0)
-e_kin(p, x, y, z) = 0.0
-
-ρ₀(p, x, y, z) = p.pₒ / (p.R_d * θ₀(p, x, y, z)) * (π_exn(p, x, y, z))^(p.cv_d / p.R_d)
-ρu₀(p, x, y, z) = @SVector [0.0, 0.0, 0.0]
-ρe₀(p, x, y, z) = ρ₀(p, x, y, z) * (e_kin(p, x, y, z) + e_int(p, x, y, z) + e_pot(p, x, y, z))
-=#
 
 # Radiative Forcing 
 struct ConvectiveForcing{S} <: AbstractForcing
@@ -178,11 +165,11 @@ iterations = floor(Int, end_time / Δt / iteration_partition)
 println("vcfl is ", vCFL)
 println("hcfl is ", hCFL)
 
-filename = "convection_just_tryin.jld2"
+filename = "convection_fixed_higher_resolution.jld2"
 jl_cb = JLD2State(iteration = iterations, filepath = filename)
 
 # methods = (LSRK144NiegemannDiehlBusch, SSPRK22Heuns)
-# cfl (0.2, 0.2)
+# cfl (1.8, 0.2)
 # set up simulation
 simulation = Simulation(
     backend = backend,

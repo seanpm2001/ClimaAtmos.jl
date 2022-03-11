@@ -37,6 +37,44 @@ end
 
 function numerical_boundary_flux_first_order!(
     numerical_flux::NumericalFluxFirstOrder,
+    ::HackBC,
+    balance_law::Union{ThreeDimensionalDryCompressibleEulerWithTotalEnergy,DryLinearBalanceLaw},
+    fluxᵀn::Vars{S},
+    n̂::SVector,
+    state⁻::Vars{S},
+    aux⁻::Vars{A},
+    state⁺::Vars{S},
+    aux⁺::Vars{A},
+    t,
+    direction,
+    state1⁻::Vars{S},
+    aux1⁻::Vars{A},
+) where {S,A}
+    state⁺.ρ = state⁻.ρ
+    state⁺.ρe = state⁻.ρe
+
+    ρu⁻ = state⁻.ρu
+
+    # project and reflect for impenetrable condition, but
+    # leave tangential component untouched
+    state⁺.ρu = ρu⁻ - n̂ ⋅ ρu⁻ .* SVector(n̂) - n̂ ⋅ ρu⁻ .* SVector(n̂)
+    numerical_flux_first_order!(
+        numerical_flux,
+        balance_law,
+        fluxᵀn,
+        n̂,
+        state⁻,
+        aux⁻,
+        state⁺,
+        aux⁺,
+        t,
+        direction,
+    )
+    fluxᵀn.ρe -= 120.0 * 0.0
+end
+
+function numerical_boundary_flux_first_order!(
+    numerical_flux::NumericalFluxFirstOrder,
     bctype::BulkFormulaTemperature,
     balance_law::ThreeDimensionalDryCompressibleEulerWithTotalEnergy,
     fluxᵀn::Vars{S},
