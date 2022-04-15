@@ -1,5 +1,4 @@
-
-
+using BenchmarkTools
 dg_fs = simulation.rhs[1]
 dg_sd = simulation.rhs[2]
 test_state = simulation.state
