@@ -4,6 +4,7 @@ authors = ["sandreza <andrenogueirasouza@gmail.com>", "jiahe <jiahe.gatech@gmail
 version = "0.1.0"
 
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CLIMAParameters = "6eacf6c3-8458-43b9-ae03-caf5306d3d53"
 ClimateMachine = "777c4786-024f-11e9-21a3-85d5d4106250"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
