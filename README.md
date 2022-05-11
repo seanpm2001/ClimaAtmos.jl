@@ -1,3 +1,5 @@
+- this branch is used for developing the coupler, avoiding the currently frequent interface modifications. 
+
 <!-- Title -->
 <h1 align="center">
   ClimaAtmos.jl
@@ -24,7 +26,7 @@
 [docs-dev-url]: https://CliMA.github.io/ClimaAtmos.jl/dev/
 
 [gha-ci-img]: https://github.com/CliMA/ClimaAtmos.jl/actions/workflows/ci.yml/badge.svg
-[gha-ci-url]: https://github.com/CliMA/ClimaAtmos.jl/actions/workflows/ci.yml
+[gha-ci-url]: https://github.com/CliMA/ClimaAtmos.jl/ac-tions/workflows/ci.yml
 
 [bk-ci-img]: https://badge.buildkite.com/2a31b42d67409c27660a0dcce65b49294cd9c6b9f14c12f21e.svg
 [bk-ci-url]: https://buildkite.com/clima/climaatmos-ci
