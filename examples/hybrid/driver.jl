@@ -1,3 +1,5 @@
+const time_start = time()
+
 include("cli_options.jl")
 if !(@isdefined parsed_args)
     (s, parsed_args) = parse_commandline()
@@ -325,6 +327,7 @@ mkpath(output_dir)
 
 function make_save_to_disk_func(output_dir, p, is_distributed)
     function save_to_disk_func(integrator)
+        @info "start save_to_disk callback" time=time()-time_start
         Y = integrator.u
 
         if :ρq_tot in propertynames(Y.c)
@@ -351,7 +354,7 @@ function make_save_to_disk_func(output_dir, p, is_distributed)
         ᶜT = @. TD.air_temperature(params, ᶜts)
         ᶜθ = @. TD.dry_pottemp(params, ᶜts)
 
-        # vorticity 
+        # vorticity
         curl_uh = @. curlₕ(Y.c.uₕ)
         ᶜvort = Geometry.WVector.(curl_uh)
         Spaces.weighted_dss!(ᶜvort)
@@ -404,17 +407,21 @@ function make_save_to_disk_func(output_dir, p, is_distributed)
             Y = integrator.u,
             diagnostic = diagnostic,
         )
+        @info "end save_to_disk callback" time=time()-time_start
         return nothing
     end
+
     return save_to_disk_func
 end
 
 save_to_disk_func = make_save_to_disk_func(output_dir, p, is_distributed)
 
 dss_callback = FunctionCallingCallback(func_start = true) do Y, t, integrator
+    @info "dss callback start" time=time()-time_start t
     p = integrator.p
     Spaces.weighted_dss!(Y.c, p.ghost_buffer.c)
     Spaces.weighted_dss!(Y.f, p.ghost_buffer.f)
+    @info "dss callback end" time=time()-time_start t
 end
 save_to_disk_callback = if dt_save_to_disk == Inf
     nothing
@@ -455,7 +462,7 @@ if haskey(ENV, "CI_PERF_SKIP_RUN") # for performance analysis
     throw(:exit_profile)
 end
 
-@info "Running job:`$job_id`"
+@info "Running job:`$job_id`" time=time()-time_start
 if is_distributed
     walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
 else

@@ -157,6 +157,7 @@ the large -I block in A.
 =#
 function linsolve!(::Type{Val{:init}}, f, u0; kwargs...)
     function _linsolve!(x, A, b, update_matrix = false; kwargs...)
+        @info "start linsolve" time=time()-time_start
         (; dtγ_ref, S, S_column_array) = A
         (; ∂ᶜρₜ∂ᶠ𝕄, ∂ᶜ𝔼ₜ∂ᶠ𝕄, ∂ᶠ𝕄ₜ∂ᶜ𝔼, ∂ᶠ𝕄ₜ∂ᶜρ, ∂ᶠ𝕄ₜ∂ᶠ𝕄, ∂ᶜ𝕋ₜ∂ᶠ𝕄_named_tuple) = A
         dtγ = dtγ_ref[]
@@ -275,5 +276,6 @@ function linsolve!(::Type{Val{:init}}, f, u0; kwargs...)
         if A.transform
             x .*= dtγ
         end
+        @info "end linsolve" time=time()-time_start
     end
 end

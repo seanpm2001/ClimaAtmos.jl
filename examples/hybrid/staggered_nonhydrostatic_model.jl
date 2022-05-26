@@ -163,6 +163,7 @@ function default_cache(Y, params, upwinding_mode)
 end
 
 function implicit_tendency!(Yₜ, Y, p, t)
+    @info "start implicit_tendency!" time=time()-time_start t
     ᶜρ = Y.c.ρ
     ᶜuₕ = Y.c.uₕ
     ᶠw = Y.f.w
@@ -246,9 +247,11 @@ function implicit_tendency!(Yₜ, Y, p, t)
     end
 
     return Yₜ
+    @info "end implicit_tendency!" time=time()-time_start t
 end
 
 function remaining_tendency!(Yₜ, Y, p, t)
+    @info "start remaining_tendency" time=time()-time_start t
     (; enable_default_remaining_tendency) = p
     Yₜ .= zero(eltype(Yₜ))
     if enable_default_remaining_tendency
@@ -257,6 +260,7 @@ function remaining_tendency!(Yₜ, Y, p, t)
     additional_tendency!(Yₜ, Y, p, t)
     Spaces.weighted_dss!(Yₜ.c, p.ghost_buffer.c)
     Spaces.weighted_dss!(Yₜ.f, p.ghost_buffer.f)
+    @info "end remaining_tendency" time=time()-time_start t
     return Yₜ
 end
 
@@ -348,6 +352,8 @@ Base.one(::Type{T}) where {T′, A, S, T <: Geometry.AxisTensor{T′, 1, A, S}} 
     T(axes(T), S(one(T′)))
 
 function Wfact!(W, Y, p, dtγ, t)
+    @info "start Wfact!" time=time()-time_start t
+
     (; flags, dtγ_ref) = W
     (; ∂ᶜρₜ∂ᶠ𝕄, ∂ᶜ𝔼ₜ∂ᶠ𝕄, ∂ᶠ𝕄ₜ∂ᶜ𝔼, ∂ᶠ𝕄ₜ∂ᶜρ, ∂ᶠ𝕄ₜ∂ᶠ𝕄, ∂ᶜ𝕋ₜ∂ᶠ𝕄_named_tuple) = W
     ᶜρ = Y.c.ρ
@@ -738,4 +744,5 @@ function Wfact!(W, Y, p, dtγ, t)
             # highest value seen so far for ρθ is ~0.02
         end
     end
+    @info "end Wfact!" time=time()-time_start t
 end
