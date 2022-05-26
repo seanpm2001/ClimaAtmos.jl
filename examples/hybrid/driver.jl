@@ -44,13 +44,19 @@ include("types.jl")
 @info "point 3" time=time() - time_start
 
 import TurbulenceConvection
+@info "point 3.1" time=time() - time_start
 const TC = TurbulenceConvection
 include("TurbulenceConvectionUtils.jl")
+@info "point 3.2" time=time() - time_start
 import .TurbulenceConvectionUtils
+@info "point 3.3" time=time() - time_start
 TCU = TurbulenceConvectionUtils
 namelist = turbconv == "edmf" ? TCU.NameList.default_namelist("Bomex") : nothing
+@info "point 3.4" time=time() - time_start
 
 include("parameter_set.jl")
+@info "point 3.5" time=time() - time_start
+
 # TODO: unify parsed_args and namelist
 params = create_parameter_set(FT, parsed_args, namelist)
 @info "point 4" time=time() - time_start
