@@ -322,8 +322,9 @@ else
 end
 default_output = haskey(ENV, "CI") ? job_id : joinpath("output", job_id)
 output_dir = parse_arg(parsed_args, "output_dir", default_output)
-@info "Output directory: `$output_dir`"
+@info "Output directory: `$output_dir`" time=time()-time_start
 mkpath(output_dir)
+@info "created Output directory: `$output_dir`" time=time()-time_start
 
 function make_save_to_disk_func(output_dir, p, is_distributed)
     function save_to_disk_func(integrator)
@@ -415,6 +416,7 @@ function make_save_to_disk_func(output_dir, p, is_distributed)
 end
 
 save_to_disk_func = make_save_to_disk_func(output_dir, p, is_distributed)
+@info "save_to_disk_func" time=time()-time_start
 
 dss_callback = FunctionCallingCallback(func_start = true) do Y, t, integrator
     @info "dss callback start" time=time()-time_start t
@@ -446,6 +448,9 @@ problem = if parsed_args["split_ode"]
 else
     OrdinaryDiffEq.ODEProblem(remaining_tendency!, Y, (t_start, t_end), p)
 end
+
+@info "problem" time=time()-time_start
+
 integrator = OrdinaryDiffEq.init(
     problem,
     ode_algorithm(; alg_kwargs...);
@@ -457,6 +462,8 @@ integrator = OrdinaryDiffEq.init(
     progress_steps = isinteractive() ? 1 : 1000,
     additional_solver_kwargs...,
 )
+@info "init done" time=time()-time_start
+
 
 if haskey(ENV, "CI_PERF_SKIP_RUN") # for performance analysis
     throw(:exit_profile)
