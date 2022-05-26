@@ -1,4 +1,5 @@
 const time_start = time()
+@info "point 1" time=time() - time_start
 
 include("cli_options.jl")
 if !(@isdefined parsed_args)
@@ -7,6 +8,8 @@ end
 
 include("classify_case.jl")
 include("utilities.jl")
+
+@info "point 2" time=time() - time_start
 const FT = parsed_args["FLOAT_TYPE"] == "Float64" ? Float64 : Float32
 
 fps = parsed_args["fps"]
@@ -38,6 +41,7 @@ dt_save_to_disk = time_to_seconds(parsed_args["dt_save_to_disk"])
 @assert viscous_sponge in (true, false)
 
 include("types.jl")
+@info "point 3" time=time() - time_start
 
 import TurbulenceConvection
 const TC = TurbulenceConvection
@@ -49,6 +53,7 @@ namelist = turbconv == "edmf" ? TCU.NameList.default_namelist("Bomex") : nothing
 include("parameter_set.jl")
 # TODO: unify parsed_args and namelist
 params = create_parameter_set(FT, parsed_args, namelist)
+@info "point 4" time=time() - time_start
 
 moisture_model() = moisture_model(parsed_args)
 energy_form() = energy_form(parsed_args)
@@ -58,6 +63,7 @@ forcing_type() = forcing_type(parsed_args)
 turbconv_model() = turbconv_model(parsed_args, namelist)
 
 diffuse_momentum = vert_diff && !(forcing_type() isa HeldSuarezForcing)
+@info "point 5" time=time() - time_start
 
 using OrdinaryDiffEq
 using PrettyTables
@@ -72,6 +78,7 @@ Random.seed!(1234)
 include(joinpath("..", "RRTMGPInterface.jl"))
 import .RRTMGPInterface
 RRTMGPI = RRTMGPInterface
+@info "point 6" time=time() - time_start
 
 !isnothing(radiation_model()) && include("radiation_utilities.jl")
 
@@ -145,6 +152,7 @@ end
 
 ################################################################################
 is_distributed = haskey(ENV, "CLIMACORE_DISTRIBUTED")
+@info "point 7" time=time() - time_start
 
 using Logging
 if is_distributed
@@ -171,6 +179,7 @@ end
 using OrdinaryDiffEq
 using DiffEqCallbacks
 using JLD2
+@info "point 8" time=time() - time_start
 
 parsed_args["trunc_stack_traces"] && include("truncate_stack_traces.jl")
 include("../implicit_solver_debugging_tools.jl")
@@ -205,6 +214,7 @@ else
     ()
 end
 
+@info "point 9" time=time() - time_start
 import ClimaCore: enable_threading
 enable_threading() = parsed_args["enable_threading"]
 
@@ -246,6 +256,7 @@ models = (;
     energy_form = energy_form(),
     turbconv_model = turbconv_model(),
 )
+@info "point 10" time=time() - time_start
 
 if haskey(ENV, "RESTART_FILE")
     restart_file_name = ENV["RESTART_FILE"]
@@ -287,6 +298,7 @@ p = get_cache(Y, params, upwinding_mode(), dt)
 if parsed_args["turbconv"] == "edmf"
     TCU.init_tc!(Y, p, params, namelist)
 end
+@info "point 11" time=time() - time_start
 
 # Print tendencies:
 for key in keys(p.tendency_knobs)
