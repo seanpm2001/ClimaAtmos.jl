@@ -11,8 +11,6 @@ env:
 agents:
   config: cpu
   queue: central
-  slurm_ntasks: 1
-  slurm_time: 04:00:00
 
 timeout_in_minutes: 240
 
@@ -35,7 +33,7 @@ steps:
     steps:
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (2) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15" 
+      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
@@ -47,7 +45,7 @@ steps:
         slurm_mem: 64GB
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (4) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15" 
+      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
@@ -59,7 +57,7 @@ steps:
         slurm_mem: 64GB
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (8) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15" 
+      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
@@ -71,7 +69,7 @@ steps:
         slurm_mem: 64GB
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (16) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15" 
+      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
@@ -83,7 +81,7 @@ steps:
         slurm_mem: 128GB
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (32) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15" 
+      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
@@ -96,7 +94,7 @@ steps:
 
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (64) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15" 
+      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 40 --h_elem 16 --kappa_4 1e15"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
