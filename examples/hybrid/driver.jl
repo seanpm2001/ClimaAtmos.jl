@@ -1,5 +1,5 @@
 const time_start = time()
-@info "point 1" time=time() - time_start
+@info "point 1" time=time() - time_start getpid()
 
 include("cli_options.jl")
 if !(@isdefined parsed_args)

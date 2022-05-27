@@ -38,7 +38,7 @@ steps:
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (8) processes"
       command:
-        - "srun julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 15 --h_elem 8 --kappa_4 2e16"
+        - "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 15 --h_elem 8 --kappa_4 2e16"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"
