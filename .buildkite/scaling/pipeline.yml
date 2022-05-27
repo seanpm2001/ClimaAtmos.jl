@@ -20,11 +20,15 @@ steps:
   - label: "init :computer:"
     key: "init_cpu_env"
     command:
+      - "module unload mpich"
+      - "module load openmpi/4.1.1"
       - "julia --project=examples -e 'using Pkg; Pkg.instantiate(;verbose=true)'"
       - "julia --project=examples -e 'using Pkg; Pkg.precompile()'"
       - "julia --project=examples -e 'using Pkg; Pkg.status()'"
 
     agents:
+      config: cpu
+      queue: central
       slurm_cpus_per_task: 8
     env:
       JULIA_NUM_PRECOMPILE_TASKS: 8
@@ -35,7 +39,10 @@ steps:
     steps:
 
     - label: ":computer: MPI Held-Suarez scaling test(ρe_tot) - (8) processes"
-      command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 15 --h_elem 8 --kappa_4 2e16"
+      command:
+        - "module unload mpich"
+        - "module load openmpi/4.1.1"
+        - "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_held_suarez_rhoe --forcing held_suarez --enable_threading false --upwinding none --t_end 1hours --dt 100secs --z_elem 15 --h_elem 8 --kappa_4 2e16"
       artifact_paths: "sphere_held_suarez_rhoe/*"
       env:
         CLIMACORE_DISTRIBUTED: "MPI"

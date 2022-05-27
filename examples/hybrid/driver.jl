@@ -221,8 +221,8 @@ else
 end
 
 @info "point 9" time=time() - time_start
-import ClimaCore: enable_threading
-enable_threading() = parsed_args["enable_threading"]
+#import ClimaCore: enable_threading
+#enable_threading() = parsed_args["enable_threading"]
 
 # TODO: When is_distributed is true, automatically compute the maximum number of
 # bytes required to store an element from Y.c or Y.f (or, really, from any Field
@@ -256,6 +256,7 @@ elseif parsed_args["config"] == "column" # single column
     end
     make_hybrid_spaces(h_space, z_max, z_elem, z_stretch)
 end
+@info "point 9.1" time=time() - time_start
 
 models = (;
     moisture_model = moisture_model(),
