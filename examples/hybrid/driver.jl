@@ -24,11 +24,9 @@ zd_rayleigh = parsed_args["zd_rayleigh"]
 zd_viscous = parsed_args["zd_viscous"]
 κ₂_sponge = parsed_args["kappa_2_sponge"]
 t_end = FT(time_to_seconds(parsed_args["t_end"]))
-t_end = 400
 dt = FT(time_to_seconds(parsed_args["dt"]))
 dt_save_to_sol = time_to_seconds(parsed_args["dt_save_to_sol"])
 dt_save_to_disk = time_to_seconds(parsed_args["dt_save_to_disk"])
-dt_save_to_disk = 400
 
 @assert idealized_insolation in (true, false)
 @assert idealized_h2o in (true, false)
@@ -150,12 +148,10 @@ end
 ################################################################################
 is_distributed = haskey(ENV, "CLIMACORE_DISTRIBUTED")
 
-is_distributed = true
-
 using Logging
 if is_distributed
     using ClimaComms
-    if true #ENV["CLIMACORE_DISTRIBUTED"] == "MPI"
+    if ENV["CLIMACORE_DISTRIBUTED"] == "MPI"
         using ClimaCommsMPI
         const comms_ctx = ClimaCommsMPI.MPICommsContext()
     else
@@ -342,11 +338,11 @@ function make_save_to_disk_func(output_dir, p, Yinit)
                 global_Y_c_type = Fields.Field{typeof(Fields.field_values(Yinit.c)), typeof(global_center_space)}
                 global_Y_f_type = Fields.Field{typeof(Fields.field_values(Yinit.f)), typeof(global_face_space)}
                 global_Y_type = Fields.FieldVector{FT, NamedTuple{(:c, :f), Tuple{global_Y_c_type, global_Y_f_type}}}
-                global_sol_u_atmos = similar(integrator.u, global_Y_type)
+                global_sol_u_atmos = similar(integrator.sol.u, global_Y_type)
             end
-            for i in 1:length(integrator.u)
-                global_Y_c = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.u[i].c))
-                global_Y_f = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.u[i].f))
+            for i in 1:length(integrator.sol.u)
+                global_Y_c = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.sol.u[i].c))
+                global_Y_f = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.sol.u[i].f))
                 if ClimaComms.iamroot(comms_ctx)
                     global_sol_u_atmos[i] = Fields.FieldVector(
                         c = Fields.Field(global_Y_c, global_center_space),
