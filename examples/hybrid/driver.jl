@@ -329,18 +329,42 @@ output_dir = parse_arg(parsed_args, "output_dir", default_output)
 @info "Output directory: `$output_dir`"
 mkpath(output_dir)
 
-function make_save_to_disk_func(output_dir, p, is_distributed)
+function make_save_to_disk_func(output_dir, p, is_distributed, Yinit)
     if is_distributed
         function save_to_disk_func(integrator)
-            Y = integrator.u
             if ClimaComms.iamroot(comms_ctx)
                 global_h_space = make_horizontal_space(horizontal_mesh, quad, nothing)
                 global_center_space, global_face_space = make_hybrid_spaces(global_h_space, z_max, z_elem, z_stretch)
-                global_Y_c_type = Fields.Field{typeof(Fields.field_values(Y.c)), typeof(global_center_space)}
-                global_Y_f_type = Fields.Field{typeof(Fields.field_values(Y.f)), typeof(global_face_space)}
+                global_Y_c_type = Fields.Field{typeof(Fields.field_values(Yinit.c)), typeof(global_center_space)}
+                global_Y_f_type = Fields.Field{typeof(Fields.field_values(Yinit.f)), typeof(global_face_space)}
                 global_Y_type = Fields.FieldVector{FT, NamedTuple{(:c, :f), Tuple{global_Y_c_type, global_Y_f_type}}}
-                
+                global_sol_u_atmos = similar(integrator.u, global_Y_type)
             end
+            for i in 1:length(integrator.u)
+                global_Y_c = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.u[i].c))
+                global_Y_f = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.u[i].f))
+                if ClimaComms.iamroot(comms_ctx)
+                    global_sol_u_atmos[i] = Fields.FieldVector(
+                        c = Fields.Field(global_Y_c, global_center_space),
+                        f = Fields.Field(global_Y_f, global_face_space),
+                    )
+                end
+            end
+            if ClimaComms.iamroot(comms_ctx)
+                Y = global_sol_u_atmos
+            end
+        
+            day = floor(Int, integrator.t / (60 * 60 * 24))
+            sec = Int(mod(integrator.t, 3600 * 24))
+            @info "Saving prognostic variables to JLD2 file on day $day second $sec"
+            suffix = is_distributed ? "_pid$pid.jld2" : ".jld2"
+            output_file = joinpath(output_dir, "day$day.$sec$suffix")
+            jldsave(
+                output_file;
+                t = integrator.t,
+                Y = integrator.u,
+            )
+            return nothing
             
         end
     else
