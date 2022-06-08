@@ -24,9 +24,11 @@ zd_rayleigh = parsed_args["zd_rayleigh"]
 zd_viscous = parsed_args["zd_viscous"]
 κ₂_sponge = parsed_args["kappa_2_sponge"]
 t_end = FT(time_to_seconds(parsed_args["t_end"]))
+t_end = 400
 dt = FT(time_to_seconds(parsed_args["dt"]))
 dt_save_to_sol = time_to_seconds(parsed_args["dt_save_to_sol"])
 dt_save_to_disk = time_to_seconds(parsed_args["dt_save_to_disk"])
+dt_save_to_disk = 400
 
 @assert idealized_insolation in (true, false)
 @assert idealized_h2o in (true, false)
@@ -148,10 +150,12 @@ end
 ################################################################################
 is_distributed = haskey(ENV, "CLIMACORE_DISTRIBUTED")
 
+is_distributed = true
+
 using Logging
 if is_distributed
     using ClimaComms
-    if ENV["CLIMACORE_DISTRIBUTED"] == "MPI"
+    if true #ENV["CLIMACORE_DISTRIBUTED"] == "MPI"
         using ClimaCommsMPI
         const comms_ctx = ClimaCommsMPI.MPICommsContext()
     else
@@ -329,9 +333,9 @@ output_dir = parse_arg(parsed_args, "output_dir", default_output)
 @info "Output directory: `$output_dir`"
 mkpath(output_dir)
 
-function make_save_to_disk_func(output_dir, p, is_distributed, Yinit)
-    if is_distributed
-        function save_to_disk_func(integrator)
+function make_save_to_disk_func(output_dir, p, Yinit)
+    function save_to_disk_func(integrator)
+        if is_distributed
             if ClimaComms.iamroot(comms_ctx)
                 global_h_space = make_horizontal_space(horizontal_mesh, quad, nothing)
                 global_center_space, global_face_space = make_hybrid_spaces(global_h_space, z_max, z_elem, z_stretch)
@@ -352,23 +356,18 @@ function make_save_to_disk_func(output_dir, p, is_distributed, Yinit)
             end
             if ClimaComms.iamroot(comms_ctx)
                 Y = global_sol_u_atmos
+                day = floor(Int, integrator.t / (60 * 60 * 24))
+                sec = Int(mod(integrator.t, 3600 * 24))
+                @info "Saving prognostic variables to JLD2 file on day $day second $sec"
+                suffix = is_distributed ? "_pid$pid.jld2" : ".jld2"
+                output_file = joinpath(output_dir, "day$day.$sec$suffix")
+                jldsave(
+                    output_file;
+                    t = integrator.t,
+                    Y = Y,
+                )
             end
-        
-            day = floor(Int, integrator.t / (60 * 60 * 24))
-            sec = Int(mod(integrator.t, 3600 * 24))
-            @info "Saving prognostic variables to JLD2 file on day $day second $sec"
-            suffix = is_distributed ? "_pid$pid.jld2" : ".jld2"
-            output_file = joinpath(output_dir, "day$day.$sec$suffix")
-            jldsave(
-                output_file;
-                t = integrator.t,
-                Y = integrator.u,
-            )
-            return nothing
-            
-        end
-    else
-        function save_to_disk_func(integrator)
+        else
             Y = integrator.u
 
             if :ρq_tot in propertynames(Y.c)
@@ -525,14 +524,14 @@ function make_save_to_disk_func(output_dir, p, is_distributed, Yinit)
                 t = integrator.t,
                 Y = integrator.u,
                 diagnostic = diagnostic,
-            )
-            return nothing
+            )   
         end
+        return nothing
     end
     return save_to_disk_func
 end
 
-save_to_disk_func = make_save_to_disk_func(output_dir, p, is_distributed, Y)
+save_to_disk_func = make_save_to_disk_func(output_dir, p, Y)
 
 dss_callback = FunctionCallingCallback(func_start = true) do Y, t, integrator
     p = integrator.p
