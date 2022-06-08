@@ -532,7 +532,7 @@ function make_save_to_disk_func(output_dir, p, is_distributed, Yinit)
     return save_to_disk_func
 end
 
-save_to_disk_func = make_save_to_disk_func(output_dir, p, is_distributed)
+save_to_disk_func = make_save_to_disk_func(output_dir, p, is_distributed, Y)
 
 dss_callback = FunctionCallingCallback(func_start = true) do Y, t, integrator
     p = integrator.p
