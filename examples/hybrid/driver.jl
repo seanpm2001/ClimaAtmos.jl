@@ -332,6 +332,15 @@ mkpath(output_dir)
 function make_save_to_disk_func(output_dir, p, is_distributed)
     if is_distributed
         function save_to_disk_func(integrator)
+            Y = integrator.u
+            if ClimaComms.iamroot(comms_ctx)
+                global_h_space = make_horizontal_space(horizontal_mesh, quad, nothing)
+                global_center_space, global_face_space = make_hybrid_spaces(global_h_space, z_max, z_elem, z_stretch)
+                global_Y_c_type = Fields.Field{typeof(Fields.field_values(Y.c)), typeof(global_center_space)}
+                global_Y_f_type = Fields.Field{typeof(Fields.field_values(Y.f)), typeof(global_face_space)}
+                global_Y_type = Fields.FieldVector{FT, NamedTuple{(:c, :f), Tuple{global_Y_c_type, global_Y_f_type}}}
+                
+            end
             
         end
     else
