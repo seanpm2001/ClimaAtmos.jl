@@ -338,11 +338,11 @@ function make_save_to_disk_func(output_dir, p, Yinit)
                 global_Y_c_type = Fields.Field{typeof(Fields.field_values(Yinit.c)), typeof(global_center_space)}
                 global_Y_f_type = Fields.Field{typeof(Fields.field_values(Yinit.f)), typeof(global_face_space)}
                 global_Y_type = Fields.FieldVector{FT, NamedTuple{(:c, :f), Tuple{global_Y_c_type, global_Y_f_type}}}
-                global_sol_u_atmos = similar(integrator.sol.u, global_Y_type)
+		global_sol_u_atmos = similar(integrator.sol.u, global_Y_type)
             end
-            for i in 1:length(integrator.sol.u)
+	    for i in 1:length(integrator.sol.u)
                 global_Y_c = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.sol.u[i].c))
-                global_Y_f = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.sol.u[i].f))
+	        global_Y_f = DataLayouts.gather(comms_ctx, Fields.field_values(integrator.sol.u[i].f))
                 if ClimaComms.iamroot(comms_ctx)
                     global_sol_u_atmos[i] = Fields.FieldVector(
                         c = Fields.Field(global_Y_c, global_center_space),
@@ -351,7 +351,7 @@ function make_save_to_disk_func(output_dir, p, Yinit)
                 end
             end
             if ClimaComms.iamroot(comms_ctx)
-                Y = global_sol_u_atmos
+                Y = global_sol_u_atmos[end]
                 day = floor(Int, integrator.t / (60 * 60 * 24))
                 sec = Int(mod(integrator.t, 3600 * 24))
                 @info "Saving prognostic variables to JLD2 file on day $day second $sec"
