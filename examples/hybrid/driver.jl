@@ -928,7 +928,7 @@ using Test
 import OrderedCollections
 using ClimaCoreTempestRemap
 using ClimaCorePlots, Plots
-include(joinpath(@__DIR__, "define_post_processing.jl"))
+include(joinpath(@__DIR__, "./sphere/post_processing_utilities/define_post_processing.jl"))
 if !is_distributed
     ENV["GKSwstype"] = "nul" # avoid displaying plots
     if is_baro_wave(parsed_args)
