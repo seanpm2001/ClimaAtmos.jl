@@ -295,9 +295,7 @@ function remaining_tendency!(Yₜ, Y, p, t)
         end
         
         if t > FT(600)
-            @show minimum(Yₜ.c.ρ)
-            @. Y.c.ρ = abs(Y.c.ρ)
-            @show minimum(Yₜ.c.ρ)
+            # @. Y.c.ρ = abs(Y.c.ρ)
             Limiters.compute_bounds!(p.debug_cache.limiter, Y.c.ρq_tot, Y.c.ρ)
             Limiters.apply_limiter!(Yₜ.c.ρq_tot, Yₜ.c.ρ, p.debug_cache.limiter)
         end
