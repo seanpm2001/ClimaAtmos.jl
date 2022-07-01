@@ -1,7 +1,12 @@
-include("cli_options.jl")
+include("cli_options_hs_limitertest.jl")
 if !(@isdefined parsed_args)
     (s, parsed_args) = parse_commandline()
 end
+
+println(parsed_args)
+
+using ClimaCore
+import ClimaCore: Limiters
 
 include("classify_case.jl")
 include("utilities.jl")
@@ -139,6 +144,7 @@ additional_cache(Y, params, dt; use_tempest_mode = false) = merge(
     !isnothing(turbconv_model()) ?
     (; edmf_cache = TCU.get_edmf_cache(Y, namelist, params)) : NamedTuple(),
     (; apply_moisture_filter = parsed_args["apply_moisture_filter"]),
+    (; debug_cache = debug_cache_limiters)
 )
 
 additional_tendency!(Yₜ, Y, p, t) = begin
@@ -311,7 +317,19 @@ else
     )
 end
 
+# hard-coded limiters setup
+ystar = copy(Y) 
+debug_cache_limiters = (
+    lim_flag = true,
+    horzspace = h_space,
+    limiter = Limiters.QuasiMonotoneLimiter(ystar.c.ρq_tot, ystar.c.ρ),
+    τ = FT(1036800),
+    center_coords = Fields.coordinate_field(center_space),
+    face_coords = Fields.coordinate_field(face_space),
+)
+
 p = get_cache(Y, params, upwinding_mode(), dt)
+
 if parsed_args["turbconv"] == "edmf"
     TCU.init_tc!(Y, p, params, namelist)
 end

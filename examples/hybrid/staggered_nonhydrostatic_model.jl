@@ -293,7 +293,19 @@ function remaining_tendency!(Yₜ, Y, p, t)
         if enable_default_remaining_tendency
             default_remaining_tendency!(Yₜ, Y, p, t)
         end
+        
+        if t > FT(600)
+            @show minimum(Yₜ.c.ρ)
+            @. Y.c.ρ = abs(Y.c.ρ)
+            @show minimum(Yₜ.c.ρ)
+            Limiters.compute_bounds!(p.debug_cache.limiter, Y.c.ρq_tot, Y.c.ρ)
+            Limiters.apply_limiter!(Yₜ.c.ρq_tot, Yₜ.c.ρ, p.debug_cache.limiter)
+        end
         additional_tendency!(Yₜ, Y, p, t)
+
+        # Limiters.compute_bounds!(p.debug_cache.limiter, Y.c.ρq_tot, Y.c.ρ)
+        # Limiters.apply_limiter!(Yₜ.c.ρq_tot, Yₜ.c.ρ, p.debug_cache.limiter)
+
         @nvtx "dss_remaining_tendency" color = colorant"blue" begin
             Spaces.weighted_dss_start!(Yₜ.c, p.ghost_buffer.c)
             Spaces.weighted_dss_start!(Yₜ.f, p.ghost_buffer.f)
