@@ -169,6 +169,8 @@ function sgs_flux_tendency!(Yₜ, Y, p, t)
     # @. p.edmf_cache.aux.ρ_c = Y.c.ρ # alternative
     for inds in TC.iterate_columns(Y.c)
         state = tc_column_state(Y, aux, Yₜ, inds...)
+        prog_gm = TC.center_prog_grid_mean(state)
+        prog_gm_f = TC.face_prog_grid_mean(state)
         grid = TC.Grid(state)
 
         set_thermo_state_peq!(
@@ -182,7 +184,9 @@ function sgs_flux_tendency!(Yₜ, Y, p, t)
 
         aux_gm = TC.center_aux_grid_mean(state)
 
-        @. aux_gm.ρ_c = state.prog.cent.ρ
+        @. prog_gm.ρ = state.prog.cent.ρ
+        @. prog_gm_f.w = state.prog.face.w
+        @show(prog_gm_f.w)
         @. aux_gm.θ_virt = TD.virtual_pottemp(thermo_params, aux_gm.ts)
 
         surf = get_surface(surf_params, grid, state, t, tc_params)
