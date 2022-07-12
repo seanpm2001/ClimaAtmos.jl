@@ -18,6 +18,7 @@ hyperdiff = parsed_args["hyperdiff"]
 disable_qt_hyperdiffusion = parsed_args["disable_qt_hyperdiffusion"]
 turbconv = parsed_args["turbconv"]
 case_name = parsed_args["turbconv_case"]
+dft_remaining_tend = parsed_args["dft_remaining_tend"]
 h_elem = parsed_args["h_elem"]
 z_elem = Int(parsed_args["z_elem"])
 z_max = FT(parsed_args["z_max"])
@@ -142,7 +143,7 @@ additional_cache(Y, params, dt; use_tempest_mode = false) = merge(
         )
     ),
     (; Δt = dt),
-    (; enable_default_remaining_tendency = isnothing(turbconv_model())),
+    (; enable_default_remaining_tendency = dft_remaining_tend),
     !isnothing(turbconv_model()) ?
     (; edmf_cache = TCU.get_edmf_cache(Y, namelist, params)) : NamedTuple(),
     (; apply_moisture_filter = parsed_args["apply_moisture_filter"]),
