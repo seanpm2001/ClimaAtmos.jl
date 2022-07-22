@@ -395,6 +395,7 @@ function initialize_forcing(::Bomex, forcing, grid::Grid, state, param_set)
 
     z = CC.Fields.coordinate_field(axes(aux_gm.uₕ_g)).z
     @. aux_gm.uₕ_g = CCG.Covariant12Vector(CCG.UVVector(prof_ug(z), FT(0)))
+    # @. aux_gm.uₕ_g = CCG.Covariant12Vector(FT(0), FT(0))
 
     @inbounds for k in real_center_indices(grid)
         z = grid.zc[k].z

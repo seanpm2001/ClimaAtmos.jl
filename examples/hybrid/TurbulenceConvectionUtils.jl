@@ -145,7 +145,7 @@ function init_tc!(Y, p, param_set, namelist)
         assign_thermo_aux!(state, grid, edmf.moisture_model, tc_params)
         Cases.initialize_forcing(case, forcing, grid, state, tc_params)
         Cases.initialize_radiation(case, radiation, grid, state, tc_params)
-        initialize_edmf(edmf, grid, state, surf_params, tc_params, t, case)
+        # initialize_edmf(edmf, grid, state, surf_params, tc_params, t, case)
     end
 end
 

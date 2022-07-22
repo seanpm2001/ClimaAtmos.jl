@@ -166,7 +166,7 @@ function additional_tendency!(Yₜ, Y, p, t)
     vert_diff && vertical_diffusion_boundary_layer_tendency!(Yₜ, Y, p, t)
     microphy_0M && zero_moment_microphysics_tendency!(Yₜ, Y, p, t)
     rad_flux && rrtmgp_model_tendency!(Yₜ, Y, p, t)
-    has_turbconv && TCU.sgs_flux_tendency!(Yₜ, Y, p, t)
+    # has_turbconv && TCU.sgs_flux_tendency!(Yₜ, Y, p, t)
 end
 
 ################################################################################

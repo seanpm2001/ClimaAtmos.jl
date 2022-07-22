@@ -242,7 +242,7 @@ steps:
         artifact_paths: "edmf_bomex/*"
 
       - label: ":computer: Compressible Single column EDMF Bomex"
-        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --config column --FLOAT_TYPE Float64 --hyperdiff false --moist equil --turbconv edmf --turbconv_case Bomex --dt_save_to_sol 5mins --z_elem 60 --z_stretch false --z_max 3e3 --job_id compressible_edmf_bomex --dt 6secs --t_end 6hours --regression_test true"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --config column --FLOAT_TYPE Float64 --hyperdiff false --moist equil --turbconv edmf --turbconv_case Bomex --split_ode false --ode_algo Euler --dt_save_to_sol 1secs --z_elem 60 --z_stretch false --z_max 3e3 --job_id compressible_edmf_bomex --dt 0.1secs --t_end 0.1hours --regression_test true"
         artifact_paths: "compressible_edmf_bomex/*"
 
       - label: ":computer: Single column EDMF DYCOMS_RF01"
