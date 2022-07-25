@@ -166,6 +166,9 @@ function implicit_tendency_special!(Yₜ, Y, p, t)
 
     ref_thermo_params = Ref(thermo_params)
     ref_zuₕ = Ref(zero(eltype(Yₜ.c.uₕ)))
+    FT = eltype(Yₜ)
+    parent(Yₜ.c) .= FT(0)
+    parent(Yₜ.f) .= FT(0)
 
     @nvtx "implicit tendency special" color = colorant"yellow" begin
         Fields.bycolumn(axes(Y.c)) do colidx
