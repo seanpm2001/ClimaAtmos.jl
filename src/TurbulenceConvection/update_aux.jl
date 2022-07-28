@@ -260,7 +260,8 @@ function update_aux!(
             aux_up[i].buoy[k] = buoyancy_c(param_set, ρ_c[k], ρ)
             aux_up[i].RH[k] = TD.relative_humidity(thermo_params, ts_up)
         end
-        aux_gm.buoy[k] = (1.0 - aux_bulk.area[k]) * aux_en.buoy[k]
+        # aux_gm.buoy[k] = (1.0 - aux_bulk.area[k]) * aux_en.buoy[k]
+        aux_gm.buoy[k] = FT(0)
         @inbounds for i in 1:N_up
             aux_gm.buoy[k] += aux_up[i].area[k] * aux_up[i].buoy[k]
         end
@@ -353,11 +354,15 @@ function update_aux!(
         )
     end
     to_scalar(vector) = vector.u₃
-    @. aux_en_f.w = to_scalar(prog_gm_f.w) / (1 - Ifb(aux_bulk.area))
+    # w_en = -w_up / a_en
+    # w_en = (w_gm - w_up) / a_en
+    # @. aux_en_f.w = to_scalar(prog_gm_f.w) / (1 - Ifb(aux_bulk.area))
+    @. aux_en_f.w = FT(0)
     @inbounds for i in 1:N_up
         @. aux_en_f.w -=
             Ifb(aux_up[i].area) * aux_up_f[i].w / (1 - Ifb(aux_bulk.area))
     end
+    # @. aux_en_f.w = -Ifb(aux_up[1].area) * aux_up_f[1].w / (1 - Ifb(aux_bulk.area))
 
     #####
     #####  diagnose_GMV_moments

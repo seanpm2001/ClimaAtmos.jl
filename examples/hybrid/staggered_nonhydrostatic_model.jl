@@ -166,12 +166,18 @@ function implicit_tendency_special!(Yₜ, Y, p, t)
 
     ref_thermo_params = Ref(thermo_params)
     ref_zuₕ = Ref(zero(eltype(Yₜ.c.uₕ)))
-    FT = eltype(Yₜ)
-    parent(Yₜ.c) .= FT(0)
-    parent(Yₜ.f) .= FT(0)
 
     @nvtx "implicit tendency special" color = colorant"yellow" begin
         Fields.bycolumn(axes(Y.c)) do colidx
+            if p.tendency_knobs.has_turbconv
+                @. Yₜ.c.turbconv.up[1].ρarea[colidx] = FT(0)
+                @. Yₜ.c.turbconv.up[1].ρaθ_liq_ice[colidx] = FT(0)
+                @. Yₜ.c.turbconv.up[1].ρaq_tot[colidx] = FT(0)
+                @. Yₜ.c.turbconv.en.ρatke[colidx] = FT(0)
+                @. Yₜ.f.turbconv.up[1].ρaw[colidx] = FT(0)
+                @. Yₜ.c.turbconv.pr.q_rai[colidx] = FT(0)
+                @. Yₜ.c.turbconv.pr.q_sno[colidx] = FT(0)
+            end
 
             @. ᶜK[colidx] =
                 norm_sqr(C123(ᶜuₕ[colidx]) + C123(ᶜinterp(ᶠw[colidx]))) / 2
