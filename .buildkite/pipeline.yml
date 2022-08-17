@@ -294,7 +294,7 @@ steps:
         artifact_paths: "edmf_trmm/*"
 
       - label: ":balloon: Compressible single column EDMF TRMM_LBA"
-        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --config column --FLOAT_TYPE Float64 --hyperdiff false --moist equil --turbconv edmf --turbconv_case TRMM_LBA --dt_save_to_sol 5mins --z_elem 82 --z_stretch false --z_max 16400 --job_id compressible_edmf_trmm --dt 0.5secs --t_end 6hours --regression_test true"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --config column --FLOAT_TYPE Float64 --hyperdiff false --moist equil --turbconv edmf --turbconv_case TRMM_LBA --dt_save_to_sol 5mins --z_elem 82 --z_stretch false --z_max 16400 --job_id compressible_edmf_trmm --dt 0.1secs --t_end 6hours --regression_test true"
         artifact_paths: "compressible_edmf_trmm/*"
 
       - label: ":balloon: Single column EDMF GABLS"
