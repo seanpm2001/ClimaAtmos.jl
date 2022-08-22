@@ -250,7 +250,7 @@ function p_ivp(::Type{FT}, params, p_0, z_0, z_max) where {FT}
     z_span = (z_0, z_max)
     prob = ODE.ODEProblem(dp_dz!, p_0, z_span, params)
 
-    sol = ODE.solve(prob, ODE.Tsit5(), reltol = 1e-10, abstol = 1e-10)
+    sol = ODE.solve(prob, ODE.Tsit5(), reltol = 1e-15, abstol = 1e-15)
     return sol
 end
 
@@ -737,22 +737,6 @@ function surface_ref_state(::TRMM_LBA, param_set::APS, namelist)
     qtg = (1 / molmass_ratio) * pvg / (Pg - pvg) #Total water mixing ratio at surface
     return TD.PhaseEquil_pTq(thermo_params, Pg, Tg, qtg)
 end
-#function TRMM_T_profile(::Type{FT}) where {FT}
-#    z_in = APL.TRMM_LBA_z(FT)
-#    T_in = APL.TRMM_LBA_T(FT)
-#
-#    T_modified_in = similar(z_in)
-#    for it in range(1, length = length(z_in))
-#        z = z_in[it]
-#        print("it, z, T_in: ", it, ", ", z, ", ", T_in(z), "\n")
-#        if z < FT(1000)
-#            T_modified_in[it] = T_in(z)
-#        else
-#            T_modified_in[it] = T_in(z)
-#        end
-#    end
-#    return Dierckx.Spline1D(z_in, T_modified_in; k = 1)
-#end
 function TRMM_q_tot_profile(::Type{FT}, param_set) where {FT}
 
     thermo_params = TCP.thermodynamics_params(param_set)
@@ -761,7 +745,6 @@ function TRMM_q_tot_profile(::Type{FT}, param_set) where {FT}
     z_in = APL.TRMM_LBA_z(FT)
     p_in = APL.TRMM_LBA_p(FT)
     T_in = APL.TRMM_LBA_T(FT)
-    #T_in = TRMM_T_profile(FT)
     RH_in = APL.TRMM_LBA_RH(FT)
 
     # eq. 37 in pressel et al and the def of RH
@@ -788,17 +771,16 @@ function initialize_profiles(
     aux_gm = TC.center_aux_grid_mean(state)
     prog_gm = TC.center_prog_grid_mean(state)
 
+    grav = TCP.grav(param_set)
     FT = TC.float_type(state)
 
     # Get profiles from AtmosphericProfilesLibrary.jl
-    #prof_p = APL.TRMM_LBA_p(FT) - trying to solve for p instead of loading it from APL
+    prof_p_paper = APL.TRMM_LBA_p(FT)
     prof_T = APL.TRMM_LBA_T(FT)
-    #prof_T_mine = TRMM_T_profile(FT)
     prof_RH = APL.TRMM_LBA_RH(FT)
     prof_u = APL.TRMM_LBA_u(FT)
     prof_v = APL.TRMM_LBA_v(FT)
     prof_tke = APL.TRMM_LBA_tke(FT)
-
     prof_q_tot = TRMM_q_tot_profile(FT, param_set)
 
     # Solve the initial value problem for pressure
@@ -810,24 +792,24 @@ function initialize_profiles(
     params = (; param_set, prof_thermo_var, prof_q_tot, thermo_flag)
     prof_p = p_ivp(FT, params, p_0, z_0, z_max)
 
+    p_low = FT(991.3 * 100)
+    z_low = FT(0)
+
     # Fill in the grid mean values
     prog_gm_uₕ = TC.grid_mean_uₕ(state)
     TC.set_z!(prog_gm_uₕ, prof_u, prof_v)
-    #zc = grid.zc.z
-    #aux_gm.T .= prof_T.(zc)
     @inbounds for k in real_center_indices(grid)
         z = grid.zc[k].z
-        #print(prof_T_mine(z), " vs ", prof_T(z), "\n")
-        #pv_star = TD.saturation_vapor_pressure(
-        #    thermo_params,
-        #    aux_gm.T[k],
-        #    TD.Liquid(),
-        #)
-        ## eq. 37 in pressel et al and the def of RH
-        #RH = prof_RH(z)
-        #denom = (prof_p(z) - pv_star + (1 / molmass_ratio) * pv_star * RH / 100)
-        #qv_star = pv_star * (1 / molmass_ratio) / denom
-        #aux_gm.q_tot[k] = qv_star * RH / 100
+
+        dz = z - z_low
+        dp = prof_p(z) - p_low
+        z_low = z
+        p_low = prof_p(z)
+        dpdz = dp/dz
+
+        tmp_ρ = TD.air_density(thermo_params, prof_T(z), prof_p(z), TD.PhasePartition(prof_q_tot(z), FT(0), FT(0)))
+        print("z, dp/dz, ρg, diff : ", z,", ", -dpdz, ", ", tmp_ρ * grav, ", ", -dpdz - tmp_ρ * grav,  "\n", )
+
         aux_gm.p[k] = prof_p(z)
         aux_gm.q_tot[k] = prof_q_tot(z)
         aux_gm.T[k] = prof_T(z)
