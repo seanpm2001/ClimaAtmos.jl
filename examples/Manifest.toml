@@ -1301,7 +1301,9 @@ version = "0.2.4"
 
 [[deps.NVTX]]
 deps = ["Colors"]
-git-tree-sha1 = "1aa34e3ee03f7253c9381c794e452e7af895b7ec"
+git-tree-sha1 = "60b8600780c5e0e1754b5927a1c87a028f621d25"
+repo-rev = "sb/alloc-free"
+repo-url = "https://github.com/simonbyrne/NVTX.jl.git"
 uuid = "5da4648a-3479-48b8-97b9-01cb529c0a1f"
 version = "0.1.2"
 
