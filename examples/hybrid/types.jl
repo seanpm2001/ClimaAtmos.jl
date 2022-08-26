@@ -346,7 +346,7 @@ function get_integrator(parsed_args, Y, p, tspan, ode_config, callback)
     (; dt) = p.simulation
     FT = eltype(tspan)
     dt_save_to_sol = time_to_seconds(parsed_args["dt_save_to_sol"])
-    show_progress_bar = isinteractive()
+    show_progress_bar = true #isinteractive()
     additional_solver_kwargs = () # e.g., abstol and reltol
 
     if :ρe_tot in propertynames(Y.c) && enable_threading()
@@ -378,7 +378,8 @@ function get_integrator(parsed_args, Y, p, tspan, ode_config, callback)
         dt = dt,
         adaptive = false,
         progress = show_progress_bar,
-        progress_steps = isinteractive() ? 1 : 1000,
+        progress_steps = 1000,
+        #progress_steps = isinteractive() ? 1 : 1000,
         additional_solver_kwargs...,
     )
     return integrator

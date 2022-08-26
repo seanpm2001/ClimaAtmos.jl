@@ -224,6 +224,8 @@ function dp_dz!(p, params, z)
     (; param_set, prof_thermo_var, prof_q_tot, thermo_flag) = params
     thermo_params = TCP.thermodynamics_params(param_set)
 
+    FT = eltype(prof_q_tot(z))
+
     q_tot = prof_q_tot(z)
     q = TD.PhasePartition(q_tot)
 
@@ -732,7 +734,7 @@ function surface_ref_state(::TRMM_LBA, param_set::APS, namelist)
     molmass_ratio = TCP.molmass_ratio(param_set)
     FT = eltype(param_set)
     Pg::FT = 991.3 * 100  #Pressure at ground
-    Tg::FT = 296.85 + 0.1   # surface values for reference state (RS) which outputs p, ρ
+    Tg::FT = 296.85 # + 0.1   # surface values for reference state (RS) which outputs p, ρ
     pvg = TD.saturation_vapor_pressure(thermo_params, Tg, TD.Liquid())
     qtg = (1 / molmass_ratio) * pvg / (Pg - pvg) #Total water mixing ratio at surface
     return TD.PhaseEquil_pTq(thermo_params, Pg, Tg, qtg)
@@ -771,56 +773,99 @@ function initialize_profiles(
     aux_gm = TC.center_aux_grid_mean(state)
     prog_gm = TC.center_prog_grid_mean(state)
 
-    grav = TCP.grav(param_set)
     FT = TC.float_type(state)
 
+    molmass_ratio = TCP.molmass_ratio(param_set)
+    grav = TCP.grav(param_set)
+
     # Get profiles from AtmosphericProfilesLibrary.jl
-    prof_p_paper = APL.TRMM_LBA_p(FT)
     prof_T = APL.TRMM_LBA_T(FT)
-    prof_RH = APL.TRMM_LBA_RH(FT)
     prof_u = APL.TRMM_LBA_u(FT)
     prof_v = APL.TRMM_LBA_v(FT)
     prof_tke = APL.TRMM_LBA_tke(FT)
     prof_q_tot = TRMM_q_tot_profile(FT, param_set)
 
     # Solve the initial value problem for pressure
-    p_0::FT = FT(991.3 * 100)    # TODO - duplicated from surface_ref_state
-    z_0::FT = grid.zf[TC.kf_surface(grid)].z
-    z_max::FT = grid.zf[TC.kf_top_of_atmos(grid)].z
-    prof_thermo_var = prof_T
-    thermo_flag = "temperature"
-    params = (; param_set, prof_thermo_var, prof_q_tot, thermo_flag)
-    prof_p = p_ivp(FT, params, p_0, z_0, z_max)
+    #p_0::FT = FT(991.3 * 100)    # TODO - duplicated from surface_ref_state
+    #z_0::FT = grid.zf[TC.kf_surface(grid)].z
+    #z_max::FT = grid.zf[TC.kf_top_of_atmos(grid)].z
+    #prof_thermo_var = prof_T
+    #thermo_flag = "temperature"
+    #params = (; param_set, prof_thermo_var, prof_q_tot, thermo_flag)
+    #prof_p = p_ivp(FT, params, p_0, z_0, z_max)
 
-    p_low = FT(991.3 * 100)
-    z_low = FT(0)
+    # Solve the initial value problem for pressure
+    p_low::FT = FT(991.3 * 100)    # TODO - duplicated from surface_ref_state
+    z_low::FT = grid.zf[TC.kf_surface(grid)].z
+
+    T_low = prof_T(z_low)
+    q_tot_low = prof_q_tot(z_low)
+    q_low = TD.PhasePartition(q_tot_low)
+    Rm_low = TD.gas_constant_air(thermo_params, q_low)
 
     # Fill in the grid mean values
     prog_gm_uₕ = TC.grid_mean_uₕ(state)
     TC.set_z!(prog_gm_uₕ, prof_u, prof_v)
+
+    #print("zc \n")
+    #print(real_center_indices(grid))
+    #print(grid.zc[:], "\n")
+    #print("zf \n")
+    #print(real_face_indices(grid))
+    #print(grid.zf[:], "\n")
+
     @inbounds for k in real_center_indices(grid)
-        z = grid.zc[k].z
 
-        dz = z - z_low
-        dp = prof_p(z) - p_low
-        z_low = z
-        p_low = prof_p(z)
-        dpdz = dp/dz
+        if z_low == 0
+            z = grid.zc[k].z
+            dz = z - z_low
 
-        tmp_ρ = TD.air_density(thermo_params, prof_T(z), prof_p(z), TD.PhasePartition(prof_q_tot(z), FT(0), FT(0)))
-        print("z, dp/dz, ρg, diff : ", z,", ", -dpdz, ", ", tmp_ρ * grav, ", ", -dpdz - tmp_ρ * grav,  "\n", )
+            aux_gm.p[k] = p_low * (FT(1) - dz * grav / FT(2) / Rm_low / T_low)
 
-        aux_gm.p[k] = prof_p(z)
+            z_low = z
+            T_low = prof_T(z)
+            q_tot_low = prof_q_tot(z)
+            q_low = TD.PhasePartition(q_tot_low)
+            Rm_low = TD.gas_constant_air(thermo_params, q_low)
+
+            dp = aux_gm.p[k] - p_low
+            p_low = aux_gm.p[k]
+        else
+            z = grid.zc[k].z
+            dz = z - z_low
+            z_low = z
+
+            q_tot = prof_q_tot(z)
+            T = prof_T(z)
+            q = TD.PhasePartition(q_tot)
+            Rm = TD.gas_constant_air(thermo_params, q)
+            aux_gm.p[k] = p_low * (FT(1) - dz * grav / FT(2) / Rm_low / T_low) / (FT(1) + dz * grav / FT(2) / Rm / T)
+
+            dp = aux_gm.p[k] - p_low
+            p_low = aux_gm.p[k]
+
+            Rm_low = Rm
+            T_low = T
+        end
         aux_gm.q_tot[k] = prof_q_tot(z)
-        aux_gm.T[k] = prof_T(z)
         phase_part = TD.PhasePartition(aux_gm.q_tot[k], FT(0), FT(0)) # initial state is not saturated
         aux_gm.θ_liq_ice[k] = TD.liquid_ice_pottemp_given_pressure(
             thermo_params,
-            aux_gm.T[k],
+            prof_T(z),
             aux_gm.p[k],
             phase_part,
         )
         aux_gm.tke[k] = prof_tke(z)
+
+        #dp = prof_p(z) - p_low
+        #p_low = prof_p(z)
+        dpdz = dp/dz
+
+        ts = TD.PhaseEquil_pθq(thermo_params, aux_gm.p[k], aux_gm.θ_liq_ice[k], aux_gm.q_tot[k])
+        ρ = TD.air_density(thermo_params, ts)
+
+        #print(z, ",\\ \n")
+        print(-dpdz - grav * ρ, ",\\ \n")
     end
 end
 
