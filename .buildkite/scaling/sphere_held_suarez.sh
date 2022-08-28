@@ -15,19 +15,19 @@ profiling="$3"
 
 job_id="sphere_held_suarez_${resolution}_res_rhoe_$nprocs"
 
-profiling_params="nsys profile --trace=nvtx,mpi,osrt --mpi-impl=mpich --output=${job_id}/report.%q{NPROCS}"
+profiling_params="nsys profile --trace=nvtx,mpi,osrt --mpi-impl=openmpi --output=${job_id}/report.%q{NPROCS}.%q{OMPI_COMM_WORLD_RANK}"
 
 if [[ "$resolution" == "low" ]]
 then
-    sim_params="mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --upwinding none --t_end 10days --dt 400secs --z_elem 10 --h_elem 4 --kappa_4 2e17"
+    sim_params="julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --upwinding none --t_end 10days --dt 400secs --z_elem 10 --h_elem 4 --kappa_4 2e17"
 else
-    sim_params="mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --upwinding none --t_end 1days --dt 50secs --z_elem 45 --h_elem 24 --kappa_4 5e14"
+    sim_params="julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --upwinding none --t_end 1days --dt 50secs --z_elem 45 --h_elem 24 --kappa_4 5e14"
 fi
 
 if [[ "$profiling" == "enable" ]]
 then
     module load cuda/11.3 nsight-systems/2022.2.1
-    $profiling_params $sim_params
+    mpiexec $profiling_params $sim_params
 else
-    $sim_params
+    mpiexec $sim_params
 fi
