@@ -15,7 +15,7 @@ profiling="$3"
 
 job_id="sphere_held_suarez_${resolution}_res_rhoe_$nprocs"
 
-profiling_params="nsys profile --trace=nvtx,mpi,osrt --mpi-impl=openmpi --output=${job_id}/report.%q{NPROCS}.%q{OMPI_COMM_WORLD_RANK}"
+profiling_params="nsys profile --trace=nvtx,mpi,osrt --mpi-impl=mpich --output=${job_id}/report.%q{NPROCS}.%q{PMI_RANK}"
 
 if [[ "$resolution" == "low" ]]
 then
