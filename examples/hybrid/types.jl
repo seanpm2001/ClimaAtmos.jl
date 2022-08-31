@@ -1,4 +1,5 @@
 using Dates: DateTime, @dateformat_str
+import ClimaCore: InputOutput
 
 abstract type AbstractMoistureModel end
 struct DryModel <: AbstractMoistureModel end
@@ -126,9 +127,13 @@ function get_numerics(parsed_args)
     numerics = (;
         upwinding_mode = Symbol(
             parse_arg(parsed_args, "upwinding", "third_order"),
-        )
+        ),
+        apply_limiter = parsed_args["apply_limiter"],
     )
     @assert numerics.upwinding_mode in (:none, :first_order, :third_order)
+    for key in keys(numerics)
+        @info "`$(key)`:$(getproperty(numerics, key))"
+    end
 
     return numerics
 end
@@ -237,24 +242,29 @@ end
 # get_state(simulation, parsed_args, spaces, params, model_spec)
 function get_state(simulation, args...)
     if simulation.restart
-        return get_state_restart(simulation.is_distributed)
+        return get_state_restart(comms_ctx)
     else
         return get_state_fresh_start(args...)
     end
 end
 
-function get_state_restart(is_distributed)
+function get_spaces_restart(Y)
+    center_space = axes(Y.c)
+    face_space = axes(Y.f)
+    hspace = Spaces.horizontal_space(center_space)
+    horizontal_mesh = hspace.topology.mesh
+    quad = horizontal_mesh.ne + 1
+    vertical_mesh = center_space.vertical_topology.mesh
+    z_max = vertical_mesh.domain.coord_max.z
+    z_elem = length(vertical_mesh.faces) - 1
+    return (; center_space, face_space, horizontal_mesh, quad, z_max, z_elem)
+end
+
+function get_state_restart(comms_ctx)
     @assert haskey(ENV, "RESTART_FILE")
-    restart_file_name = if is_distributed
-        split(ENV["RESTART_FILE"], ".jld2")[1] * "_pid$pid.jld2"
-    else
-        ENV["RESTART_FILE"]
-    end
-    local Y, t_start
-    JLD2.jldopen(restart_file_name) do data
-        Y = data["Y"]
-        t_start = data["t"]
-    end
+    reader = InputOutput.HDF5Reader(ENV["RESTART_FILE"], comms_ctx)
+    Y = InputOutput.read_field(reader, "Y")
+    t_start = InputOutput.HDF5.read_attribute(reader.file, "time")
     return (Y, t_start)
 end
 
@@ -283,26 +293,32 @@ function get_state_fresh_start(parsed_args, spaces, params, model_spec)
 end
 
 import OrdinaryDiffEq as ODE
+import ClimaTimeSteppers as CTS
 #=
 (; jac_kwargs, alg_kwargs, ode_algorithm) =
     ode_config(Y, parsed_args, model_spec)
 =#
 function ode_configuration(Y, parsed_args, model_spec)
-    # TODO: add max_newton_iters, newton_κ, test_implicit_solver to parsed_args?
-    max_newton_iters = 2 # only required by ODE algorithms that use Newton's method
-    newton_κ = Inf # similar to a reltol for Newton's method (default is 0.01)
     test_implicit_solver = false # makes solver extremely slow when set to `true`
     jacobian_flags = jacobi_flags(model_spec.energy_form)
-    ode_algorithm = getproperty(ODE, Symbol(parsed_args["ode_algo"]))
+    ode_algorithm = if startswith(parsed_args["ode_algo"], "ODE.")
+        @warn "apply_limiter flag is ignored for OrdinaryDiffEq algorithms"
+        getproperty(ODE, Symbol(split(parsed_args["ode_algo"], ".")[2]))
+    else
+        getproperty(CTS, Symbol(parsed_args["ode_algo"]))
+    end
 
     ode_algorithm_type =
         ode_algorithm isa Function ? typeof(ode_algorithm()) : ode_algorithm
+    is_imex_CTS_algo = ode_algorithm_type <: ClimaTimeSteppers.IMEXARKAlgorithm
     if ode_algorithm_type <: Union{
         ODE.OrdinaryDiffEqImplicitAlgorithm,
         ODE.OrdinaryDiffEqAdaptiveImplicitAlgorithm,
-    }
-        use_transform =
-            !(ode_algorithm_type in (ODE.Rosenbrock23, ODE.Rosenbrock32))
+    } || is_imex_CTS_algo
+        use_transform = !(
+            is_imex_CTS_algo ||
+            ode_algorithm_type in (ODE.Rosenbrock23, ODE.Rosenbrock32)
+        )
         W = SchurComplementW(
             Y,
             use_transform,
@@ -327,13 +343,21 @@ function ode_configuration(Y, parsed_args, model_spec)
             ODE.OrdinaryDiffEqNewtonAlgorithm,
             ODE.OrdinaryDiffEqNewtonAdaptiveAlgorithm,
         }
-            alg_kwargs = (;
-                alg_kwargs...,
-                nlsolve = ODE.NLNewton(;
-                    κ = newton_κ,
-                    max_iter = max_newton_iters,
-                ),
+            if parsed_args["max_newton_iters"] == 1
+                error("OridinaryDiffEq requires at least 2 Newton iterations")
+            end
+            # κ like a relative tolerance; its default value in ODE is 0.01
+            nlsolve = ODE.NLNewton(;
+                κ = parsed_args["max_newton_iters"] == 2 ? Inf : 0.01,
+                max_iter = parsed_args["max_newton_iters"],
             )
+            alg_kwargs = (; alg_kwargs..., nlsolve)
+        elseif is_imex_CTS_algo
+            newtons_method = NewtonsMethod(;
+                linsolve = linsolve!,
+                max_iters = parsed_args["max_newton_iters"],
+            )
+            alg_kwargs = (; newtons_method)
         end
     else
         jac_kwargs = alg_kwargs = ()
@@ -346,8 +370,7 @@ function get_integrator(parsed_args, Y, p, tspan, ode_config, callback)
     (; dt) = p.simulation
     FT = eltype(tspan)
     dt_save_to_sol = time_to_seconds(parsed_args["dt_save_to_sol"])
-    show_progress_bar = true #isinteractive()
-    additional_solver_kwargs = () # e.g., abstol and reltol
+    show_progress_bar = isinteractive()
 
     if :ρe_tot in propertynames(Y.c) && enable_threading()
         implicit_tendency! = implicit_tendency_special!
@@ -356,13 +379,17 @@ function get_integrator(parsed_args, Y, p, tspan, ode_config, callback)
     end
 
     problem = if parsed_args["split_ode"]
+        remaining_func =
+            startswith(parsed_args["ode_algo"], "ODE.") ?
+            remaining_tendency! :
+            ForwardEulerODEFunction(remaining_tendency_increment!)
         ODE.SplitODEProblem(
             ODE.ODEFunction(
                 implicit_tendency!;
                 jac_kwargs...,
                 tgrad = (∂Y∂t, Y, p, t) -> (∂Y∂t .= FT(0)),
             ),
-            remaining_tendency!,
+            remaining_func,
             Y,
             tspan,
             p,
@@ -370,17 +397,29 @@ function get_integrator(parsed_args, Y, p, tspan, ode_config, callback)
     else
         ODE.ODEProblem(remaining_tendency!, Y, tspan, p)
     end
-    integrator = ODE.init(
-        problem,
-        ode_algorithm(; alg_kwargs...);
-        saveat = dt_save_to_sol == Inf ? last(tspan) : dt_save_to_sol,
-        callback = callback,
-        dt = dt,
-        adaptive = false,
-        progress = show_progress_bar,
-        progress_steps = 1000,
-        #progress_steps = isinteractive() ? 1 : 1000,
-        additional_solver_kwargs...,
-    )
+    if startswith(parsed_args["ode_algo"], "ODE.")
+        ode_algo = ode_algorithm(; alg_kwargs...)
+        integrator_kwargs = (;
+            adaptive = false,
+            progress = show_progress_bar,
+            progress_steps = isinteractive() ? 1 : 1000,
+        )
+    else
+        ode_algo = ode_algorithm(alg_kwargs...)
+        integrator_kwargs = (;
+            kwargshandle = KeywordArgSilent, # allow custom kwargs
+            adjustfinal = true,
+            # TODO: enable progress bars in ClimaTimeSteppers
+        )
+    end
+    saveat = if dt_save_to_sol == Inf
+        tspan[2]
+    elseif tspan[2] % dt_save_to_sol == 0
+        dt_save_to_sol
+    else
+        [tspan[1]:dt_save_to_sol:tspan[2]..., tspan[2]]
+    end # ensure that tspan[2] is always saved
+    integrator =
+        ODE.init(problem, ode_algo; saveat, callback, dt, integrator_kwargs...)
     return integrator
 end

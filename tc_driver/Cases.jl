@@ -734,7 +734,7 @@ function surface_ref_state(::TRMM_LBA, param_set::APS, namelist)
     molmass_ratio = TCP.molmass_ratio(param_set)
     FT = eltype(param_set)
     Pg::FT = 991.3 * 100  #Pressure at ground
-    Tg::FT = 296.85 # + 0.1   # surface values for reference state (RS) which outputs p, ρ
+    Tg::FT = 296.85 # surface values for reference state (RS) which outputs p, ρ
     pvg = TD.saturation_vapor_pressure(thermo_params, Tg, TD.Liquid())
     qtg = (1 / molmass_ratio) * pvg / (Pg - pvg) #Total water mixing ratio at surface
     return TD.PhaseEquil_pTq(thermo_params, Pg, Tg, qtg)

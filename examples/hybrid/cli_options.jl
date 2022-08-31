@@ -22,6 +22,10 @@ function parse_commandline()
         help = "Time between saving to disk. Examples: [`10secs`, `1hours`, `Inf` (do not save)]"
         arg_type = String
         default = "Inf"
+        "--dt_save_restart"
+        help = "Time between saving restart files to disk. Examples: [`10secs`, `1hours`, `Inf` (do not save)]"
+        arg_type = String
+        default = "Inf"
         "--dt_rad"
         help = "Time between calling radiation callback for sphere configurations"
         arg_type = String
@@ -90,9 +94,13 @@ function parse_commandline()
         arg_type = String
         default = "none"
         "--ode_algo"
-        help = "ODE algorithm [`Rosenbrock23` (default), `Euler`]"
+        help = "ODE algorithm [`ARS343`, `IMKG343a`, `ODE.Euler`, `ODE.IMEXEuler`, `ODE.Rosenbrock23` (default), etc.]"
         arg_type = String
-        default = "Rosenbrock23"
+        default = "ODE.Rosenbrock23"
+        "--max_newton_iters"
+        help = "Maximum number of Newton's method iterations (only for ODE algorithms that use Newton's method)"
+        arg_type = Int
+        default = 3
         "--split_ode"
         help = "Use split of ODE problem. Examples: [`true` (implicit, default), `false` (explicit)]"
         arg_type = Bool
@@ -199,6 +207,10 @@ function parse_commandline()
         help = "Define the surface elevation profile [`NoWarp`,`Earth`,`DCMIP200`]"
         arg_type = String
         default = "NoWarp"
+        "--apply_limiter"
+        help = "Apply a horizontal limiter to every tracer [`true` (default), `false`]"
+        arg_type = Bool
+        default = true
     end
     parsed_args = ArgParse.parse_args(ARGS, s)
     return (s, parsed_args)
@@ -293,6 +305,7 @@ parsed_args_from_command_line_flags(str, parsed_args = Dict()) =
 
 function parsed_args_from_ARGS_string(str, parsed_args = Dict())
     parsed_args_list = split(str, " ")
+    parsed_args_list == [""] && return parsed_args
     @assert iseven(length(parsed_args_list))
     parsed_arg_pairs = map(1:2:(length(parsed_args_list) - 1)) do i
         Pair(parsed_args_list[i], strip(parsed_args_list[i + 1], '\"'))
