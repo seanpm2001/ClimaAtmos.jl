@@ -353,7 +353,8 @@ function update_aux!(
         )
     end
     to_scalar(vector) = vector.u₃
-    @. aux_en_f.w = to_scalar(prog_gm_f.w) / (1 - Ifb(aux_bulk.area))
+    #@. aux_en_f.w = to_scalar(prog_gm_f.w) / (1 - Ifb(aux_bulk.area))
+    @. aux_en_f.w = FT(0)
     @inbounds for i in 1:N_up
         @. aux_en_f.w -=
             Ifb(aux_up[i].area) * aux_up_f[i].w / (1 - Ifb(aux_bulk.area))

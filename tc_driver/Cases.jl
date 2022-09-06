@@ -794,18 +794,18 @@ function initialize_profiles(
     #params = (; param_set, prof_thermo_var, prof_q_tot, thermo_flag)
     #prof_p = p_ivp(FT, params, p_0, z_0, z_max)
 
+    # Fill in the grid mean values
+    prog_gm_uₕ = TC.grid_mean_uₕ(state)
+    TC.set_z!(prog_gm_uₕ, prof_u, x -> FT(0))
+    # Testing the pressure profile:
+
     # Solve the initial value problem for pressure
     p_low::FT = FT(991.3 * 100)    # TODO - duplicated from surface_ref_state
     z_low::FT = grid.zf[TC.kf_surface(grid)].z
-
     T_low = prof_T(z_low)
     q_tot_low = prof_q_tot(z_low)
     q_low = TD.PhasePartition(q_tot_low)
     Rm_low = TD.gas_constant_air(thermo_params, q_low)
-
-    # Fill in the grid mean values
-    prog_gm_uₕ = TC.grid_mean_uₕ(state)
-    TC.set_z!(prog_gm_uₕ, prof_u, prof_v)
 
     #print("zc \n")
     #print(real_center_indices(grid))
@@ -813,41 +813,32 @@ function initialize_profiles(
     #print("zf \n")
     #print(real_face_indices(grid))
     #print(grid.zf[:], "\n")
-
     @inbounds for k in real_center_indices(grid)
+        z = grid.zc[k].z
+        dz = z - z_low
 
-        if z_low == 0
-            z = grid.zc[k].z
-            dz = z - z_low
+        q_tot = prof_q_tot(z)
+        T = prof_T(z)
+        q = TD.PhasePartition(q_tot)
+        Rm = TD.gas_constant_air(thermo_params, q)
 
-            aux_gm.p[k] = p_low * (FT(1) - dz * grav / FT(2) / Rm_low / T_low)
+        p = p_low * (FT(1) - dz * grav / FT(2) / Rm_low / T_low) / (FT(1) + dz *  grav / FT(2) / Rm / T)
 
-            z_low = z
-            T_low = prof_T(z)
-            q_tot_low = prof_q_tot(z)
-            q_low = TD.PhasePartition(q_tot_low)
-            Rm_low = TD.gas_constant_air(thermo_params, q_low)
+        z_low = z
+        T_low = T
+        q_tot_low = q_tot
+        q_low = q
+        Rm_low = Rm
+        p_low = p
 
-            dp = aux_gm.p[k] - p_low
-            p_low = aux_gm.p[k]
-        else
-            z = grid.zc[k].z
-            dz = z - z_low
-            z_low = z
+        aux_gm.p[k] = p
 
-            q_tot = prof_q_tot(z)
-            T = prof_T(z)
-            q = TD.PhasePartition(q_tot)
-            Rm = TD.gas_constant_air(thermo_params, q)
-            aux_gm.p[k] = p_low * (FT(1) - dz * grav / FT(2) / Rm_low / T_low) / (FT(1) + dz * grav / FT(2) / Rm / T)
-
-            dp = aux_gm.p[k] - p_low
-            p_low = aux_gm.p[k]
-
-            Rm_low = Rm
-            T_low = T
-        end
+    end
+    @inbounds for k in real_center_indices(grid)
+        z = grid.zc[k].z
+        aux_gm.tke[k] = prof_tke(z)
         aux_gm.q_tot[k] = prof_q_tot(z)
+
         phase_part = TD.PhasePartition(aux_gm.q_tot[k], FT(0), FT(0)) # initial state is not saturated
         aux_gm.θ_liq_ice[k] = TD.liquid_ice_pottemp_given_pressure(
             thermo_params,
@@ -855,18 +846,34 @@ function initialize_profiles(
             aux_gm.p[k],
             phase_part,
         )
-        aux_gm.tke[k] = prof_tke(z)
-
-        #dp = prof_p(z) - p_low
-        #p_low = prof_p(z)
-        dpdz = dp/dz
-
-        ts = TD.PhaseEquil_pθq(thermo_params, aux_gm.p[k], aux_gm.θ_liq_ice[k], aux_gm.q_tot[k])
-        ρ = TD.air_density(thermo_params, ts)
-
-        #print(z, ",\\ \n")
-        print(-dpdz - grav * ρ, ",\\ \n")
     end
+
+    #p_low::FT = FT(991.3 * 100)    # TODO - duplicated from surface_ref_state
+    #z_low::FT = grid.zf[TC.kf_surface(grid)].z
+    #T_low = prof_T(z_low)
+    #q_tot_low = prof_q_tot(z_low)
+    #q_low = TD.PhasePartition(q_tot_low)
+    #Rm_low = TD.gas_constant_air(thermo_params, q_low)
+    #@inbounds for k in real_center_indices(grid)
+    #    z  = grid.zc[k].z
+    #    if z_low == grid.zf[TC.kf_surface(grid)].z
+
+    #    else
+    #        ts_k = TD.PhaseEquil_pθq(thermo_params, aux_gm.p[k-1], aux_gm.θ_liq_ice[k-1], aux_gm.q_tot[k-1])
+    #        ts_kp1 = TD.PhaseEquil_pθq(thermo_params, aux_gm.p[k], aux_gm.θ_liq_ice[k], aux_gm.q_tot[k])
+    #        ρ_k = TD.air_density(thermo_params, ts_k)
+    #        ρ_kp1 = TD.air_density(thermo_params, ts_kp1)
+    #        f_ρ = 0.5 * (ρ_k + ρ_kp1)
+
+
+    #        dz = grid.zc[k].z - grid.zc[k-1].z
+    #        dp = aux_gm.p[k] - aux_gm.p[k-1]
+    #        f_dp_c_dz = dp/dz
+
+    #        #print(z, ",\\ \n")
+    #        print(z-dz/FT(2), ", ", -f_dp_c_dz - grav * f_ρ, ",\\ \n")
+    #    end
+    #end
 end
 
 function surface_params(case::TRMM_LBA, surf_ref_state, param_set; Ri_bulk_crit)
