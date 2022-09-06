@@ -45,6 +45,7 @@ steps:
         queue: central
         slurm_nodes: 1
         slurm_tasks_per_node: 1
+        slurm_cpus_per_task: 2
         slurm_mem: 0
         slurm_exclusive:
 
@@ -62,6 +63,7 @@ steps:
         queue: central
         slurm_nodes: 1
         slurm_tasks_per_node: 2
+        slurm_cpus_per_task: 2
         slurm_mem: 0
         slurm_exclusive:
 
@@ -79,6 +81,7 @@ steps:
         queue: central
         slurm_nodes: 1
         slurm_tasks_per_node: 4
+        slurm_cpus_per_task: 2
         slurm_mem: 0
         slurm_exclusive:
 
@@ -96,6 +99,7 @@ steps:
         queue: central
         slurm_nodes: 1
         slurm_tasks_per_node: 8
+        slurm_cpus_per_task: 2
         slurm_mem: 0
         slurm_exclusive:
 
@@ -113,6 +117,7 @@ steps:
         queue: central
         slurm_nodes: 1
         slurm_tasks_per_node: 16
+        slurm_cpus_per_task: 2
         slurm_mem: 0
         slurm_exclusive:
 
@@ -130,6 +135,7 @@ steps:
         queue: central
         slurm_nodes: 1
         slurm_tasks_per_node: 32
+        slurm_cpus_per_task: 2
         slurm_mem: 0
         slurm_exclusive:
 
