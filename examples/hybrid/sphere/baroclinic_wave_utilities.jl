@@ -242,11 +242,13 @@ end
 # TODO: Allow ClimaCore to handle both 2D and 3D Fields in a single broadcast.
 #       This currently results in a mismatched spaces error.
 function vertical_diffusion_boundary_layer_cache(
-    Y;
-    surface_scheme = "bulk",
+    Y,
+    ::Type{FT};
+    surface_scheme = nothing,
+    C_E::FT = FT(0),
     diffuse_momentum = true,
     coupled = false,
-)
+) where {FT}
     ᶠz_a = similar(Y.f, FT)
     z_bottom = Spaces.level(Fields.coordinate_field(Y.c).z, 1)
     Fields.field_values(ᶠz_a) .=
@@ -271,11 +273,14 @@ function vertical_diffusion_boundary_layer_cache(
         (; Cd = FT(0.0044), Ch = FT(0.0044))
     elseif surface_scheme == "monin_obukhov"
         (; z0m = FT(1e-5), z0b = FT(1e-5))
+    elseif isnothing(surface_scheme)
+        NamedTuple()
     end
     return (;
         surface_scheme,
         ᶠv_a = similar(Y.f, eltype(Y.c.uₕ)),
         ᶠz_a,
+        C_E,
         ᶠK_E = similar(Y.f, FT),
         surface_conditions = similar(z_bottom, cond_type),
         dif_flux_uₕ,
@@ -288,8 +293,7 @@ function vertical_diffusion_boundary_layer_cache(
     )
 end
 
-function eddy_diffusivity_coefficient(norm_v_a, z_a, p)
-    C_E = FT(0.0044)
+function eddy_diffusivity_coefficient(C_E, norm_v_a, z_a, p)
     p_pbl = FT(85000)
     p_strato = FT(10000)
     K_E = C_E * norm_v_a * z_a
@@ -394,7 +398,7 @@ end
 
 function vertical_diffusion_boundary_layer_tendency!(Yₜ, Y, p, t)
     ᶜρ = Y.c.ρ
-    (; z_sfc, ᶜts, ᶜp, T_sfc, ᶠv_a, ᶠz_a, ᶠK_E) = p # assume ᶜts and ᶜp have been updated
+    (; z_sfc, ᶜts, ᶜp, T_sfc, ᶠv_a, ᶠz_a, ᶠK_E, C_E) = p # assume ᶜts and ᶜp have been updated
     (;
         surface_conditions,
         dif_flux_uₕ,
@@ -417,7 +421,7 @@ function vertical_diffusion_boundary_layer_tendency!(Yₜ, Y, p, t)
     Fields.field_values(ᶠv_a) .=
         Fields.field_values(Spaces.level(Y.c.uₕ, 1)) .*
         one.(Fields.field_values(ᶠz_a)) # TODO: fix VIJFH copyto! to remove this
-    @. ᶠK_E = eddy_diffusivity_coefficient(norm(ᶠv_a), ᶠz_a, ᶠinterp(ᶜp))
+    @. ᶠK_E = eddy_diffusivity_coefficient(C_E, norm(ᶠv_a), ᶠz_a, ᶠinterp(ᶜp))
 
     # TODO: Revisit z_surface construction when "space is not same instance" error is dealt with
     ᶜz_field = Fields.coordinate_field(Y.c).z
@@ -482,9 +486,13 @@ function vertical_diffusion_boundary_layer_tendency!(Yₜ, Y, p, t)
 
     if :ρe_tot in propertynames(Y.c)
         if !coupled
-            @. dif_flux_energy = Geometry.WVector(
-                surface_conditions.shf + surface_conditions.lhf,
-            )
+            if isnothing(p.surface_scheme)
+                @. dif_flux_energy *= 0
+            else
+                @. dif_flux_energy = Geometry.WVector(
+                    surface_conditions.shf + surface_conditions.lhf,
+                )
+            end
         end
         ᶜdivᵥ = Operators.DivergenceF2C(
             top = Operators.SetValue(Geometry.WVector(FT(0))),
@@ -496,7 +504,11 @@ function vertical_diffusion_boundary_layer_tendency!(Yₜ, Y, p, t)
 
     if :ρq_tot in propertynames(Y.c)
         if !coupled
-            @. dif_flux_ρq_tot = Geometry.WVector(surface_conditions.E)
+            if isnothing(p.surface_scheme)
+                @. dif_flux_ρq_tot *= 0
+            else
+                @. dif_flux_ρq_tot = Geometry.WVector(surface_conditions.E)
+            end
         end
         ᶜdivᵥ = Operators.DivergenceF2C(
             top = Operators.SetValue(Geometry.WVector(FT(0))),

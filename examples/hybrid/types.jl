@@ -117,20 +117,19 @@ function get_model_spec(::Type{FT}, parsed_args, namelist) where {FT}
         forcing_type = forcing_type(parsed_args),
         turbconv_model = turbconv_model(FT, parsed_args, namelist),
         anelastic_dycore = parsed_args["anelastic_dycore"],
+        C_E = FT(parsed_args["C_E"]),
     )
 
     return model_spec
 end
 
 function get_numerics(parsed_args)
-
+    # wrap each upwinding mode in a Val for dispatch
     numerics = (;
-        upwinding_mode = Symbol(
-            parse_arg(parsed_args, "upwinding", "third_order"),
-        ),
+        energy_upwinding = Val(Symbol(parsed_args["energy_upwinding"])),
+        tracer_upwinding = Val(Symbol(parsed_args["tracer_upwinding"])),
         apply_limiter = parsed_args["apply_limiter"],
     )
-    @assert numerics.upwinding_mode in (:none, :first_order, :third_order)
     for key in keys(numerics)
         @info "`$(key)`:$(getproperty(numerics, key))"
     end
@@ -329,6 +328,7 @@ function ode_configuration(Y, parsed_args, model_spec)
             if :ρe_tot in propertynames(Y.c) &&
                W.flags.∂ᶜ𝔼ₜ∂ᶠ𝕄_mode == :no_∂ᶜp∂ᶜK &&
                W.flags.∂ᶠ𝕄ₜ∂ᶜρ_mode == :exact &&
+               !W.test &&
                enable_threading()
                 Wfact_special!
             else

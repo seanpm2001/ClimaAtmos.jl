@@ -49,9 +49,12 @@ function parse_commandline()
         arg_type = Bool
         default = false
         "--surface_scheme"
-        help = "Surface flux scheme [`bulk` (default), `monin_obukhov`]"
+        help = "Surface flux scheme [`nothing` (default), `bulk`, `monin_obukhov`]"
         arg_type = String
-        default = "bulk"
+        "--C_E"
+        help = "Buld transfer coefficient"
+        arg_type = Float64
+        default = Float64(0.0044)
         "--coupled"
         help = "Coupled simulation [`false` (default), `true`]"
         arg_type = Bool
@@ -89,10 +92,14 @@ function parse_commandline()
         help = "Energy variable name [`rhoe` (default), `rhoe_int` , `rhotheta`]"
         arg_type = String
         default = "rhoe"
-        "--upwinding"
-        help = "Upwinding mode [`none` (default), `first_order` , `third_order`]"
-        arg_type = String
-        default = "none"
+        "--energy_upwinding"
+        help = "Energy upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
+        arg_type = Symbol
+        default = :none
+        "--tracer_upwinding"
+        help = "Tracer upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
+        arg_type = Symbol
+        default = :none # TODO: change to :zalesak
         "--ode_algo"
         help = "ODE algorithm [`ARS343`, `IMKG343a`, `ODE.Euler`, `ODE.IMEXEuler`, `ODE.Rosenbrock23` (default), etc.]"
         arg_type = String
@@ -304,6 +311,7 @@ parsed_args_from_command_line_flags(str, parsed_args = Dict()) =
     parsed_args_from_ARGS_string(strip(last(split(str, ".jl"))), parsed_args)
 
 function parsed_args_from_ARGS_string(str, parsed_args = Dict())
+    str = replace(str, "    " => " ", "   " => " ", "  " => " ")
     parsed_args_list = split(str, " ")
     parsed_args_list == [""] && return parsed_args
     @assert iseven(length(parsed_args_list))
