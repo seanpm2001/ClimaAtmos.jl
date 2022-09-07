@@ -705,6 +705,7 @@ function compute_up_tendencies!(
             -∇c(wvec(LBF(Ic(w_up) * ρarea))) +
             (ρarea * Ic(w_up) * entr_turb_dyn) -
             (ρarea * Ic(w_up) * detr_turb_dyn)
+
         @. tends_ρae_tot =
             -∇c(wvec(LBF(Ic(w_up) * ρarea * h_tot_up))) +
             (ρarea * Ic(w_up) * entr_turb_dyn * h_tot_en) -
