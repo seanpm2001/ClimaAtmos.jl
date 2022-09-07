@@ -151,15 +151,17 @@ function turb_conv_affect_filter!(integrator)
 end
 
 function save_to_disk_func(integrator)
+
     (; t, u, p) = integrator
     (; output_dir) = p.simulation
     Y = u
 
-    if :ρq_tot in propertynames(Y.c)
+    if :ᶜS_ρq_tot in propertynames(Y.c)
         (; ᶜts, ᶜp, ᶜS_ρq_tot, params, ᶜK) = p
     else
         (; ᶜts, ᶜp, params, ᶜK) = p
     end
+
     thermo_params = CAP.thermodynamics_params(params)
     cm_params = CAP.microphysics_params(params)
 
@@ -189,38 +191,97 @@ function save_to_disk_func(integrator)
 
     # cloudwater (liquid and ice), watervapor, precipitation, and RH for moist simulation
     if :ρq_tot in propertynames(Y.c)
+
         ᶜq = @. TD.PhasePartition(thermo_params, ᶜts)
         ᶜcloud_liquid = @. ᶜq.liq
         ᶜcloud_ice = @. ᶜq.ice
         ᶜwatervapor = @. TD.vapor_specific_humidity(ᶜq)
         ᶜRH = @. TD.relative_humidity(thermo_params, ᶜts)
 
-        # precipitation
-        @. ᶜS_ρq_tot =
-            Y.c.ρ * CM.Microphysics0M.remove_precipitation(
-                cm_params,
-                TD.PhasePartition(thermo_params, ᶜts),
-            )
-
-        # rain vs snow
-        ᶜ3d_rain = @. ifelse(ᶜT >= FT(273.15), ᶜS_ρq_tot, FT(0))
-        ᶜ3d_snow = @. ifelse(ᶜT < FT(273.15), ᶜS_ρq_tot, FT(0))
-        col_integrated_rain =
-            vertical∫_col(ᶜ3d_rain) ./ FT(CAP.ρ_cloud_liq(params))
-        col_integrated_snow =
-            vertical∫_col(ᶜ3d_snow) ./ FT(CAP.ρ_cloud_liq(params))
-
         moist_diagnostic = (;
             cloud_liquid = ᶜcloud_liquid,
             cloud_ice = ᶜcloud_ice,
             water_vapor = ᶜwatervapor,
-            precipitation_removal = ᶜS_ρq_tot,
-            column_integrated_rain = col_integrated_rain,
-            column_integrated_snow = col_integrated_snow,
             relative_humidity = ᶜRH,
         )
+        if :ᶜS_ρq_tot in propertynames(Y.c)
+            # precipitation
+            @. ᶜS_ρq_tot =
+                Y.c.ρ * CM.Microphysics0M.remove_precipitation(
+                    cm_params,
+                    TD.PhasePartition(thermo_params, ᶜts),
+                )
+            # rain vs snow
+            ᶜ3d_rain = @. ifelse(ᶜT >= FT(273.15), ᶜS_ρq_tot, FT(0))
+            ᶜ3d_snow = @. ifelse(ᶜT < FT(273.15), ᶜS_ρq_tot, FT(0))
+            col_integrated_rain =
+                vertical∫_col(ᶜ3d_rain) ./ FT(CAP.ρ_cloud_liq(params))
+            col_integrated_snow =
+                vertical∫_col(ᶜ3d_snow) ./ FT(CAP.ρ_cloud_liq(params))
+
+            moist_diagnostics = (
+                moist_diagnostics...,
+                precipitation_removal = ᶜS_ρq_tot,
+                column_integrated_rain = col_integrated_rain,
+                column_integrated_snow = col_integrated_snow,
+            )
+        end
     else
         moist_diagnostic = NamedTuple()
+    end
+
+    if :edmf_cache in propertynames(p) && p.simulation.is_debugging_tc
+
+        turbulence_convection_diagnostic = (;
+            bulk_up_area = p.edmf_cache.aux.cent.turbconv.bulk.area,
+            bulk_up_h_tot = p.edmf_cache.aux.cent.turbconv.bulk.h_tot,
+            bulk_up_buoyancy = p.edmf_cache.aux.cent.turbconv.bulk.buoy,
+            bulk_up_q_tot = p.edmf_cache.aux.cent.turbconv.bulk.q_tot,
+            bulk_up_q_liq = p.edmf_cache.aux.cent.turbconv.bulk.q_liq,
+            bulk_up_q_ice = p.edmf_cache.aux.cent.turbconv.bulk.q_ice,
+            bulk_up_temperature = p.edmf_cache.aux.cent.turbconv.bulk.T,
+            bulk_up_cloud_fraction =
+                p.edmf_cache.aux.cent.turbconv.bulk.cloud_fraction,
+            bulk_up_e_tot_tendency_precip_formation =
+                p.edmf_cache.aux.cent.turbconv.bulk.e_tot_tendency_precip_formation,
+            bulk_up_qt_tendency_precip_formation =
+                p.edmf_cache.aux.cent.turbconv.bulk.qt_tendency_precip_formation,
+            env_w = p.edmf_cache.aux.cent.turbconv.en.w,
+            env_area = p.edmf_cache.aux.cent.turbconv.en.area,
+            env_q_tot = p.edmf_cache.aux.cent.turbconv.en.q_tot,
+            env_q_liq = p.edmf_cache.aux.cent.turbconv.en.q_liq,
+            env_q_ice = p.edmf_cache.aux.cent.turbconv.en.q_ice,
+            env_theta_liq_ice = p.edmf_cache.aux.cent.turbconv.en.θ_liq_ice,
+            env_theta_virt = p.edmf_cache.aux.cent.turbconv.en.θ_virt,
+            env_theta_dry = p.edmf_cache.aux.cent.turbconv.en.θ_dry,
+            env_e_tot = p.edmf_cache.aux.cent.turbconv.en.e_tot,
+            env_e_kin = p.edmf_cache.aux.cent.turbconv.en.e_kin,
+            env_h_tot = p.edmf_cache.aux.cent.turbconv.en.h_tot,
+            env_RH = p.edmf_cache.aux.cent.turbconv.en.RH,
+            env_s = p.edmf_cache.aux.cent.turbconv.en.s,
+            env_temperature = p.edmf_cache.aux.cent.turbconv.en.T,
+            env_buoyancy = p.edmf_cache.aux.cent.turbconv.en.buoy,
+            env_cloud_fraction =
+                p.edmf_cache.aux.cent.turbconv.en.cloud_fraction,
+            env_TKE = p.edmf_cache.aux.cent.turbconv.en.tke,
+            env_Hvar = p.edmf_cache.aux.cent.turbconv.en.Hvar,
+            env_QTvar = p.edmf_cache.aux.cent.turbconv.en.QTvar,
+            env_HQTcov = p.edmf_cache.aux.cent.turbconv.en.HQTcov,
+            env_e_tot_tendency_precip_formation =
+                p.edmf_cache.aux.cent.turbconv.en.e_tot_tendency_precip_formation,
+            env_qt_tendency_precip_formation =
+                p.edmf_cache.aux.cent.turbconv.en.qt_tendency_precip_formation,
+            env_Hvar_rain_dt =
+                p.edmf_cache.aux.cent.turbconv.en.Hvar_rain_dt,
+            env_QTvar_rain_dt =
+                p.edmf_cache.aux.cent.turbconv.en.QTvar_rain_dt,
+            env_HQTcov_rain_dt =
+                p.edmf_cache.aux.cent.turbconv.en.HQTcov_rain_dt,
+            face_bulk_w = p.edmf_cache.aux.face.turbconv.bulk.w,
+            face_env_w = p.edmf_cache.aux.face.turbconv.en.w,
+        )
+    else
+        turbulence_convection_diagnostic =NamedTuple()
     end
 
     if vert_diff
@@ -283,6 +344,7 @@ function save_to_disk_func(integrator)
         vert_diff_diagnostic,
         rad_diagnostic,
         rad_clear_diagnostic,
+        turbulence_convection_diagnostic,
     )
 
     day = floor(Int, t / (60 * 60 * 24))
