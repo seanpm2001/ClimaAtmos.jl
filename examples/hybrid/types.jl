@@ -107,6 +107,8 @@ function get_model_spec(::Type{FT}, parsed_args, namelist) where {FT}
     # should this live in the radiation model?
     idealized_h2o = parsed_args["idealized_h2o"]
     @assert idealized_h2o in (true, false)
+    non_orographic_gravity_wave = parsed_args["non_orographic_gravity_wave"]
+    @assert non_orographic_gravity_wave in (true, false)
 
     model_spec = (;
         moisture_model = moisture_model(parsed_args),
@@ -119,6 +121,7 @@ function get_model_spec(::Type{FT}, parsed_args, namelist) where {FT}
         turbconv_model = turbconv_model(FT, parsed_args, namelist),
         anelastic_dycore = parsed_args["anelastic_dycore"],
         C_E = FT(parsed_args["C_E"]),
+        non_orographic_gravity_wave,
     )
 
     return model_spec
