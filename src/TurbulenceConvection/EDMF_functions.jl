@@ -376,6 +376,8 @@ function set_edmf_surface_bc(
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
+        @show(e_tot_surf/aux_gm.e_tot[kc_surf])
+        @show(θ_surf/aux_gm.θ_liq_ice[kc_surf])
         if edmf.moisture_model isa NonEquilibriumMoisture
             q_liq_surf = FT(0)
             q_ice_surf = FT(0)
@@ -794,9 +796,9 @@ function compute_up_tendencies!(
         entr_w = aux_up[i].entr_turb_dyn
         detr_w = aux_up[i].detr_turb_dyn
         buoy = aux_up[i].buoy
-        @show(buoy)
-        @show(w_up)
-        @show(a_up)
+        # @show(buoy)
+        # @show(w_up)
+        # @show(a_up)
 
         @. tends_ρaw = -(∇f(wvec(LBC(ρaw * w_up))))
         @. tends_ρaw +=
@@ -918,6 +920,8 @@ function filter_updraft_vars(
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
+        @show(e_tot_surf/aux_gm.e_tot[kc_surf])
+        @show(θ_surf/aux_gm.θ_liq_ice[kc_surf])
     end
     if edmf.moisture_model isa NonEquilibriumMoisture
         @inbounds for i in 1:N_up
