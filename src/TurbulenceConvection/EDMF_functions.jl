@@ -371,13 +371,13 @@ function set_edmf_surface_bc(
         e_kin = @. LA.norm_sqr(C123(prog_gm_uₕ) + C123(wvec(w_up_c))) / 2
         e_pot = geopotential(param_set, grid.zc.z[kc_surf])
         ts_up_i = thermo_state_pθq(param_set, p_c[kc_surf], θ_surf, q_surf)
+        ρ_i = TD.air_density(thermo_params, ts_up_i)
+        buoy_surf = buoyancy_c(param_set, ρ_c[kc_surf], ρ_i)
         e_tot_surf =
             TD.total_energy(thermo_params, ts_up_i, e_kin[kc_surf], e_pot)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
-        @show(e_tot_surf/aux_gm.e_tot[kc_surf])
-        @show(θ_surf/aux_gm.θ_liq_ice[kc_surf])
         if edmf.moisture_model isa NonEquilibriumMoisture
             q_liq_surf = FT(0)
             q_ice_surf = FT(0)
@@ -796,9 +796,6 @@ function compute_up_tendencies!(
         entr_w = aux_up[i].entr_turb_dyn
         detr_w = aux_up[i].detr_turb_dyn
         buoy = aux_up[i].buoy
-        # @show(buoy)
-        # @show(w_up)
-        # @show(a_up)
 
         @. tends_ρaw = -(∇f(wvec(LBC(ρaw * w_up))))
         @. tends_ρaw +=
@@ -915,13 +912,13 @@ function filter_updraft_vars(
         e_kin = @. LA.norm_sqr(C123(prog_gm_uₕ) + C123(wvec(w_up_c))) / 2
         e_pot = geopotential(param_set, grid.zc.z[kc_surf])
         ts_up_i = thermo_state_pθq(param_set, p_c[kc_surf], θ_surf, q_surf)
+        ρ_i = TD.air_density(thermo_params, ts_up_i)
+        buoy_surf = buoyancy_c(param_set, ρ_c[kc_surf], ρ_i)
         e_tot_surf =
             TD.total_energy(thermo_params, ts_up_i, e_kin[kc_surf], e_pot)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
-        @show(e_tot_surf/aux_gm.e_tot[kc_surf])
-        @show(θ_surf/aux_gm.θ_liq_ice[kc_surf])
     end
     if edmf.moisture_model isa NonEquilibriumMoisture
         @inbounds for i in 1:N_up
