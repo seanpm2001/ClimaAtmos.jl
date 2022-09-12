@@ -11,6 +11,8 @@ parsed_args_prescribed = parsed_args_from_ARGS(ARGS)
 parsed_args_target = dict["perf_target_unthreaded"];
 parsed_args = merge(parsed_args_target, parsed_args_prescribed);
 
+# The callbacks flame graph is very expensive, so only do 2 steps.
+const n_samples = occursin("callbacks", parsed_args["job_id"]) ? 2 : 20
 
 try # capture integrator
     include(filename)
@@ -21,7 +23,7 @@ catch err
 end
 
 function do_work!(integrator)
-    for _ in 1:20
+    for _ in 1:n_samples
         OrdinaryDiffEq.step!(integrator)
     end
 end
@@ -45,4 +47,35 @@ if haskey(ENV, "BUILDKITE_COMMIT") || haskey(ENV, "BUILDKITE_BRANCH")
     html_file(joinpath(output_dir, "flame.html"))
 else
     ProfileCanvas.view(Profile.fetch())
+end
+
+
+#####
+##### Allocation tests
+#####
+
+# We're grouping allocation tests here for convenience.
+
+using Test
+# Threaded allocations are not deterministic, so let's add a buffer
+# TODO: remove buffer, and threaded tests, when
+#       threaded/unthreaded functions are unified
+buffer = occursin("threaded", job_id) ? 1.4 : 1
+
+allocs = @allocated OrdinaryDiffEq.step!(integrator)
+@timev OrdinaryDiffEq.step!(integrator)
+@info "`allocs ($job_id)`: $(allocs)"
+
+allocs_limit = Dict()
+allocs_limit["flame_perf_target_rhoe"] = 13675232
+allocs_limit["flame_perf_target_rhoe_threaded"] = 27219952
+allocs_limit["flame_perf_target_rhoe_callbacks"] = 24841304
+
+if allocs < allocs_limit[job_id] * buffer
+    @info "TODO: lower `allocs_limit[$job_id]` to: $(allocs)"
+end
+
+# https://github.com/CliMA/ClimaAtmos.jl/issues/827
+@testset "Allocations limit" begin
+    @test allocs ≤ allocs_limit[job_id]
 end
