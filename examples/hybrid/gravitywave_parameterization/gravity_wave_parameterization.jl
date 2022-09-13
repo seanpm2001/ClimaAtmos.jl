@@ -9,7 +9,7 @@ function gravity_wave_cache(::Type{FT};) where {FT}
     nc = Int(floor(2 * cmax / dc + 1))
     c0 = [(n - 1) * dc - cmax for n in 1:nc]
     nk = Int(1)
-    kwv = [2π / (30 * (10^n)) * 1e3 for n in 1:nk]
+    kwv = [2π / (30 * (10^n) * 1e3) for n in 1:nk]
     k2 = kwv .^ 2
     return (;
         gw_source_height = gw_source_height,
@@ -39,7 +39,7 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
     parent(grad_scalar) .= parent(Geometry.WVector.(ᶜgradᵥ.(ᶠinterp.(ᶜT)))) 
  
     ᶜbf = @. (grav / ᶜT) * (grad_scalar + grav / cp_m)
-    ᶜbf = @. ifelse(ᶜbf < FT(2.5e-5), FT(sqrt(2.5e-5)), sqrt(ᶜbf)) # to avoid small numbers
+    ᶜbf = @. ifelse(ᶜbf < FT(2.5e-5), FT(sqrt(2.5e-5)), sqrt(abs(ᶜbf))) # to avoid small numbers
     # alternative
     # ᶠbf = [i > 2.5e-5 ? sqrt(i) : sqrt(2.5e-5)  for i in ᶠbf]
     # TODO: create an extra layer at model top so that the gravity wave forcing
@@ -116,11 +116,10 @@ function gravity_wave_forcing(
     flag = Int(1)
     Bw = FT(0.4)
     Bn = FT(0.0)
-    cw = FT(40.0)
+    # cw = FT(40.0)
+    cw = FT(60.0)
 
-    iz0 = source_level
-
-    ampl = gw_Bm
+    ampl = 0.004 / ᶜρ[source_level] #0.003 # gw_Bm or FS0??
 
     c0 = gw_c0
     nc = length(c0)
@@ -135,7 +134,7 @@ function gravity_wave_forcing(
     # !    the contribution from this phase speed to the previous sum.
     # !---------------------------------------------------------------------
 
-    c0mu0 = c0 .- ᶜu[iz0]
+    c0mu0 = c0 .- ᶜu[source_level]
     c = c0 * flag + c0mu0 * (1 - flag)
     Bexp = @. exp(-log(2.0) * (c / cw)^2)
     B0 = @. sign(c0mu0) * (Bw * Bexp + Bn * Bexp)
@@ -147,17 +146,20 @@ function gravity_wave_forcing(
     #   !    define the intermittency factor eps. the factor of 1.5 is currently
     #   !    unexplained.
     #   !---------------------------------------------------------------------
-    eps = (ampl * 1.5 / nk) / Bsum
+    eps = (ampl / nk) / Bsum
 
     ᶜdz = ᶠz[2:end] - ᶠz[1:(end - 1)]
     # append!(ᶜdz, (ᶜz[end] - ᶠz[end]))
 
     wv_frcng = zeros(nc)
     gwf = zeros(length(ᶜu))
+    u_len = length(ᶜu)
     for ink in 1:nk # loop over all wave lengths
 
         mask = ones(nc)  # mask to determine waves that propagate upward
+        
         for k in source_level:length(ᶜu)
+            # @show "00000000 k=$k, u_len = $u_len"
             fac = 0.5 * (ᶜρ[k] / ᶜρ[source_level]) * kwv[ink] / ᶜbf[k]
 
             ᶜHb = - ᶜdz[k] / log(ᶜρ[k] / ᶜρ[k - 1])  # density scale height
@@ -177,6 +179,7 @@ function gravity_wave_forcing(
                     # !    set of propagating waves.
                     # !----------------------------------------------------------------------
                     if c0mu == 0.0
+                        # @show " 1111 c0mu == 0.0, k = $k"
                         mask[n] = 0.0
                     else
                         # !---------------------------------------------------------------------
@@ -185,6 +188,7 @@ function gravity_wave_forcing(
                         # !---------------------------------------------------------------------
                         test = abs(c0mu) * kwv[ink] - omc
                         if test >= 0.0
+                            # @show "2222 test >=0, k = $k"
                             # !---------------------------------------------------------------------
                             # !    wave has undergone total internal reflection. remove it from the
                             # !    propagating set.
@@ -202,16 +206,18 @@ function gravity_wave_forcing(
                             # !    moving upwards to the next level.
                             # !---------------------------------------------------------------------
                             if c0mu0[n] * c0mu <= 0.0
+                                # @show "333s c0mu0[n] * c0mu <= 0.0, k = $k"
                                 mask[n] = 0.0
-                                if k < source_level
+                                if k > source_level
                                     fm = fm + B0[n]
                                     fe = fe + c0mu * B0[n]
                                 end
                             else
                                 Foc = B0[n] / (c0mu)^3 - fac
                                 if Foc >= 0.0
+                                    # @show "4444 Foc >=0, k = $k"
                                     mask[n] = 0.0
-                                    if k < source_level
+                                    if k > source_level
                                         fm = fm + B0[n]
                                         fe = fe + c0mu * B0[n]
                                     end
@@ -222,6 +228,7 @@ function gravity_wave_forcing(
                 end # mask = 0
 
             end # phase speed loop
+
             # TODO: option to dump remaining flux at the top of the model 
 
             # !----------------------------------------------------------------------
