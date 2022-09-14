@@ -171,7 +171,6 @@ function set_thermo_state_pθq!(state, grid, moisture_model, param_set)
     ts_gm = TC.center_aux_grid_mean(state).ts
     prog_gm = TC.center_prog_grid_mean(state)
     aux_gm = TC.center_aux_grid_mean(state)
-    p_c = aux_gm.p
     @inbounds for k in TC.real_center_indices(grid)
         thermo_args = if moisture_model isa TC.EquilibriumMoisture
             ()
@@ -184,7 +183,7 @@ function set_thermo_state_pθq!(state, grid, moisture_model, param_set)
         end
         ts_gm[k] = TC.thermo_state_pθq(
             param_set,
-            p_c[k],
+            aux_gm.p[k],
             aux_gm.θ_liq_ice[k],
             aux_gm.q_tot[k],
             thermo_args...,
@@ -196,12 +195,18 @@ end
 function set_grid_mean_from_thermo_state!(param_set, state, grid)
     thermo_params = TCP.thermodynamics_params(param_set)
     Ic = CCO.InterpolateF2C()
+    If = CCO.InterpolateC2F(bottom = CCO.Extrapolate(), top = CCO.Extrapolate())
     ts_gm = TC.center_aux_grid_mean(state).ts
     prog_gm = TC.center_prog_grid_mean(state)
     prog_gm_f = TC.face_prog_grid_mean(state)
     aux_gm = TC.center_aux_grid_mean(state)
+    aux_gm_f = TC.face_aux_grid_mean(state)
     prog_gm_uₕ = TC.grid_mean_uₕ(state)
+
+    @. prog_gm.ρ = TD.air_density(thermo_params, ts_gm)
     ρ_c = prog_gm.ρ
+    ρ_f = aux_gm_f.ρ
+
     C123 = CCG.Covariant123Vector
     @. prog_gm.ρe_tot =
         ρ_c * TD.total_energy(
@@ -210,17 +215,24 @@ function set_grid_mean_from_thermo_state!(param_set, state, grid)
             LA.norm_sqr(C123(prog_gm_uₕ) + C123(Ic(prog_gm_f.w))) / 2,
             TC.geopotential(param_set, grid.zc.z),
         )
+
     @. prog_gm.ρq_tot = ρ_c * aux_gm.q_tot
+    @. ρ_f = If(ρ_c)
 
     return nothing
 end
 
 function assign_thermo_aux!(state, grid, moisture_model, param_set)
+    If = CCO.InterpolateC2F(bottom = CCO.Extrapolate(), top = CCO.Extrapolate())
     thermo_params = TCP.thermodynamics_params(param_set)
     aux_gm = TC.center_aux_grid_mean(state)
+    aux_gm_f = TC.face_aux_grid_mean(state)
     prog_gm = TC.center_prog_grid_mean(state)
     ts_gm = TC.center_aux_grid_mean(state).ts
     ρ_c = prog_gm.ρ
+    ρ_f = aux_gm_f.ρ
+    @. ρ_f = If(ρ_c)
+
     @inbounds for k in TC.real_center_indices(grid)
         ts = ts_gm[k]
         aux_gm.q_tot[k] = prog_gm.ρq_tot[k] / ρ_c[k]

@@ -12,16 +12,9 @@ function get_callbacks(parsed_args, simulation, model_spec, params)
     FT = eltype(params)
     (; dt) = simulation
 
-    callback_filters = ODE.DiscreteCallback(
-        condition_every_iter,
-        affect_filter!;
-        save_positions = (false, false),
-    )
-    tc_callbacks = ODE.DiscreteCallback(
-        condition_every_iter,
-        turb_conv_affect_filter!;
-        save_positions = (false, false),
-    )
+    callback_filters = call_every_n_steps(affect_filter!; skip_first = true)
+    tc_callbacks =
+        call_every_n_steps(turb_conv_affect_filter!; skip_first = true)
 
     additional_callbacks = if !isnothing(model_spec.radiation_model)
         # TODO: better if-else criteria?
@@ -30,14 +23,7 @@ function get_callbacks(parsed_args, simulation, model_spec, params)
         else
             FT(time_to_seconds(parsed_args["dt_rad"]))
         end
-        (
-            DEQ.PeriodicCallback(
-                rrtmgp_model_callback!,
-                dt_rad; # update RRTMGPModel every dt_rad
-                initial_affect = true, # run callback at t = 0
-                save_positions = (false, false), # do not save Y before and after callback
-            ),
-        )
+        (call_every_dt(rrtmgp_model_callback!, dt_rad),)
     else
         ()
     end
@@ -53,27 +39,21 @@ function get_callbacks(parsed_args, simulation, model_spec, params)
     dt_save_to_disk = time_to_seconds(parsed_args["dt_save_to_disk"])
     dt_save_restart = time_to_seconds(parsed_args["dt_save_restart"])
 
-    dss_cb = DEQ.FunctionCallingCallback(dss_callback, func_start = true)
+    dss_cb = if startswith(parsed_args["ode_algo"], "ODE.")
+        call_every_n_steps(dss_callback)
+    else
+        nothing
+    end
     save_to_disk_callback = if dt_save_to_disk == Inf
         nothing
     else
-        DEQ.PeriodicCallback(
-            save_to_disk_func,
-            dt_save_to_disk;
-            initial_affect = true,
-            save_positions = (false, false),
-        )
+        call_every_dt(save_to_disk_func, dt_save_to_disk)
     end
 
     save_restart_callback = if dt_save_restart == Inf
         nothing
     else
-        DEQ.PeriodicCallback(
-            save_restart_func,
-            dt_save_restart;
-            initial_affect = true,
-            save_positions = (false, false),
-        )
+        call_every_dt(save_restart_func, dt_save_restart)
     end
     return ODE.CallbackSet(
         dss_cb,
@@ -83,23 +63,58 @@ function get_callbacks(parsed_args, simulation, model_spec, params)
     )
 end
 
+function call_every_n_steps(f!, n = 1; skip_first = false, call_at_end = false)
+    previous_step = Ref(0)
+    return ODE.DiscreteCallback(
+        (u, t, integrator) ->
+            (previous_step[] += 1) % n == 0 ||
+                (call_at_end && t == integrator.sol.prob.tspan[2]),
+        f!;
+        initialize = (cb, u, t, integrator) -> skip_first || f!(integrator),
+        save_positions = (false, false),
+    )
+end
 
-condition_every_iter(u, t, integrator) = true
+function call_every_dt(f!, dt; skip_first = false, call_at_end = false)
+    next_t = Ref{typeof(dt)}()
+    affect! = function (integrator)
+        t = integrator.t
+        t_end = integrator.sol.prob.tspan[2]
+        while t >= next_t[]
+            f!(integrator)
+            next_t[] =
+                (call_at_end && t < t_end) ? min(t_end, next_t[] + dt) :
+                next_t[] + dt
+        end
+    end
+    return ODE.DiscreteCallback(
+        (u, t, integrator) -> t >= next_t[],
+        affect!;
+        initialize = (cb, u, t, integrator) -> begin
+            skip_first || f!(integrator)
+            t_end = integrator.sol.prob.tspan[2]
+            next_t[] =
+                (call_at_end && t < t_end) ? min(t_end, t + dt) : t + dt
+        end,
+        save_positions = (false, false),
+    )
+end
 
 function affect_filter!(Y::Fields.FieldVector)
     @. Y.c.ρq_tot = max(Y.c.ρq_tot, 0)
     return nothing
 end
 
-function dss_callback(Y, t, integrator)
-    p = integrator.p
+function dss_callback(integrator)
+    Y = integrator.u
+    ghost_buffer = integrator.p.ghost_buffer
     @nvtx "dss callback" color = colorant"yellow" begin
-        Spaces.weighted_dss_start!(Y.c, p.ghost_buffer.c)
-        Spaces.weighted_dss_start!(Y.f, p.ghost_buffer.f)
-        Spaces.weighted_dss_internal!(Y.c, p.ghost_buffer.c)
-        Spaces.weighted_dss_internal!(Y.f, p.ghost_buffer.f)
-        Spaces.weighted_dss_ghost!(Y.c, p.ghost_buffer.c)
-        Spaces.weighted_dss_ghost!(Y.f, p.ghost_buffer.f)
+        Spaces.weighted_dss_start!(Y.c, ghost_buffer.c)
+        Spaces.weighted_dss_start!(Y.f, ghost_buffer.f)
+        Spaces.weighted_dss_internal!(Y.c, ghost_buffer.c)
+        Spaces.weighted_dss_internal!(Y.f, ghost_buffer.f)
+        Spaces.weighted_dss_ghost!(Y.c, ghost_buffer.c)
+        Spaces.weighted_dss_ghost!(Y.f, ghost_buffer.f)
     end
     # ODE.u_modified!(integrator, false) # TODO: try this
 end
@@ -136,15 +151,17 @@ function turb_conv_affect_filter!(integrator)
 end
 
 function save_to_disk_func(integrator)
+
     (; t, u, p) = integrator
     (; output_dir) = p.simulation
     Y = u
 
-    if :ρq_tot in propertynames(Y.c)
-        (; ᶜts, ᶜp, ᶜS_ρq_tot, params, ᶜK) = p
+    if :ᶜS_ρq_tot in propertynames(Y.c)
+        (; ᶜts, ᶜp, ᶜS_ρq_tot, ᶜ3d_rain, ᶜ3d_snow, params, ᶜK) = p
     else
         (; ᶜts, ᶜp, params, ᶜK) = p
     end
+
     thermo_params = CAP.thermodynamics_params(params)
     cm_params = CAP.microphysics_params(params)
 
@@ -172,40 +189,103 @@ function save_to_disk_func(integrator)
         vorticity = ᶜvort,
     )
 
-    # cloudwater (liquid and ice), watervapor, precipitation, and RH for moist simulation
+    # cloudwater (liquid and ice), watervapor and RH for moist simulation
     if :ρq_tot in propertynames(Y.c)
+
         ᶜq = @. TD.PhasePartition(thermo_params, ᶜts)
         ᶜcloud_liquid = @. ᶜq.liq
         ᶜcloud_ice = @. ᶜq.ice
         ᶜwatervapor = @. TD.vapor_specific_humidity(ᶜq)
         ᶜRH = @. TD.relative_humidity(thermo_params, ᶜts)
 
-        # precipitation
-        @. ᶜS_ρq_tot =
-            Y.c.ρ * CM.Microphysics0M.remove_precipitation(
-                cm_params,
-                TD.PhasePartition(thermo_params, ᶜts),
-            )
-
-        # rain vs snow
-        ᶜ3d_rain = @. ifelse(ᶜT >= FT(273.15), ᶜS_ρq_tot, FT(0))
-        ᶜ3d_snow = @. ifelse(ᶜT < FT(273.15), ᶜS_ρq_tot, FT(0))
-        col_integrated_rain =
-            vertical∫_col(ᶜ3d_rain) ./ FT(CAP.ρ_cloud_liq(params))
-        col_integrated_snow =
-            vertical∫_col(ᶜ3d_snow) ./ FT(CAP.ρ_cloud_liq(params))
-
         moist_diagnostic = (;
             cloud_liquid = ᶜcloud_liquid,
             cloud_ice = ᶜcloud_ice,
             water_vapor = ᶜwatervapor,
-            precipitation_removal = ᶜS_ρq_tot,
-            column_integrated_rain = col_integrated_rain,
-            column_integrated_snow = col_integrated_snow,
             relative_humidity = ᶜRH,
         )
+        # precipitation
+        if :ᶜS_ρq_tot in propertynames(Y.c)
+
+            @. ᶜS_ρq_tot =
+                Y.c.ρ * CM.Microphysics0M.remove_precipitation(
+                    cm_params,
+                    TD.PhasePartition(thermo_params, ᶜts),
+                )
+
+            # rain vs snow
+            @. ᶜ3d_rain = ifelse(ᶜT >= FT(273.15), ᶜS_ρq_tot, FT(0))
+            @. ᶜ3d_snow = ifelse(ᶜT < FT(273.15), ᶜS_ρq_tot, FT(0))
+
+            col_integrated_rain =
+                vertical∫_col(ᶜ3d_rain) ./ FT(CAP.ρ_cloud_liq(params))
+            col_integrated_snow =
+                vertical∫_col(ᶜ3d_snow) ./ FT(CAP.ρ_cloud_liq(params))
+
+            moist_diagnostics = (
+                moist_diagnostics...,
+                precipitation_removal = ᶜS_ρq_tot,
+                column_integrated_rain = col_integrated_rain,
+                column_integrated_snow = col_integrated_snow,
+            )
+        end
     else
         moist_diagnostic = NamedTuple()
+    end
+
+    if :edmf_cache in propertynames(p) && p.simulation.is_debugging_tc
+
+        tc_cent(p) = p.edmf_cache.aux.cent.turbconv
+        tc_face(p) = p.edmf_cache.aux.face.turbconv
+        turbulence_convection_diagnostic = (;
+            bulk_up_area = tc_cent(p).bulk.area,
+            bulk_up_h_tot = tc_cent(p).bulk.h_tot,
+            bulk_up_buoyancy = tc_cent(p).bulk.buoy,
+            bulk_up_q_tot = tc_cent(p).bulk.q_tot,
+            bulk_up_q_liq = tc_cent(p).bulk.q_liq,
+            bulk_up_q_ice = tc_cent(p).bulk.q_ice,
+            bulk_up_temperature = tc_cent(p).bulk.T,
+            bulk_up_cloud_fraction = tc_cent(p).bulk.cloud_fraction,
+            bulk_up_e_tot_tendency_precip_formation = tc_cent(
+                p,
+            ).bulk.e_tot_tendency_precip_formation,
+            bulk_up_qt_tendency_precip_formation = tc_cent(
+                p,
+            ).bulk.qt_tendency_precip_formation,
+            env_w = tc_cent(p).en.w,
+            env_area = tc_cent(p).en.area,
+            env_q_tot = tc_cent(p).en.q_tot,
+            env_q_liq = tc_cent(p).en.q_liq,
+            env_q_ice = tc_cent(p).en.q_ice,
+            env_theta_liq_ice = tc_cent(p).en.θ_liq_ice,
+            env_theta_virt = tc_cent(p).en.θ_virt,
+            env_theta_dry = tc_cent(p).en.θ_dry,
+            env_e_tot = tc_cent(p).en.e_tot,
+            env_e_kin = tc_cent(p).en.e_kin,
+            env_h_tot = tc_cent(p).en.h_tot,
+            env_RH = tc_cent(p).en.RH,
+            env_s = tc_cent(p).en.s,
+            env_temperature = tc_cent(p).en.T,
+            env_buoyancy = tc_cent(p).en.buoy,
+            env_cloud_fraction = tc_cent(p).en.cloud_fraction,
+            env_TKE = tc_cent(p).en.tke,
+            env_Hvar = tc_cent(p).en.Hvar,
+            env_QTvar = tc_cent(p).en.QTvar,
+            env_HQTcov = tc_cent(p).en.HQTcov,
+            env_e_tot_tendency_precip_formation = tc_cent(
+                p,
+            ).en.e_tot_tendency_precip_formation,
+            env_qt_tendency_precip_formation = tc_cent(
+                p,
+            ).en.qt_tendency_precip_formation,
+            env_Hvar_rain_dt = tc_cent(p).en.Hvar_rain_dt,
+            env_QTvar_rain_dt = tc_cent(p).en.QTvar_rain_dt,
+            env_HQTcov_rain_dt = tc_cent(p).en.HQTcov_rain_dt,
+            face_bulk_w = tc_face(p).bulk.w,
+            face_env_w = tc_face(p).en.w,
+        )
+    else
+        turbulence_convection_diagnostic = NamedTuple()
     end
 
     if vert_diff
@@ -268,10 +348,11 @@ function save_to_disk_func(integrator)
         vert_diff_diagnostic,
         rad_diagnostic,
         rad_clear_diagnostic,
+        turbulence_convection_diagnostic,
     )
 
     day = floor(Int, t / (60 * 60 * 24))
-    sec = Int(mod(t, 3600 * 24))
+    sec = floor(Int, t % (60 * 60 * 24))
     @info "Saving diagnostics to HDF5 file on day $day second $sec"
     output_file = joinpath(output_dir, "day$day.$sec.hdf5")
     hdfwriter = InputOutput.HDF5Writer(output_file, comms_ctx)
@@ -291,7 +372,7 @@ function save_restart_func(integrator)
     (; output_dir) = p.simulation
     Y = u
     day = floor(Int, t / (60 * 60 * 24))
-    sec = Int(mod(t, 3600 * 24))
+    sec = floor(Int, t % (60 * 60 * 24))
     @info "Saving restart file to HDF5 file on day $day second $sec"
     mkpath(joinpath(output_dir, "restart"))
     output_file = joinpath(output_dir, "restart", "day$day.$sec.hdf5")

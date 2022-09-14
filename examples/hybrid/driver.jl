@@ -36,7 +36,7 @@ zd_viscous = parsed_args["zd_viscous"]
 @assert idealized_insolation in (true, false)
 @assert idealized_clouds in (true, false)
 @assert vert_diff in (true, false)
-@assert surface_scheme in ("bulk", "monin_obukhov")
+@assert surface_scheme in (nothing, "bulk", "monin_obukhov")
 @assert hyperdiff in (true, false)
 @assert parsed_args["config"] in ("sphere", "column")
 @assert rayleigh_sponge in (true, false)
@@ -67,7 +67,10 @@ model_spec = get_model_spec(FT, parsed_args, namelist)
 numerics = get_numerics(parsed_args)
 simulation = get_simulation(FT, parsed_args)
 
-diffuse_momentum = vert_diff && !(model_spec.forcing_type isa HeldSuarezForcing)
+diffuse_momentum =
+    vert_diff &&
+    !(model_spec.forcing_type isa HeldSuarezForcing) &&
+    !isnothing(surface_scheme)
 
 # TODO: use import istead of using
 using Colors
@@ -78,6 +81,7 @@ using JLD2
 using ClimaCore.DataLayouts
 using NCDatasets
 using ClimaCore
+using ClimaTimeSteppers
 
 import Random
 Random.seed!(1234)
@@ -97,13 +101,19 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
     (; microphysics_model, forcing_type, radiation_model, turbconv_model) =
         model_spec
 
-    default_remaining_tendency! = if model_spec.anelastic_dycore
-        (Yₜ, Y, p, t) -> nothing
+    default_remaining_tendencies = if model_spec.anelastic_dycore
+        nothing
     else
         if :ρe_tot in propertynames(Y.c) && enable_threading()
-            default_remaining_tendency_special!
+            (;
+                horizontal_advection_tendency! = horizontal_advection_tendency_special!,
+                explicit_vertical_advection_tendency! = explicit_vertical_advection_tendency_special!,
+            )
         else
-            default_remaining_tendency_generic!
+            (;
+                horizontal_advection_tendency! = horizontal_advection_tendency_generic!,
+                explicit_vertical_advection_tendency! = explicit_vertical_advection_tendency_generic!,
+            )
         end
     end
 
@@ -142,8 +152,10 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
         ),
         vert_diff ?
         vertical_diffusion_boundary_layer_cache(
-            Y;
+            Y,
+            FT;
             surface_scheme,
+            model_spec.C_E,
             diffuse_momentum,
             coupled,
         ) : NamedTuple(),
@@ -160,7 +172,7 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
             )
         ),
         (; Δt = dt),
-        (; default_remaining_tendency!),
+        (; default_remaining_tendencies),
         !isnothing(turbconv_model) ?
         (; edmf_cache = TCU.get_edmf_cache(Y, namelist, params, parsed_args)) :
         NamedTuple(),
@@ -305,6 +317,14 @@ if !simulation.is_distributed && parsed_args["post_process"]
     else
         postprocessing(sol, simulation.output_dir, fps)
     end
+end
+
+if parsed_args["debugging_tc"]
+    include(joinpath(@__DIR__, "define_tc_quicklook_profiles.jl"))
+    plot_tc_profiles(
+        simulation.output_dir,
+        "day0." * string(Int(simulation.t_end)) * ".hdf5",
+    )
 end
 
 if parsed_args["regression_test"]

@@ -19,9 +19,9 @@ profiling_params="nsys profile --sample=none --trace=nvtx,mpi,osrt --mpi-impl=mp
 
 if [[ "$resolution" == "low" ]]
 then
-    sim_params="julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --upwinding none --t_end 10days --dt 400secs --z_elem 10 --h_elem 4 --kappa_4 2e17"
+    sim_params="julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --tracer_upwinding none --t_end 10days --dt 400secs --z_elem 10 --h_elem 4 --kappa_4 2e17"
 else
-    sim_params="julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --upwinding none --t_end 1days --dt 50secs --z_elem 45 --h_elem 24 --kappa_4 5e14"
+    sim_params="julia --color=yes --project=examples examples/hybrid/driver.jl --job_id $job_id --forcing held_suarez --enable_threading false --tracer_upwinding none --t_end 1days --dt 50secs --z_elem 45 --h_elem 24 --kappa_4 5e14"
 fi
 
 if [[ "$profiling" == "enable" ]]

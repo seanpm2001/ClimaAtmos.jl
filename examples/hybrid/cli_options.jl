@@ -13,7 +13,7 @@ function parse_commandline()
         "--dt"
         help = "Simulation time step. Examples: [`10secs`, `1hours`]"
         arg_type = String
-        default = "400secs"
+        default = "600secs"
         "--dt_save_to_sol"
         help = "Time between saving solution. Examples: [`10days`, `1hours`, `Inf` (do not save)]"
         arg_type = String
@@ -49,9 +49,12 @@ function parse_commandline()
         arg_type = Bool
         default = false
         "--surface_scheme"
-        help = "Surface flux scheme [`bulk` (default), `monin_obukhov`]"
+        help = "Surface flux scheme [`nothing` (default), `bulk`, `monin_obukhov`]"
         arg_type = String
-        default = "bulk"
+        "--C_E"
+        help = "Buld transfer coefficient"
+        arg_type = Float64
+        default = Float64(0.0044)
         "--coupled"
         help = "Coupled simulation [`false` (default), `true`]"
         arg_type = Bool
@@ -89,14 +92,22 @@ function parse_commandline()
         help = "Energy variable name [`rhoe` (default), `rhoe_int` , `rhotheta`]"
         arg_type = String
         default = "rhoe"
-        "--upwinding"
-        help = "Upwinding mode [`none` (default), `first_order` , `third_order`]"
-        arg_type = String
-        default = "none"
+        "--energy_upwinding"
+        help = "Energy upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
+        arg_type = Symbol
+        default = :none
+        "--tracer_upwinding"
+        help = "Tracer upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
+        arg_type = Symbol
+        default = :none # TODO: change to :zalesak
         "--ode_algo"
-        help = "ODE algorithm [`Rosenbrock23` (default), `Euler`]"
+        help = "ODE algorithm [`ARS343`, `IMKG343a`, `ODE.Euler`, `ODE.IMEXEuler`, `ODE.Rosenbrock23` (default), etc.]"
         arg_type = String
-        default = "Rosenbrock23"
+        default = "ODE.Rosenbrock23"
+        "--max_newton_iters"
+        help = "Maximum number of Newton's method iterations (only for ODE algorithms that use Newton's method)"
+        arg_type = Int
+        default = 3
         "--split_ode"
         help = "Use split of ODE problem. Examples: [`true` (implicit, default), `false` (explicit)]"
         arg_type = Bool
@@ -130,7 +141,7 @@ function parse_commandline()
         "--h_elem"
         help = "number of elements per edge on a cubed sphere"
         arg_type = Int
-        default = 4
+        default = 6
         "--z_elem"
         help = "number of vertical elements"
         arg_type = Int
@@ -138,7 +149,7 @@ function parse_commandline()
         "--nh_poly"
         help = "Horizontal polynomial order"
         arg_type = Int
-        default = 4
+        default = 3
         "--z_max"
         help = "Model top height. Default: 30km"
         arg_type = Float64
@@ -203,6 +214,14 @@ function parse_commandline()
         help = "Define the surface elevation profile [`NoWarp`,`Earth`,`DCMIP200`]"
         arg_type = String
         default = "NoWarp"
+        "--apply_limiter"
+        help = "Apply a horizontal limiter to every tracer [`true` (default), `false`]"
+        arg_type = Bool
+        default = true
+        "--debugging_tc"
+        help = "Save most of the tc aux state to HDF5 file [`false` (default), `true`]"
+        arg_type = Bool
+        default = false
     end
     parsed_args = ArgParse.parse_args(ARGS, s)
     return (s, parsed_args)
@@ -296,7 +315,9 @@ parsed_args_from_command_line_flags(str, parsed_args = Dict()) =
     parsed_args_from_ARGS_string(strip(last(split(str, ".jl"))), parsed_args)
 
 function parsed_args_from_ARGS_string(str, parsed_args = Dict())
+    str = replace(str, "    " => " ", "   " => " ", "  " => " ")
     parsed_args_list = split(str, " ")
+    parsed_args_list == [""] && return parsed_args
     @assert iseven(length(parsed_args_list))
     parsed_arg_pairs = map(1:2:(length(parsed_args_list) - 1)) do i
         Pair(parsed_args_list[i], strip(parsed_args_list[i + 1], '\"'))
