@@ -27,7 +27,7 @@ fi
 if [[ "$profiling" == "enable" ]]
 then
     module load cuda/11.3 nsight-systems/2022.2.1
-    mpiexec $profiling_params $sim_params
+    srun --cpu-bind=cores $profiling_params $sim_params
 else
-    mpiexec $sim_params
+    srun --cpu-bind=cores $sim_params
 fi
