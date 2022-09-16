@@ -12,20 +12,13 @@ const FT = Float64
 face_z = 0:1e3:0.47e5
 center_z = 0.5.*(face_z[1:end-1].+face_z[2:end])
 
+
 # compute the source parameters
-source_height = 15e3
-source_level = argmin( abs.(center_z .- source_height) )
-gw_Bm = 0.4
-dc = 0.6
-cmax = 150 # 99.6
-nc = Int(floor(2 * cmax / dc + 1))
-gw_c0 = [(n - 1) * dc - cmax for n in 1:nc]
-nk = 1
-kwv = 2π/100e3 #[2π/10e3, 2π/100e3, 2π/1000e3 ]
-k2 = kwv.^2
+params = gravity_wave_cache(FT; Bm = 0.4, cmax = 150, kwv = 2π/100e3 )
+source_level = argmin( abs.(center_z .- params.gw_source_height) )
 
 # ERA5 data 1973 Jan
-ds = NCDataset("./gravitywave_parameterization/era5-monthly.nc")
+ds = NCDataset("./era5-monthly.nc")
 
 lon = ds["longitude"][:] 
 lat = ds["latitude"][:] 
@@ -75,28 +68,32 @@ center_u_zonalave = mean(center_u, dims = 1)[1,:,:,:]
 center_bf_zonalave = mean(center_bf, dims = 1)[1,:,:,:]
 center_ρ_zonalave = mean(center_ρ, dims = 1)[1,:,:,:]
 
-uforcing = zeros(size(center_u_zonalave))
-for j in 1 : length(lat)
-  for it in 1:length(time)
-	uforcing[j,:,it] = gravity_wave_forcing(
-		center_u_zonalave[j,:,it],
-		source_level,
-		gw_Bm,
-		gw_c0,
-		nk,
-		kwv,
-		k2,
-		center_bf_zonalave[j,:,it],
-		center_ρ_zonalave[j,:,it],
-		face_z,
+# Jan
+month = Dates.month.(time)
+
+Jan_u = mean(center_u_zonalave[:, :, month.==1], dims=3)[:,:,1]
+Jan_bf = mean(center_bf_zonalave[:, :, month.==1], dims=3)[:,:,1]
+Jan_ρ = mean(center_ρ_zonalave[:, :, month.==1], dims=3)[:,:,1]
+Jan_uforcing = zeros(length(lat), length(center_z))
+for j in 1:length(lat)
+	Jan_uforcing[j,:] = gravity_wave_forcing(
+	    Jan_u[j,:],
+	    source_level,
+		params.gw_F_S0,
+	    params.gw_Bm,
+	    params.gw_c,
+		params.gw_cw,
+		params.gw_c0,
+	    params.gw_nk,
+	    params.gw_k,
+	    params.gw_k2,
+	    Jan_bf[j,:],
+	    Jan_ρ[j,:],
+	    face_z,
 	)
-  end
 end
 
-# January for comparison with Fig 8
-month = Dates.month.(time)
-Jan_uforcing = mean(uforcing[:, :, month.==1], dims=3)[:,:,1]
 png(
-	contourf( lat[end:-1:1], center_z[source_level:end], 86400*Jan_uforcing[end:-1:1, source_level:end]', color=:balance, clim=(-4, 4) ),
-	"./gravitywave_parameterization/test-fig8.png"
+	contourf( lat[end:-1:1], center_z[source_level:end], 86400*Jan_uforcing[end:-1:1, source_level:end]', color=:balance, clim=(-1, 1) ),
+	"./test-fig8.png"
 )

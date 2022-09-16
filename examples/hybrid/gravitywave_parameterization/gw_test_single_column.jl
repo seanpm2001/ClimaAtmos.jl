@@ -10,23 +10,15 @@ const FT = Float64
 # https://journals.ametsoc.org/view/journals/atsc/56/24/1520-0469_1999_056_4167_aspomf_2.0.co_2.xml?tab_body=pdf
 # zonal mean monthly wind, temperature 1958-1973; at 40N in latitude for Jan, April, July, Oct.
 
-face_z = 0:1e3:0.5e5
-center_z = 0.5.*(face_z[1:end-1].+face_z[2:end])
+face_z = FT.(0:1e3:0.5e5)
+center_z = FT(0.5).*(face_z[1:end-1].+face_z[2:end])
 
 # compute the source parameters
-source_height = 15e3
-source_level = argmin( abs.(center_z .- source_height) )
-gw_Bm = 0.4
-dc = 0.6
-cmax = 150 # 99.6
-nc = Int(floor(2 * cmax / dc + 1))
-gw_c0 = [(n - 1) * dc - cmax for n in 1:nc]
-nk = 1
-kwv = 2π/100e3 #[2π/10e3, 2π/100e3, 2π/1000e3 ]
-k2 = kwv.^2
+params = gravity_wave_cache(FT; Bm = 0.4, cmax = 150, kwv = 2π/100e3 )
+source_level = argmin( abs.(center_z .- params.gw_source_height) )
 
 # read ERA5 nc data: wind, temperature, geopotential height
-ds = NCDataset("./gravitywave_parameterization/single_column_test.nc")
+ds = NCDataset("./single_column_test.nc")
 # data at 40N, all longitude, all levels, all time
 lon = ds["longitude"][:] 
 lat = ds["latitude"][:] 
@@ -91,33 +83,8 @@ center_v_mean = mean(center_v, dims = 1)[1,:,:]
 center_bf_mean = mean(center_bf, dims = 1)[1,:,:]
 center_ρ_mean = mean(center_ρ, dims = 1)[1,:,:]
 
-# prepare input for gravity_wave_forcing()
 # monthly ave Jan, April, July, Oct
 month = Dates.month.(time)
-
-# uforcing for all time 
-# uforcing = zeros(size(center_u_mean))
-# for it in 1:length(time)
-# 	uforcing[:,it] = gravity_wave_forcing(
-# 	    center_u_mean[:,it],
-# 	    source_level,
-# 	    gw_Bm,
-# 	    gw_c0,
-# 	    nk,
-# 	    kwv,
-# 	    k2,
-# 	    center_bf_mean[:,it],
-# 	    center_ρ_mean[:,it],
-# 	    face_z,
-# 	)	
-# end
-
-# Jan_uforcing = mean(uforcing[:, month.==1], dims=2)[:,1] 
-# Apr_uforcing = mean(uforcing[:, month.==4], dims=2)[:,1] 
-# Jul_uforcing = mean(uforcing[:, month.==7], dims=2)[:,1] 
-# Oct_uforcing = mean(uforcing[:, month.==10], dims=2)[:,1] 
-
-
 
 # Jan
 Jan_u = mean(center_u_mean[:, month.==1], dims=2)[:,1]
@@ -126,42 +93,91 @@ Jan_ρ = mean(center_ρ_mean[:, month.==1], dims=2)[:,1]
 Jan_uforcing = gravity_wave_forcing(
     Jan_u,
     source_level,
-    gw_Bm,
-    gw_c0,
-    nk,
-    kwv,
-    k2,
+	params.gw_F_S0,
+    params.gw_Bm,
+    params.gw_c,
+	params.gw_cw,
+	params.gw_c0,
+    params.gw_nk,
+    params.gw_k,
+    params.gw_k2,
     Jan_bf,
     Jan_ρ,
     face_z,
 )
-plot(Jan_uforcing[source_level:end] * 86400, center_z[source_level:end])
+png( 
+	plot(Jan_uforcing[source_level:end] * 86400, center_z[source_level:end]),
+	"./fig6jan.png"
+)
 
-# # April
-# April_u = mean(center_u_mean[:, month.==4], dims=2)[:,1]
-# April_bf = mean(center_bf_mean[:, month.==4], dims=2)[:,1]
-# April_ρ = mean(center_ρ_mean[:, month.==4], dims=2)[:,1]
-# April_uforcing = gravity_wave_forcing(
-#     April_u,
-#     source_level,
-#     gw_Bm,
-#     gw_c0,
-#     nk,
-#     kwv,
-#     k2,
-#     April_bf,
-#     April_ρ,
-#     face_z,
-# )
-# plot(April_uforcing[source_level:end] * 86400, center_z[source_level:end])
+# April
+April_u = mean(center_u_mean[:, month.==4], dims=2)[:,1]
+April_bf = mean(center_bf_mean[:, month.==4], dims=2)[:,1]
+April_ρ = mean(center_ρ_mean[:, month.==4], dims=2)[:,1]
+April_uforcing = gravity_wave_forcing(
+    April_u,
+    source_level,
+    params.gw_F_S0,
+    params.gw_Bm,
+    params.gw_c,
+	params.gw_cw,
+	params.gw_c0,
+    params.gw_nk,
+    params.gw_k,
+    params.gw_k2,
+    April_bf,
+    April_ρ,
+    face_z,
+)
+png(
+	plot(April_uforcing[source_level:end] * 86400, center_z[source_level:end]),
+	"./fig6apr.png"
+)
 
 # July
+July_u = mean(center_u_mean[:, month.==7], dims=2)[:,1]
+July_bf = mean(center_bf_mean[:, month.==7], dims=2)[:,1]
+July_ρ = mean(center_ρ_mean[:, month.==7], dims=2)[:,1]
+July_uforcing = gravity_wave_forcing(
+    July_u,
+    source_level,
+    params.gw_F_S0,
+    params.gw_Bm,
+    params.gw_c,
+	params.gw_cw,
+	params.gw_c0,
+    params.gw_nk,
+    params.gw_k,
+    params.gw_k2,
+    July_bf,
+    July_ρ,
+    face_z,
+)
+png(
+	plot(July_uforcing[source_level:end] * 86400, center_z[source_level:end]),
+	"./fig6jul.png"
+)
 
 # Oct
-
-# plot
-
-
-# download NCEP data
-using Downloads
-Downloads.download("https://downloads.psl.noaa.gov/Datasets/ncep.reanalysis/Monthlies/surface_gauss/ugwd.mon.mean.nc", "ugwd.mon.mean.nc")
+Oct_u = mean(center_u_mean[:, month.==10], dims=2)[:,1]
+Oct_bf = mean(center_bf_mean[:, month.==10], dims=2)[:,1]
+Oct_ρ = mean(center_ρ_mean[:, month.==10], dims=2)[:,1]
+Oct_uforcing = gravity_wave_forcing(
+    Oct_u,
+    source_level,
+    params.gw_F_S0,
+    params.gw_Bm,
+    params.gw_c,
+	params.gw_cw,
+	params.gw_c0,
+    params.gw_nk,
+    params.gw_k,
+    params.gw_k2,
+    Oct_bf,
+    Oct_ρ,
+    face_z,
+)
+png(
+	plot(Oct_uforcing[source_level:end] * 86400, center_z[source_level:end]),
+	"./fig6oct.png"
+)
