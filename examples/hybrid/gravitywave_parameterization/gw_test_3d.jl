@@ -12,22 +12,51 @@ const FT = Float64
 face_z = 0:1e3:0.47e5
 center_z = 0.5.*(face_z[1:end-1].+face_z[2:end])
 
-
 # compute the source parameters
+function gravity_wave_cache(
+    ::Type{FT};
+    source_height = FT(15000),
+    Bm = FT(1.2),
+    F_S0 = FT(4e-3),
+    dc = FT(0.6),
+    cmax = FT(99.6),
+    c0 = FT(0),
+    kwv = FT(2π/100e5),
+    cw = FT(40.0),
+
+) where {FT}
+
+    nc = Int(floor(FT(2 * cmax / dc + 1)))
+    c = [FT((n - 1) * dc - cmax) for n in 1:nc]
+
+    return (;
+        gw_source_height = source_height,
+        gw_F_S0 = F_S0,
+        gw_Bm = Bm,
+        gw_c = c,
+        gw_cw = cw,
+        gw_c0 = c0,
+        gw_nk = length(kwv),
+        gw_k = kwv,
+        gw_k2 = kwv.^2,
+    )
+end
+
 params = gravity_wave_cache(FT; Bm = 0.4, cmax = 150, kwv = 2π/100e3 )
 source_level = argmin( abs.(center_z .- params.gw_source_height) )
 
 # ERA5 data 1973 Jan
-ds = NCDataset("./era5-monthly.nc")
-
-lon = ds["longitude"][:] 
-lat = ds["latitude"][:] 
-lev = ds["level"][:] .* 100
-time = ds["time"][:]
-
-gZ = ds["z"][:] 
-T = ds["t"][:] 
-u = ds["u"][:]
+nt = NCDataset("./era5-monthly.nc") do ds
+    lon = ds["longitude"][:]
+    lat = ds["latitude"][:]
+    lev = ds["level"][:] .* 100
+    time = ds["time"][:]
+    gZ = ds["z"][:]
+    T = ds["t"][:]
+    u = ds["u"][:]
+    (; lon, lat, lev, time, gZ, T, u)
+end
+(; lon, lat, lev, time, gZ, T, u) = nt
 
 # compute density and buoyancy frequency
 R_d = 287.0

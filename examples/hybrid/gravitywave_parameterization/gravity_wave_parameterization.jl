@@ -1,4 +1,5 @@
 function gravity_wave_cache(
+    Y,
     ::Type{FT};
     source_height = FT(15000),
     Bm = FT(1.2),
@@ -8,7 +9,6 @@ function gravity_wave_cache(
     c0 = FT(0),
     kwv = FT(2π/100e5),
     cw = FT(40.0),
-
 ) where {FT}
 
     nc = Int(floor(FT(2 * cmax / dc + 1)))
@@ -24,31 +24,29 @@ function gravity_wave_cache(
         gw_nk = length(kwv),
         gw_k = kwv,
         gw_k2 = kwv.^2,
+        ᶜbuoyancy_frequency = similar(Y.c.ρ),
+        ᶜdTdz = similar(Y.c.ρ),
     )
 end
-
-
 
 function gravity_wave_tendency!(Yₜ, Y, p, t)
     #unpack
     (; gw_source_height, gw_Bm, gw_F_S0, gw_c, gw_cw, gw_c0, gw_nk, gw_k, gw_k2) = p
-    (; ᶜts, ᶜT, params) = p
+    (; ᶜts, ᶜT, ᶜdTdz, ᶜbuoyancy_frequency, params) = p
     ᶜρ = Y.c.ρ
     # parameters
     thermo_params = CAP.thermodynamics_params(params)
     grav = FT(CAP.grav(params))
-    cp_m = @. TD.cp_m(thermo_params, ᶜts)
 
     # compute buoyancy frequency
     @. ᶜT = TD.air_temperature(thermo_params, ᶜts)
 
-    grad_scalar = similar(ᶜT)
-    parent(grad_scalar) .= parent(Geometry.WVector.(ᶜgradᵥ.(ᶠinterp.(ᶜT))))
+    parent(ᶜdTdz) .= parent(Geometry.WVector.(ᶜgradᵥ.(ᶠinterp.(ᶜT))))
 
-    ᶜbf = @. (grav / ᶜT) * (grad_scalar + grav / cp_m)
-    ᶜbf = @. ifelse(ᶜbf < FT(2.5e-5), FT(sqrt(2.5e-5)), sqrt(abs(ᶜbf))) # to avoid small numbers
+    ᶜbuoyancy_frequency = @. (grav / ᶜT) * (ᶜdTdz + grav / TD.cp_m(thermo_params, ᶜts))
+    ᶜbuoyancy_frequency = @. ifelse(ᶜbuoyancy_frequency < FT(2.5e-5), FT(sqrt(2.5e-5)), sqrt(abs(ᶜbuoyancy_frequency))) # to avoid small numbers
     # alternative
-    # ᶠbf = [i > 2.5e-5 ? sqrt(i) : sqrt(2.5e-5)  for i in ᶠbf]
+    # ᶜbuoyancy_frequency = [i > 2.5e-5 ? sqrt(i) : sqrt(2.5e-5)  for i in ᶜbuoyancy_frequency]
     # TODO: create an extra layer at model top so that the gravity wave forcing
     # .     occurring between the topmost model level and the upper boundary
     # .     may be calculated
@@ -84,7 +82,7 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
             gw_nk,
             gw_k,
             gw_k2,
-            parent(ᶜbf[colidx])[:, 1],
+            parent(ᶜbuoyancy_frequency[colidx])[:, 1],
             parent(ᶜρ[colidx])[:, 1],
             parent(ᶠz[colidx])[:, 1],
         )
@@ -99,7 +97,7 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
             gw_nk,
             gw_k,
             gw_k2,
-            parent(ᶜbf[colidx])[:, 1],
+            parent(ᶜbuoyancy_frequency[colidx])[:, 1],
             parent(ᶜρ[colidx])[:, 1],
             parent(ᶠz[colidx])[:, 1],
         )
@@ -110,8 +108,6 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
         Geometry.Covariant12Vector.(Geometry.UVVector.(uforcing, vforcing))
 
 end
-
-
 
 function gravity_wave_forcing(
     ᶜu,
@@ -155,7 +151,7 @@ function gravity_wave_forcing(
 
         mask = ones(nc)  # mask to determine which waves propagate upward
         for k in source_level:length(ᶜu)
-            fac = 0.5 * (ᶜρ[k] / ᶜρ[source_level]) * kwv[ink] / ᶜbf[k]
+            fac = FT(0.5) * (ᶜρ[k] / ᶜρ[source_level]) * kwv[ink] / ᶜbf[k]
 
             ᶜHb = - ᶜdz[k] / log(ᶜρ[k] / ᶜρ[k - 1])  # density scale height
             alp2 = 0.25 / (ᶜHb * ᶜHb)

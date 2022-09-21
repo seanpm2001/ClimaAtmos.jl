@@ -14,22 +14,52 @@ face_z = FT.(0:1e3:0.5e5)
 center_z = FT(0.5).*(face_z[1:end-1].+face_z[2:end])
 
 # compute the source parameters
+function gravity_wave_cache(
+    ::Type{FT};
+    source_height = FT(15000),
+    Bm = FT(1.2),
+    F_S0 = FT(4e-3),
+    dc = FT(0.6),
+    cmax = FT(99.6),
+    c0 = FT(0),
+    kwv = FT(2π/100e5),
+    cw = FT(40.0),
+
+) where {FT}
+
+    nc = Int(floor(FT(2 * cmax / dc + 1)))
+    c = [FT((n - 1) * dc - cmax) for n in 1:nc]
+
+    return (;
+        gw_source_height = source_height,
+        gw_F_S0 = F_S0,
+        gw_Bm = Bm,
+        gw_c = c,
+        gw_cw = cw,
+        gw_c0 = c0,
+        gw_nk = length(kwv),
+        gw_k = kwv,
+        gw_k2 = kwv.^2,
+    )
+end
+
 params = gravity_wave_cache(FT; Bm = 0.4, cmax = 150, kwv = 2π/100e3 )
 source_level = argmin( abs.(center_z .- params.gw_source_height) )
 
 # read ERA5 nc data: wind, temperature, geopotential height
-ds = NCDataset("./single_column_test.nc")
-# data at 40N, all longitude, all levels, all time
-lon = ds["longitude"][:] 
-lat = ds["latitude"][:] 
-lev = ds["level"][:] .* 100
-time = ds["time"][:]
-# Dimensions:  longitude × latitude × level × time
-gZ = ds["z"][:,5,:,:] 
-q = ds["q"][:,5,:,:] 
-T = ds["t"][:,5,:,:] 
-u = ds["u"][:,5,:,:] 
-v = ds["v"][:,5,:,:]
+nt = NCDataset("./single_column_test.nc") do ds
+	# Dimensions:  longitude × latitude × level × time
+	# data at 40N, all longitude, all levels, all time
+	lon = ds["longitude"][:]
+    lat = ds["latitude"][:]
+    lev = ds["level"][:] .* 100
+    time = ds["time"][:]
+    gZ = ds["z"][:,5,:,:]
+    T = ds["t"][:,5,:,:]
+    u = ds["u"][:,5,:,:]
+    (; lon, lat, lev, time, gZ, T, u)
+end
+(; lon, lat, lev, time, gZ, T, u) = nt
 
 # compute density and buoyancy frequency
 R_d = 287.0
@@ -47,25 +77,13 @@ bf = @. (grav / T) * (dTdz + grav / cp_d)
 bf = @. ifelse(bf < 2.5e-5, sqrt(2.5e-5), sqrt(abs(bf)))
 
 # interpolation to center_z grid
-center_pressure = zeros(length(lon), length(center_z), length(time))
-center_T = zeros(length(lon), length(center_z), length(time))
 center_u = zeros(length(lon), length(center_z), length(time))
-center_v = zeros(length(lon), length(center_z), length(time))
 center_bf = zeros(length(lon), length(center_z), length(time))
 center_ρ = zeros(length(lon), length(center_z), length(time))
 for i in 1:length(lon)
 	for it in 1:length(time)
-		interp_linear = LinearInterpolation(Z[i,:,it][end:-1:1], lev[end:-1:1], extrapolation_bc=Line())
-		center_pressure[i,:,it] = interp_linear.(center_z)
-
-		interp_linear = LinearInterpolation(Z[i,:,it][end:-1:1], T[i,:,it][end:-1:1], extrapolation_bc=Line())
-		center_T[i,:,it] = interp_linear.(center_z)
-
 		interp_linear = LinearInterpolation(Z[i,:,it][end:-1:1], u[i,:,it][end:-1:1], extrapolation_bc=Line())
 		center_u[i,:,it] = interp_linear.(center_z)
-		
-		interp_linear = LinearInterpolation(Z[i,:,it][end:-1:1], v[i,:,it][end:-1:1], extrapolation_bc=Line())
-		center_v[i,:,it] = interp_linear.(center_z)
 
 		interp_linear = LinearInterpolation(Z[i,:,it][end:-1:1], bf[i,:,it][end:-1:1], extrapolation_bc=Line())
 		center_bf[i,:,it] = interp_linear.(center_z)
@@ -76,10 +94,7 @@ for i in 1:length(lon)
 end
 
 # zonal mean
-center_pressure_mean = mean(center_pressure, dims = 1)[1,:,:]
-center_T_mean = mean(center_T, dims = 1)[1,:,:]
 center_u_mean = mean(center_u, dims = 1)[1,:,:]
-center_v_mean = mean(center_v, dims = 1)[1,:,:]
 center_bf_mean = mean(center_bf, dims = 1)[1,:,:]
 center_ρ_mean = mean(center_ρ, dims = 1)[1,:,:]
 

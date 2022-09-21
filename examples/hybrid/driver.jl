@@ -159,7 +159,7 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
             diffuse_momentum,
             coupled,
         ) : NamedTuple(),
-        model_spec.non_orographic_gravity_wave ? gravity_wave_cache(FT) :
+        model_spec.non_orographic_gravity_wave ? gravity_wave_cache(Y,FT) :
         NamedTuple(),
         (;
             tendency_knobs = (;
