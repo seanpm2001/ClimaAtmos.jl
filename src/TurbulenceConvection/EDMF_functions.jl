@@ -688,19 +688,24 @@ function compute_up_tendencies!(
         e_tot_up = aux_up_i.e_tot
         e_tot_en = aux_en.e_tot
         h_tot_up = aux_up_i.h_tot
-        h_tot_en = aux_en.h_tot
+        θ_liq_ice_up = aux_up_i.θ_liq_ice
+        θ_liq_ice_en = aux_en.θ_liq_ice
         entr_turb_dyn = aux_up_i.entr_turb_dyn
         detr_turb_dyn = aux_up_i.detr_turb_dyn
         qt_tendency_precip_formation = aux_up_i.qt_tendency_precip_formation
         e_tot_tendency_precip_formation =
             aux_up_i.e_tot_tendency_precip_formation
+        θ_liq_ice_tendency_precip_formation =
+            aux_up_i.θ_liq_ice_tendency_precip_formation
 
         ρarea = prog_up[i].ρarea
         ρae_tot = prog_up[i].ρae_tot
+        ρaθ_liq_ice = prog_up[i].ρaθ_liq_ice
         ρaq_tot = prog_up[i].ρaq_tot
 
         tends_ρarea = tendencies_up[i].ρarea
         tends_ρae_tot = tendencies_up[i].ρae_tot
+        tends_ρaθ_liq_ice = tendencies_up[i].ρaθ_liq_ice
         tends_ρaq_tot = tendencies_up[i].ρaq_tot
 
         @. tends_ρarea =
@@ -713,6 +718,12 @@ function compute_up_tendencies!(
             (ρarea * Ic(w_up) * entr_turb_dyn * h_tot_en) -
             (ρarea * Ic(w_up) * detr_turb_dyn * h_tot_up) +
             (ρ_c * e_tot_tendency_precip_formation)
+
+        @. tends_ρaθ_liq_ice =
+            -∇c(wvec(LBF(Ic(w_up) * ρaθ_liq_ice))) +
+            (ρarea * Ic(w_up) * entr_turb_dyn * θ_liq_ice_en) -
+            (ρarea * Ic(w_up) * detr_turb_dyn * θ_liq_ice_up) +
+            (ρ_c * θ_liq_ice_tendency_precip_formation)
 
         @. tends_ρaq_tot =
             -∇c(wvec(LBF(Ic(w_up) * ρaq_tot))) +
