@@ -213,13 +213,14 @@ function update_aux!(
                k > kc_surf &&
                aux_up[i].area[k - 1] > 0.0
                 qt = aux_up[i].q_tot[k - 1]
-                h = aux_up[i].θ_liq_ice[k - 1]
+                e_pot_m = geopotential(param_set, grid.zc.z[k - 1])
+                h = enthalpy(aux_up[i].h_tot[k-1], e_pot_m, aux_up[i].e_kin[k-1])
                 if edmf.moisture_model isa EquilibriumMoisture
-                    ts_up = thermo_state_pθq(param_set, p_c[k], h, qt)
+                    ts_up = thermo_state_phq(param_set, p_c[k], h, qt)
                 elseif edmf.moisture_model isa NonEquilibriumMoisture
                     ql = aux_up[i].q_liq[k - 1]
                     qi = aux_up[i].q_ice[k - 1]
-                    ts_up = thermo_state_pθq(param_set, p_c[k], h, qt, ql, qi)
+                    ts_up = thermo_state_phq(param_set, p_c[k], h, qt, ql, qi)
                 else
                     error(
                         "Something went wrong. emdf.moisture_model options are equilibrium or nonequilibrium",
