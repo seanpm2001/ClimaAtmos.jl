@@ -111,26 +111,26 @@ function get_model_spec(::Type{FT}, parsed_args, namelist) where {FT}
     model_spec = (;
         moisture_model = moisture_model(parsed_args),
         energy_form = energy_form(parsed_args),
+        perturb_initstate = parsed_args["perturb_initstate"],
         idealized_h2o,
         radiation_model = radiation_model(parsed_args),
         microphysics_model = microphysics_model(parsed_args),
         forcing_type = forcing_type(parsed_args),
         turbconv_model = turbconv_model(FT, parsed_args, namelist),
         anelastic_dycore = parsed_args["anelastic_dycore"],
+        C_E = FT(parsed_args["C_E"]),
     )
 
     return model_spec
 end
 
 function get_numerics(parsed_args)
-
+    # wrap each upwinding mode in a Val for dispatch
     numerics = (;
-        upwinding_mode = Symbol(
-            parse_arg(parsed_args, "upwinding", "third_order"),
-        ),
+        energy_upwinding = Val(Symbol(parsed_args["energy_upwinding"])),
+        tracer_upwinding = Val(Symbol(parsed_args["tracer_upwinding"])),
         apply_limiter = parsed_args["apply_limiter"],
     )
-    @assert numerics.upwinding_mode in (:none, :first_order, :third_order)
     for key in keys(numerics)
         @info "`$(key)`:$(getproperty(numerics, key))"
     end
@@ -152,6 +152,7 @@ function get_simulation(::Type{FT}, parsed_args) where {FT}
 
     sim = (;
         is_distributed = haskey(ENV, "CLIMACORE_DISTRIBUTED"),
+        is_debugging_tc = parsed_args["debugging_tc"],
         output_dir,
         restart = haskey(ENV, "RESTART_FILE"),
         job_id,
@@ -211,6 +212,7 @@ function get_spaces(parsed_args, params, comms_ctx)
             )
         end
     elseif parsed_args["config"] == "column" # single column
+        @warn "perturb_initstate flag is ignored for single column configuration"
         FT = eltype(params)
         Δx = FT(1) # Note: This value shouldn't matter, since we only have 1 column.
         quad = Spaces.Quadratures.GL{1}()
@@ -325,15 +327,6 @@ function ode_configuration(Y, parsed_args, model_spec)
             jacobian_flags,
             test_implicit_solver,
         )
-        Wfact! =
-            if :ρe_tot in propertynames(Y.c) &&
-               W.flags.∂ᶜ𝔼ₜ∂ᶠ𝕄_mode == :no_∂ᶜp∂ᶜK &&
-               W.flags.∂ᶠ𝕄ₜ∂ᶜρ_mode == :exact &&
-               enable_threading()
-                Wfact_special!
-            else
-                Wfact_generic!
-            end
         jac_kwargs =
             use_transform ? (; jac_prototype = W, Wfact_t = Wfact!) :
             (; jac_prototype = W, Wfact = Wfact!)
@@ -371,12 +364,6 @@ function get_integrator(parsed_args, Y, p, tspan, ode_config, callback)
     FT = eltype(tspan)
     dt_save_to_sol = time_to_seconds(parsed_args["dt_save_to_sol"])
     show_progress_bar = true#isinteractive()
-
-    if :ρe_tot in propertynames(Y.c) && enable_threading()
-        implicit_tendency! = implicit_tendency_special!
-    else
-        implicit_tendency! = implicit_tendency_generic!
-    end
 
     problem = if parsed_args["split_ode"]
         remaining_func =

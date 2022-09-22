@@ -36,7 +36,7 @@ zd_viscous = parsed_args["zd_viscous"]
 @assert idealized_insolation in (true, false)
 @assert idealized_clouds in (true, false)
 @assert vert_diff in (true, false)
-@assert surface_scheme in ("bulk", "monin_obukhov")
+@assert surface_scheme in (nothing, "bulk", "monin_obukhov")
 @assert hyperdiff in (true, false)
 @assert parsed_args["config"] in ("sphere", "column")
 @assert rayleigh_sponge in (true, false)
@@ -67,7 +67,10 @@ model_spec = get_model_spec(FT, parsed_args, namelist)
 numerics = get_numerics(parsed_args)
 simulation = get_simulation(FT, parsed_args)
 
-diffuse_momentum = vert_diff && !(model_spec.forcing_type isa HeldSuarezForcing)
+diffuse_momentum =
+    vert_diff &&
+    !(model_spec.forcing_type isa HeldSuarezForcing) &&
+    !isnothing(surface_scheme)
 
 # TODO: use import istead of using
 using Colors
@@ -98,21 +101,7 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
     (; microphysics_model, forcing_type, radiation_model, turbconv_model) =
         model_spec
 
-    default_remaining_tendencies = if model_spec.anelastic_dycore
-        nothing
-    else
-        if :ρe_tot in propertynames(Y.c) && enable_threading()
-            (;
-                horizontal_advection_tendency! = horizontal_advection_tendency_special!,
-                explicit_vertical_advection_tendency! = explicit_vertical_advection_tendency_special!,
-            )
-        else
-            (;
-                horizontal_advection_tendency! = horizontal_advection_tendency_generic!,
-                explicit_vertical_advection_tendency! = explicit_vertical_advection_tendency_generic!,
-            )
-        end
-    end
+    anelastic_dycore = model_spec.anelastic_dycore
 
     return merge(
         hyperdiffusion_cache(
@@ -149,8 +138,10 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
         ),
         vert_diff ?
         vertical_diffusion_boundary_layer_cache(
-            Y;
+            Y,
+            FT;
             surface_scheme,
+            model_spec.C_E,
             diffuse_momentum,
             coupled,
         ) : NamedTuple(),
@@ -167,7 +158,7 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
             )
         ),
         (; Δt = dt),
-        (; default_remaining_tendencies),
+        (; anelastic_dycore),
         !isnothing(turbconv_model) ?
         (; edmf_cache = TCU.get_edmf_cache(Y, namelist, params, parsed_args)) :
         NamedTuple(),
@@ -265,7 +256,13 @@ end
 if simulation.is_distributed
     OrdinaryDiffEq.step!(integrator)
     ClimaComms.barrier(comms_ctx)
-    walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
+    if ClimaComms.iamroot(comms_ctx)
+        @timev begin
+            walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
+        end
+    else
+        walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
+    end
     ClimaComms.barrier(comms_ctx)
 else
     sol = @timev OrdinaryDiffEq.solve!(integrator)
@@ -296,7 +293,7 @@ if !simulation.is_distributed && parsed_args["post_process"]
             FT(90),
             FT(180),
         )
-    elseif is_column_radiative_equilibrium(parsed_args)
+    elseif is_column_without_edmf(parsed_args)
         custom_postprocessing(sol, simulation.output_dir)
     elseif is_column_edmf(parsed_args)
         postprocessing_edmf(sol, simulation.output_dir, fps)
@@ -312,6 +309,14 @@ if !simulation.is_distributed && parsed_args["post_process"]
     else
         postprocessing(sol, simulation.output_dir, fps)
     end
+end
+
+if parsed_args["debugging_tc"]
+    include(joinpath(@__DIR__, "define_tc_quicklook_profiles.jl"))
+    plot_tc_profiles(
+        simulation.output_dir,
+        "day0." * string(Int(simulation.t_end)) * ".hdf5",
+    )
 end
 
 if parsed_args["regression_test"]

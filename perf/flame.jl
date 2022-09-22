@@ -11,6 +11,8 @@ parsed_args_prescribed = parsed_args_from_ARGS(ARGS)
 parsed_args_target = dict["perf_target_unthreaded"];
 parsed_args = merge(parsed_args_target, parsed_args_prescribed);
 
+# The callbacks flame graph is very expensive, so only do 2 steps.
+const n_samples = occursin("callbacks", parsed_args["job_id"]) ? 2 : 20
 
 try # capture integrator
     include(filename)
@@ -21,7 +23,7 @@ catch err
 end
 
 function do_work!(integrator)
-    for _ in 1:20
+    for _ in 1:n_samples
         OrdinaryDiffEq.step!(integrator)
     end
 end
@@ -34,41 +36,49 @@ prof = Profile.@profile begin
     do_work!(integrator)
 end
 
-if !isempty(get(ENV, "CI_PERF_CPUPROFILE", ""))
+(; output_dir, job_id) = simulation
 
-    (; output_dir, job_id) = simulation
-    import ChromeProfileFormat
-    output_path = output_dir
-    cpufile = job_id * ".cpuprofile"
-    ChromeProfileFormat.save_cpuprofile(joinpath(output_path, cpufile))
+import ProfileCanvas
+include("profile_canvas_patch.jl")
 
-    if !isempty(get(ENV, "BUILDKITE", ""))
-        import URIs
-
-        print_link_url(url) = print("\033]1339;url='$(url)'\a\n")
-
-        profiler_url(uri) = URIs.URI(
-            "https://profiler.firefox.com/from-url/$(URIs.escapeuri(uri))",
-        )
-
-        # copy the file to the clima-ci bucket
-        buildkite_pipeline = ENV["BUILDKITE_PIPELINE_SLUG"]
-        buildkite_buildnum = ENV["BUILDKITE_BUILD_NUMBER"]
-        buildkite_step = ENV["BUILDKITE_STEP_KEY"]
-
-        profile_uri = "$buildkite_pipeline/build/$buildkite_buildnum/$buildkite_step/$cpufile"
-        gs_profile_uri = "gs://clima-ci/$profile_uri"
-        dl_profile_uri = "https://storage.googleapis.com/clima-ci/$profile_uri"
-
-        # sync to bucket
-        run(`gsutil cp $(joinpath(output_path, cpufile)) $gs_profile_uri`)
-
-        # print link
-        println("+++ Profiler link for '$profile_uri': ")
-        print_link_url(profiler_url(dl_profile_uri))
-    end
+if haskey(ENV, "BUILDKITE_COMMIT") || haskey(ENV, "BUILDKITE_BRANCH")
+    output_dir = job_id
+    mkpath(output_dir)
+    html_file(joinpath(output_dir, "flame.html"))
 else
-    import PProf
-    PProf.pprof()
-    # http://localhost:57599/ui/flamegraph?tf
+    ProfileCanvas.view(Profile.fetch())
+end
+
+
+#####
+##### Allocation tests
+#####
+
+# We're grouping allocation tests here for convenience.
+
+using Test
+# Threaded allocations are not deterministic, so let's add a buffer
+# TODO: remove buffer, and threaded tests, when
+#       threaded/unthreaded functions are unified
+buffer = occursin("threaded", job_id) ? 1.4 : 1
+
+allocs = @allocated OrdinaryDiffEq.step!(integrator)
+@timev OrdinaryDiffEq.step!(integrator)
+@info "`allocs ($job_id)`: $(allocs)"
+
+allocs_limit = Dict()
+allocs_limit["flame_perf_target_rhoe"] = 10575616
+allocs_limit["flame_perf_target_rhoe_threaded"] = 12078608
+allocs_limit["flame_perf_target_rhoe_callbacks"] = 21775759
+allocs_limit["flame_perf_target_rhoe_ARS343"] = 24056711
+
+if allocs < allocs_limit[job_id] * buffer
+    @info "TODO: lower `allocs_limit[$job_id]` to: $(allocs)"
+end
+Δallocs = allocs / allocs_limit[job_id]
+@info "Allocation change (allocs/allocs_limit): $Δallocs"
+
+# https://github.com/CliMA/ClimaAtmos.jl/issues/827
+@testset "Allocations limit" begin
+    @test allocs ≤ allocs_limit[job_id]
 end
