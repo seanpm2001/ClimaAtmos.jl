@@ -1610,7 +1610,7 @@ function surface_params(
                 dims = 1,
             )[1],
         )
-        hf = FT(
+        shf = FT(
             Statistics.mean(
                 data.group["timeseries"]["shf_surface_mean"][:][imin:imax],
                 dims = 1,
