@@ -882,7 +882,7 @@ function surface_params(case::TRMM_LBA, surf_ref_state, param_set; Ri_bulk_crit)
     FT = eltype(p_f_surf)
     # zrough = 1.0e-4 # not actually used, but initialized to reasonable value
     qsurface::FT = 22.45e-3 # kg/kg
-    θ_surface::FT = (273.15 + 23 + 0.1)
+    θ_surface::FT = (273.15 + 23)
     ts = TD.PhaseEquil_pθq(thermo_params, p_f_surf, θ_surface, qsurface)
     Tsurface = TD.air_temperature(thermo_params, ts)
     ustar::FT = 0.28 # this is taken from Bomex -- better option is to approximate from LES tke above the surface
@@ -1610,7 +1610,7 @@ function surface_params(
                 dims = 1,
             )[1],
         )
-        shf = FT(
+        hf = FT(
             Statistics.mean(
                 data.group["timeseries"]["shf_surface_mean"][:][imin:imax],
                 dims = 1,
