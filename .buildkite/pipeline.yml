@@ -1,5 +1,5 @@
 env:
-  JULIA_VERSION: "1.8.0"
+  JULIA_VERSION: "1.8.1"
   MPI_IMPL: "openmpi"
   OPENMPI_VERSION: "4.1.1"
   CUDA_VERSION: "11.2"
@@ -102,6 +102,10 @@ steps:
 
   - group: "Column Examples"
     steps:
+
+      - label: ":computer: single column hydrostatic balance"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --hyperdiff false --config column --z_max 30e3 --z_elem 45 --dz_bottom 30 --dz_top 5000 --t_end 10days --dt 3hours --dt_save_to_sol 3hours --job_id sphere_single_column_hydrostatic_balance"
+        artifact_paths: "sphere_single_column_hydrostatic_balance/*"
 
       - label: ":computer: single column radiative equilibrium gray"
         command: "julia --color=yes --project=examples examples/hybrid/driver.jl --rad gray --hyperdiff false --config column --z_max 70e3 --z_elem 70 --dz_bottom 100 --dz_top 10000 --t_end 654days --dt 3hours --dt_save_to_sol 30hours --job_id sphere_single_column_radiative_equilibrium_gray"
@@ -224,6 +228,10 @@ steps:
   - group: "Milestones"
     steps:
 
+      - label: ":computer: hydrostatic balance (ρe_tot)"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --perturb_initstate false --job_id sphere_hydrostatic_balance_rhoe"
+        artifact_paths: "sphere_hydrostatic_balance_rhoe/*"
+
       - label: ":computer: baroclinic wave (ρe_tot)"
         command: "julia --color=yes --project=examples examples/hybrid/driver.jl --job_id sphere_baroclinic_wave_rhoe --regression_test true"
         artifact_paths: "sphere_baroclinic_wave_rhoe/*"
@@ -251,6 +259,8 @@ steps:
       - label: ":computer: aquaplanet (ρe_tot) equilmoist clearsky radiation monin_obukhov"
         command: "julia --color=yes --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --microphy 0M --job_id sphere_aquaplanet_rhoe_equilmoist_clearsky_mo --dt 200secs --t_end 2.5days"
         artifact_paths: "sphere_aquaplanet_rhoe_equilmoist_clearsky_mo/*"
+        agents:
+          slurm_mem: 20GB
 
       - label: ":computer: aquaplanet (ρe_tot) equilmoist gray radiation"
         command: "julia --color=yes --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme bulk --moist equil --rad gray --microphy 0M --job_id sphere_aquaplanet_rhoe_equilmoist_gray --dt 450secs --t_end 2.5days"
@@ -367,7 +377,7 @@ steps:
         agents:
           slurm_mem: 20GB
 
-      - label: ":rocket: flame graph: threadedd perf target (ρe_tot)"
+      - label: ":rocket: flame graph: threaded perf target (ρe_tot)"
         command: "julia --threads 8 --color=yes --project=perf perf/flame.jl --job_id flame_perf_target_rhoe_threaded --enable_threading true"
         artifact_paths: "flame_perf_target_rhoe_threaded/*"
         agents:
@@ -381,11 +391,19 @@ steps:
         agents:
           slurm_mem: 20GB
 
+      - label: ":rocket: flame graph: perf target (ρe_tot) ARS343"
+        command: "julia --color=yes --project=perf perf/flame.jl --job_id flame_perf_target_rhoe_ARS343 --ode_algo ARS343"
+        artifact_paths: "flame_perf_target_rhoe_ARS343/*"
+        agents:
+          slurm_mem: 20GB
+
       - label: ":rocket: benchmark: baroclinic wave (ρe_tot)"
         command: "julia --color=yes --project=perf perf/benchmark.jl --job_id bm_sphere_baroclinic_wave_rhoe"
 
-      - label: ":mag: Allocations: baroclinic wave (ρe_tot)"
+      - label: ":mag: Allocations: perf target"
         command: "julia --color=yes --project=perf perf/allocs.jl"
+        agents:
+          slurm_mem: 20GB
 
   - wait: ~
     continue_on_failure: true

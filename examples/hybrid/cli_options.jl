@@ -52,7 +52,7 @@ function parse_commandline()
         help = "Surface flux scheme [`nothing` (default), `bulk`, `monin_obukhov`]"
         arg_type = String
         "--C_E"
-        help = "Buld transfer coefficient"
+        help = "Bulk transfer coefficient"
         arg_type = Float64
         default = Float64(0.0044)
         "--coupled"
@@ -92,6 +92,10 @@ function parse_commandline()
         help = "Energy variable name [`rhoe` (default), `rhoe_int` , `rhotheta`]"
         arg_type = String
         default = "rhoe"
+        "--perturb_initstate"
+        help = "Add a perturbation to the initial condition [`false`, `true` (default)]"
+        arg_type = Bool
+        default = true
         "--energy_upwinding"
         help = "Energy upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
         arg_type = Symbol
@@ -107,7 +111,7 @@ function parse_commandline()
         "--max_newton_iters"
         help = "Maximum number of Newton's method iterations (only for ODE algorithms that use Newton's method)"
         arg_type = Int
-        default = 3
+        default = 1
         "--split_ode"
         help = "Use split of ODE problem. Examples: [`true` (implicit, default), `false` (explicit)]"
         arg_type = Bool
@@ -375,4 +379,14 @@ function parsed_args_per_job_id(buildkite_yaml; trigger = "driver.jl")
             parsed_args_from_command_line_flags(bkcs, default_parsed_args)
     end
     return result
+end
+
+function non_default_command_line_flags_parsed_args(parsed_args)
+    (s, default_parsed_args) = parse_commandline()
+    s = ""
+    for k in keys(parsed_args)
+        default_parsed_args[k] == parsed_args[k] && continue
+        s *= "--$k $(parsed_args[k]) "
+    end
+    return rstrip(s)
 end

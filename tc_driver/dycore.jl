@@ -124,7 +124,7 @@ function set_thermo_state_peq!(
 )
     Ic = CCO.InterpolateF2C()
     thermo_params = TCP.thermodynamics_params(param_set)
-    ts_gm = TC.center_aux_grid_mean(state).ts
+    ts_gm = TC.center_aux_grid_mean_ts(state)
     prog_gm = TC.center_prog_grid_mean(state)
     prog_gm_f = TC.face_prog_grid_mean(state)
     aux_gm = TC.center_aux_grid_mean(state)
@@ -168,7 +168,7 @@ end
 
 function set_thermo_state_pθq!(state, grid, moisture_model, param_set)
     Ic = CCO.InterpolateF2C()
-    ts_gm = TC.center_aux_grid_mean(state).ts
+    ts_gm = TC.center_aux_grid_mean_ts(state)
     prog_gm = TC.center_prog_grid_mean(state)
     aux_gm = TC.center_aux_grid_mean(state)
     @inbounds for k in TC.real_center_indices(grid)
@@ -196,7 +196,7 @@ function set_grid_mean_from_thermo_state!(param_set, state, grid)
     thermo_params = TCP.thermodynamics_params(param_set)
     Ic = CCO.InterpolateF2C()
     If = CCO.InterpolateC2F(bottom = CCO.Extrapolate(), top = CCO.Extrapolate())
-    ts_gm = TC.center_aux_grid_mean(state).ts
+    ts_gm = TC.center_aux_grid_mean_ts(state)
     prog_gm = TC.center_prog_grid_mean(state)
     prog_gm_f = TC.face_prog_grid_mean(state)
     aux_gm = TC.center_aux_grid_mean(state)
@@ -228,7 +228,7 @@ function assign_thermo_aux!(state, grid, moisture_model, param_set)
     aux_gm = TC.center_aux_grid_mean(state)
     aux_gm_f = TC.face_aux_grid_mean(state)
     prog_gm = TC.center_prog_grid_mean(state)
-    ts_gm = TC.center_aux_grid_mean(state).ts
+    ts_gm = TC.center_aux_grid_mean_ts(state)
     ρ_c = prog_gm.ρ
     ρ_f = aux_gm_f.ρ
     @. ρ_f = If(ρ_c)
@@ -264,9 +264,9 @@ function ∑stoch_tendencies!(
     parent(tends_face) .= 0
     parent(tends_cent) .= 0
 
-    for inds in TC.iterate_columns(prog.cent)
+    Fields.bycolumn(axes(prog.cent)) do colidx
 
-        state = TC.column_state(prog, aux, tendencies, inds...)
+        state = TC.column_state(prog, aux, tendencies, colidx)
         grid = TC.Grid(state)
         surf = get_surface(surf_params, grid, state, t, param_set)
 
@@ -289,8 +289,8 @@ function ∑tendencies!(
     parent(tendencies.face) .= 0
     parent(tendencies.cent) .= 0
 
-    for inds in TC.iterate_columns(prog.cent)
-        state = TC.column_state(prog, aux, tendencies, inds...)
+    Fields.bycolumn(axes(prog.cent)) do colidx
+        state = TC.column_state(prog, aux, tendencies, colidx)
         grid = TC.Grid(state)
 
         set_thermo_state_peq!(
@@ -303,8 +303,9 @@ function ∑tendencies!(
         assign_thermo_aux!(state, grid, edmf.moisture_model, param_set)
 
         aux_gm = TC.center_aux_grid_mean(state)
+        ts_gm = TC.center_aux_grid_mean_ts(state)
 
-        @. aux_gm.θ_virt = TD.virtual_pottemp(thermo_params, aux_gm.ts)
+        @. aux_gm.θ_virt = TD.virtual_pottemp(thermo_params, ts_gm)
 
         Δt = TS.dt
         surf = get_surface(surf_params, grid, state, t, param_set)
@@ -401,7 +402,7 @@ function compute_gm_tendencies!(
     p_c = aux_gm.p
     ρ_c = prog_gm.ρ
     aux_tc = TC.center_aux_turbconv(state)
-    ts_gm = TC.center_aux_grid_mean(state).ts
+    ts_gm = TC.center_aux_grid_mean_ts(state)
 
     MSE_gm_toa = aux_gm.h_tot[kc_toa] - aux_gm.e_kin[kc_toa]
     q_tot_gm_toa = prog_gm.ρq_tot[kc_toa] / ρ_c[kc_toa]

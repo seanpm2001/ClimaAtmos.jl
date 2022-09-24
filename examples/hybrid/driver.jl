@@ -3,6 +3,20 @@ if !(@isdefined parsed_args)
     (s, parsed_args) = parse_commandline()
 end
 
+# Distributed log must be configured before we start logging:
+# https://github.com/CliMA/ClimaAtmos.jl/issues/838
+include("config_log.jl")
+const comms_ctx = get_comms_ctx()
+if haskey(ENV, "CLIMACORE_DISTRIBUTED")
+    const pid, nprocs = ClimaComms.init(comms_ctx)
+    @info "Setting up distributed run on $nprocs \
+        processor$(nprocs == 1 ? "" : "s")"
+end
+import Logging
+atexit() do
+    Logging.global_logger(Logging.global_logger(get_logger(comms_ctx)))
+end
+
 include("../implicit_solver_debugging_tools.jl")
 include("../ordinary_diff_eq_bug_fixes.jl")
 include("../common_spaces.jl")
@@ -101,21 +115,7 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
     (; microphysics_model, forcing_type, radiation_model, turbconv_model) =
         model_spec
 
-    default_remaining_tendencies = if model_spec.anelastic_dycore
-        nothing
-    else
-        if :ρe_tot in propertynames(Y.c) && enable_threading()
-            (;
-                horizontal_advection_tendency! = horizontal_advection_tendency_special!,
-                explicit_vertical_advection_tendency! = explicit_vertical_advection_tendency_special!,
-            )
-        else
-            (;
-                horizontal_advection_tendency! = horizontal_advection_tendency_generic!,
-                explicit_vertical_advection_tendency! = explicit_vertical_advection_tendency_generic!,
-            )
-        end
-    end
+    anelastic_dycore = model_spec.anelastic_dycore
 
     return merge(
         hyperdiffusion_cache(
@@ -172,7 +172,7 @@ function additional_cache(Y, params, model_spec, dt; use_tempest_mode = false)
             )
         ),
         (; Δt = dt),
-        (; default_remaining_tendencies),
+        (; anelastic_dycore),
         !isnothing(turbconv_model) ?
         (; edmf_cache = TCU.get_edmf_cache(Y, namelist, params, parsed_args)) :
         NamedTuple(),
@@ -196,28 +196,6 @@ end
 
 ################################################################################
 
-using Logging
-using ClimaComms
-if simulation.is_distributed
-    if ENV["CLIMACORE_DISTRIBUTED"] == "MPI"
-        using ClimaCommsMPI
-        const comms_ctx = ClimaCommsMPI.MPICommsContext()
-    else
-        error("ENV[\"CLIMACORE_DISTRIBUTED\"] only supports the \"MPI\" option")
-    end
-    const pid, nprocs = ClimaComms.init(comms_ctx)
-    logger_stream = ClimaComms.iamroot(comms_ctx) ? stderr : devnull
-    prev_logger = global_logger(ConsoleLogger(logger_stream, Logging.Info))
-    @info "Setting up distributed run on $nprocs \
-        processor$(nprocs == 1 ? "" : "s")"
-else
-    const comms_ctx = ClimaComms.SingletonCommsContext()
-    using TerminalLoggers: TerminalLogger
-    prev_logger = global_logger(TerminalLogger())
-end
-atexit() do
-    global_logger(prev_logger)
-end
 using OrdinaryDiffEq
 using DiffEqCallbacks
 using JLD2
@@ -270,7 +248,13 @@ end
 if simulation.is_distributed
     OrdinaryDiffEq.step!(integrator)
     ClimaComms.barrier(comms_ctx)
-    walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
+    if ClimaComms.iamroot(comms_ctx)
+        @timev begin
+            walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
+        end
+    else
+        walltime = @elapsed sol = OrdinaryDiffEq.solve!(integrator)
+    end
     ClimaComms.barrier(comms_ctx)
 else
     sol = @timev OrdinaryDiffEq.solve!(integrator)
@@ -301,7 +285,7 @@ if !simulation.is_distributed && parsed_args["post_process"]
             FT(90),
             FT(180),
         )
-    elseif is_column_radiative_equilibrium(parsed_args)
+    elseif is_column_without_edmf(parsed_args)
         custom_postprocessing(sol, simulation.output_dir)
     elseif is_column_edmf(parsed_args)
         postprocessing_edmf(sol, simulation.output_dir, fps)

@@ -14,7 +14,6 @@ import ClimaAtmos.TurbulenceConvection as TC
 import UnPack
 import Logging
 import TerminalLoggers
-Logging.global_logger(TerminalLoggers.TerminalLogger())
 
 const ca_dir = pkgdir(ClimaAtmos)
 
@@ -79,13 +78,13 @@ function get_edmf_cache(Y, namelist, param_set, parsed_args)
     )
 end
 
-function tc_column_state(prog, aux, tendencies, inds...)
-    prog_cent_column = CC.column(prog.c, inds...)
-    prog_face_column = CC.column(prog.f, inds...)
-    aux_cent_column = CC.column(aux.cent, inds...)
-    aux_face_column = CC.column(aux.face, inds...)
-    tends_cent_column = CC.column(tendencies.c, inds...)
-    tends_face_column = CC.column(tendencies.f, inds...)
+function tc_column_state(prog, p, tendencies, colidx)
+    prog_cent_column = CC.column(prog.c, colidx)
+    prog_face_column = CC.column(prog.f, colidx)
+    aux_cent_column = CC.column(p.edmf_cache.aux.cent, colidx)
+    aux_face_column = CC.column(p.edmf_cache.aux.face, colidx)
+    tends_cent_column = CC.column(tendencies.c, colidx)
+    tends_face_column = CC.column(tendencies.f, colidx)
     prog_column =
         CC.Fields.FieldVector(cent = prog_cent_column, face = prog_face_column)
     aux_column =
@@ -95,44 +94,36 @@ function tc_column_state(prog, aux, tendencies, inds...)
         face = tends_face_column,
     )
 
-    return TC.State(prog_column, aux_column, tends_column)
+    return TC.State(prog_column, aux_column, tends_column, p, colidx)
 end
 
-function tc_column_state(prog, aux, tendencies::Nothing, inds...)
-    prog_cent_column = CC.column(prog.c, inds...)
-    prog_face_column = CC.column(prog.f, inds...)
-    aux_cent_column = CC.column(aux.cent, inds...)
-    aux_face_column = CC.column(aux.face, inds...)
+function tc_column_state(prog, p, tendencies::Nothing, colidx)
+    prog_cent_column = CC.column(prog.c, colidx)
+    prog_face_column = CC.column(prog.f, colidx)
+    aux_cent_column = CC.column(p.edmf_cache.aux.cent, colidx)
+    aux_face_column = CC.column(p.edmf_cache.aux.face, colidx)
     prog_column =
         CC.Fields.FieldVector(cent = prog_cent_column, face = prog_face_column)
     aux_column =
         CC.Fields.FieldVector(cent = aux_cent_column, face = aux_face_column)
     tends_column = nothing
 
-    return TC.State(prog_column, aux_column, tends_column)
+    return TC.State(prog_column, aux_column, tends_column, p, colidx)
 end
 
 
 function init_tc!(Y, p, param_set, namelist)
     (; edmf_cache, Δt) = p
-    (;
-        edmf,
-        param_set,
-        surf_ref_state,
-        aux,
-        surf_params,
-        forcing,
-        radiation,
-        case,
-    ) = edmf_cache
+    (; edmf, param_set, surf_ref_state, surf_params, forcing, radiation, case) =
+        edmf_cache
     tc_params = CAP.turbconv_params(param_set)
 
     FT = eltype(edmf)
     N_up = TC.n_updrafts(edmf)
 
-    for inds in TC.iterate_columns(Y.c)
+    CC.Fields.bycolumn(axes(Y.c)) do colidx
         # `nothing` goes into State because OrdinaryDiffEq.jl owns tendencies.
-        state = tc_column_state(Y, aux, nothing, inds...)
+        state = tc_column_state(Y, p, nothing, colidx)
 
         grid = TC.Grid(state)
         FT = eltype(grid)
@@ -152,21 +143,13 @@ end
 
 function sgs_flux_tendency!(Yₜ, Y, p, t)
     (; edmf_cache, Δt) = p
-    (;
-        edmf,
-        param_set,
-        aux,
-        case,
-        surf_params,
-        radiation,
-        forcing,
-        precip_model,
-    ) = edmf_cache
+    (; edmf, param_set, case, surf_params, radiation, forcing, precip_model) =
+        edmf_cache
     tc_params = CAP.turbconv_params(param_set)
 
     # TODO: write iterator for this
-    for inds in TC.iterate_columns(Y.c)
-        state = tc_column_state(Y, aux, Yₜ, inds...)
+    CC.Fields.bycolumn(axes(Y.c)) do colidx
+        state = tc_column_state(Y, p, Yₜ, colidx)
         grid = TC.Grid(state)
 
         set_thermo_state_peq!(
