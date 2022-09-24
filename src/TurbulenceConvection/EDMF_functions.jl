@@ -371,13 +371,12 @@ function set_edmf_surface_bc(
         e_kin = @. LA.norm_sqr(C123(prog_gm_uₕ) + C123(wvec(w_up_c))) / 2
         e_pot = geopotential(param_set, grid.zc.z[kc_surf])
         ts_up_i = thermo_state_pθq(param_set, p_c[kc_surf], θ_surf, q_surf)
-        ρ_i = TD.air_density(thermo_params, ts_up_i)
-        buoy_surf = buoyancy_c(param_set, ρ_c[kc_surf], ρ_i)
         e_tot_surf =
             TD.total_energy(thermo_params, ts_up_i, e_kin[kc_surf], e_pot)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
+        prog_up[i].ρaθ_liq_ice[kc_surf] = prog_up[i].ρarea[kc_surf] * θ_surf
         if edmf.moisture_model isa NonEquilibriumMoisture
             q_liq_surf = FT(0)
             q_ice_surf = FT(0)
@@ -688,6 +687,7 @@ function compute_up_tendencies!(
         e_tot_up = aux_up_i.e_tot
         e_tot_en = aux_en.e_tot
         h_tot_up = aux_up_i.h_tot
+        h_tot_en = aux_en.h_tot
         θ_liq_ice_up = aux_up_i.θ_liq_ice
         θ_liq_ice_en = aux_en.θ_liq_ice
         entr_turb_dyn = aux_up_i.entr_turb_dyn
@@ -781,6 +781,7 @@ function compute_up_tendencies!(
         end
         tends_ρarea[kc_surf] = 0
         tends_ρae_tot[kc_surf] = 0
+        tends_ρaθ_liq_ice[kc_surf] = 0
         tends_ρaq_tot[kc_surf] = 0
     end
 
@@ -852,6 +853,7 @@ function filter_updraft_vars(
     @inbounds for i in 1:N_up
         prog_up[i].ρarea .= max.(prog_up[i].ρarea, 0)
         prog_up[i].ρae_tot .= max.(prog_up[i].ρae_tot, 0)
+        prog_up[i].ρaθ_liq_ice .= max.(prog_up[i].ρaθ_liq_ice, 0)
         prog_up[i].ρaq_tot .= max.(prog_up[i].ρaq_tot, 0)
         if edmf.entr_closure isa PrognosticNoisyRelaxationProcess
             @. prog_up[i].ε_nondim = max(prog_up[i].ε_nondim, 0)
@@ -886,6 +888,7 @@ function filter_updraft_vars(
             if prog_up[i].ρarea[k] / ρ_c[k] < a_min
                 prog_up[i].ρaq_tot[k] = 0
                 prog_up[i].ρae_tot[k] = 0
+                prog_up[i].ρaθ_liq_ice[k] = 0
             end
         end
     end
@@ -900,6 +903,7 @@ function filter_updraft_vars(
                 if prog_up[i].ρarea[k] / ρ_c[k] < a_min
                     prog_up[i].ρaq_liq[k] = 0
                     prog_up[i].ρaq_ice[k] = 0
+                    prog_up[i].ρaθ_liq_ice[k] = 0
                 end
             end
         end
@@ -915,6 +919,8 @@ function filter_updraft_vars(
             ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρarea)
         @. prog_up[i].ρae_tot =
             ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρae_tot)
+        @. prog_up[i].ρaθ_liq_ice =
+            ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρaθ_liq_ice)
         @. prog_up[i].ρaq_tot =
             ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρaq_tot)
         θ_surf = θ_surface_bc(surf, grid, state, edmf, i, param_set)
@@ -923,12 +929,11 @@ function filter_updraft_vars(
         e_kin = @. LA.norm_sqr(C123(prog_gm_uₕ) + C123(wvec(w_up_c))) / 2
         e_pot = geopotential(param_set, grid.zc.z[kc_surf])
         ts_up_i = thermo_state_pθq(param_set, p_c[kc_surf], θ_surf, q_surf)
-        ρ_i = TD.air_density(thermo_params, ts_up_i)
-        buoy_surf = buoyancy_c(param_set, ρ_c[kc_surf], ρ_i)
         e_tot_surf =
             TD.total_energy(thermo_params, ts_up_i, e_kin[kc_surf], e_pot)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
+        prog_up[i].ρaθ_liq_ice[kc_surf] = prog_up[i].ρarea[kc_surf] * θ_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
     end
     if edmf.moisture_model isa NonEquilibriumMoisture
