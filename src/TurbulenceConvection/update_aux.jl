@@ -100,7 +100,12 @@ function update_aux!(
                 aux_up[i].q_tot[k],
                 thermo_args...,
             )
-            e_tot_θ = TD.internal_energy(thermo_params, ts_up_i) + e_pot + aux_up[i].e_kin[k]
+            e_tot_θ = TD.total_energy(
+                thermo_params,
+                ts_up_i,
+                aux_up[i].e_kin[k],
+                e_pot,
+            )
             aux_up[i].h_tot[k] =
                 total_enthalpy(param_set, e_tot_θ, ts_up_i)
         end
