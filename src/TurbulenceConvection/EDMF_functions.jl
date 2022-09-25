@@ -722,7 +722,7 @@ function compute_up_tendencies!(
         @. tends_ρaθ_liq_ice =
             -∇c(wvec(LBF(Ic(w_up) * ρaθ_liq_ice))) +
             (ρarea * Ic(w_up) * entr_turb_dyn * θ_liq_ice_en) -
-            (ρarea * Ic(w_up) * detr_turb_dyn * θ_liq_ice_up) +
+            (ρaθ_liq_ice * Ic(w_up) * detr_turb_dyn) +
             (ρ_c * θ_liq_ice_tendency_precip_formation)
 
         @. tends_ρaq_tot =
@@ -887,8 +887,8 @@ function filter_updraft_vars(
             # a similar filtering of ρae_tot breaks the simulation
             if prog_up[i].ρarea[k] / ρ_c[k] < a_min
                 prog_up[i].ρaq_tot[k] = 0
-                prog_up[i].ρae_tot[k] = 0
-                prog_up[i].ρaθ_liq_ice[k] = 0
+                # prog_up[i].ρae_tot[k] = 0
+                # prog_up[i].ρaθ_liq_ice[k] = 0
             end
         end
     end
@@ -903,7 +903,6 @@ function filter_updraft_vars(
                 if prog_up[i].ρarea[k] / ρ_c[k] < a_min
                     prog_up[i].ρaq_liq[k] = 0
                     prog_up[i].ρaq_ice[k] = 0
-                    prog_up[i].ρaθ_liq_ice[k] = 0
                 end
             end
         end
