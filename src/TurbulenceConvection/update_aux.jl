@@ -106,8 +106,13 @@ function update_aux!(
                 aux_up[i].e_kin[k],
                 e_pot,
             )
+            # aux_up[i].h_tot[k] =
+            #     total_enthalpy(param_set, e_tot_θ, ts_up_i)
+            if prog_up[i].ρarea[k] / ρ_c[k] >= edmf.minimum_area
+                @show(k, e_tot_θ - aux_up[i].e_tot[k])
+            end
             aux_up[i].h_tot[k] =
-                total_enthalpy(param_set, e_tot_θ, ts_up_i)
+                total_enthalpy(param_set, aux_up[i].e_tot[k], ts_up_i)
         end
 
         #####

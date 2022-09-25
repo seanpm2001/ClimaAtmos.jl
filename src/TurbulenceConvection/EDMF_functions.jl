@@ -714,9 +714,9 @@ function compute_up_tendencies!(
             (ρarea * Ic(w_up) * detr_turb_dyn)
 
         @. tends_ρae_tot =
-            -∇c(wvec(LBF(Ic(w_up) * ρarea * h_tot_up))) +
-            (ρarea * Ic(w_up) * entr_turb_dyn * h_tot_en) -
-            (ρarea * Ic(w_up) * detr_turb_dyn * h_tot_up) +
+            -∇c(wvec(LBF(Ic(w_up) * ρarea * e_tot_up))) +
+            (ρarea * Ic(w_up) * entr_turb_dyn * e_tot_en) -
+            (ρarea * Ic(w_up) * detr_turb_dyn * e_tot_up) +
             (ρ_c * e_tot_tendency_precip_formation)
 
         @. tends_ρaθ_liq_ice =
