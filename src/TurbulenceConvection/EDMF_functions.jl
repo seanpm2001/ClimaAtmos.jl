@@ -376,7 +376,6 @@ function set_edmf_surface_bc(
         h_tot_surf = total_enthalpy(param_set, e_tot_surf, ts_up_i)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
-        # prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
         prog_up[i].ρah_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * h_tot_surf
         prog_up[i].ρaθ_liq_ice[kc_surf] = prog_up[i].ρarea[kc_surf] * θ_surf
         if edmf.moisture_model isa NonEquilibriumMoisture
@@ -701,13 +700,11 @@ function compute_up_tendencies!(
             aux_up_i.θ_liq_ice_tendency_precip_formation
 
         ρarea = prog_up[i].ρarea
-        # ρae_tot = prog_up[i].ρae_tot
         ρah_tot = prog_up[i].ρah_tot
         ρaθ_liq_ice = prog_up[i].ρaθ_liq_ice
         ρaq_tot = prog_up[i].ρaq_tot
 
         tends_ρarea = tendencies_up[i].ρarea
-        # tends_ρae_tot = tendencies_up[i].ρae_tot
         tends_ρah_tot = tendencies_up[i].ρah_tot
         tends_ρaθ_liq_ice = tendencies_up[i].ρaθ_liq_ice
         tends_ρaq_tot = tendencies_up[i].ρaq_tot
@@ -716,12 +713,6 @@ function compute_up_tendencies!(
             -∇c(wvec(LBF(Ic(w_up) * ρarea))) +
             (ρarea * Ic(w_up) * entr_turb_dyn) -
             (ρarea * Ic(w_up) * detr_turb_dyn)
-
-        # @. tends_ρae_tot =
-        #     -∇c(wvec(LBF(Ic(w_up) * ρarea * h_tot_up))) +
-        #     (ρarea * Ic(w_up) * entr_turb_dyn * h_tot_en) -
-        #     (ρarea * Ic(w_up) * detr_turb_dyn * h_tot_up) +
-        #     (ρ_c * e_tot_tendency_precip_formation)
 
         @. tends_ρah_tot =
             -∇c(wvec(LBF(Ic(w_up) * ρarea * h_tot_up))) +
@@ -790,8 +781,8 @@ function compute_up_tendencies!(
             @. tends_δ_nondim = δ_λ * (mean_detr - δ_nondim)
         end
         tends_ρarea[kc_surf] = 0
-        # tends_ρae_tot[kc_surf] = 0
         tends_ρaθ_liq_ice[kc_surf] = 0
+        tends_ρah_tot[kc_surf] = 0
         tends_ρaq_tot[kc_surf] = 0
     end
 
@@ -862,7 +853,6 @@ function filter_updraft_vars(
 
     @inbounds for i in 1:N_up
         prog_up[i].ρarea .= max.(prog_up[i].ρarea, 0)
-        # prog_up[i].ρae_tot .= max.(prog_up[i].ρae_tot, 0)
         prog_up[i].ρaθ_liq_ice .= max.(prog_up[i].ρaθ_liq_ice, 0)
         prog_up[i].ρah_tot .= max.(prog_up[i].ρah_tot, 0)
         prog_up[i].ρaq_tot .= max.(prog_up[i].ρaq_tot, 0)
@@ -899,7 +889,7 @@ function filter_updraft_vars(
             if prog_up[i].ρarea[k] / ρ_c[k] < a_min
                 prog_up[i].ρaq_tot[k] = 0
                 prog_up[i].ρah_tot[k] = 0
-                # prog_up[i].ρaθ_liq_ice[k] = 0
+                prog_up[i].ρaθ_liq_ice[k] = 0
             end
         end
     end
@@ -927,8 +917,6 @@ function filter_updraft_vars(
         @. w_up_c = Ic(aux_up_f[i].w)
         @. prog_up[i].ρarea =
             ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρarea)
-        # @. prog_up[i].ρae_tot =
-        #     ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρae_tot)
         @. prog_up[i].ρaθ_liq_ice =
             ifelse(Ic(prog_up_f[i].ρaw) <= 0, FT(0), prog_up[i].ρaθ_liq_ice)
         @. prog_up[i].ρaq_tot =
@@ -943,7 +931,6 @@ function filter_updraft_vars(
             TD.total_energy(thermo_params, ts_up_i, e_kin[kc_surf], e_pot)
         h_tot_surf = total_enthalpy(param_set, e_tot_surf, ts_up_i)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
-        # prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
         prog_up[i].ρah_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * h_tot_surf
         prog_up[i].ρaθ_liq_ice[kc_surf] = prog_up[i].ρarea[kc_surf] * θ_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf

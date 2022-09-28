@@ -100,16 +100,9 @@ function update_aux!(
                 aux_up[i].q_tot[k],
                 thermo_args...,
             )
-            # e_tot = TD.total_energy(
-            #     thermo_params,
-            #     ts_up_i,
-            #     aux_up[i].e_kin[k],
-            #     e_pot,
-            # )
-            # h_tot_ = aux_up[i].h_tot[k]
-            # aux_up[i].h_tot[k] =
-            #     total_enthalpy(param_set, e_tot, ts_up_i)
-            # @show(k, aux_up[i].area[k], h_tot_, aux_up[i].h_tot[k], h_tot_ - aux_up[i].h_tot[k])
+            aux_up[i].θ_liq_ice[k] = TD.liquid_ice_pottemp(thermo_params, ts_up_i)
+            # e_tot = TD.total_energy(thermo_params, ts_up_i, aux_up[i].e_kin[k], e_pot)
+            # aux_up[i].h_tot[k] = total_enthalpy(param_set, e_tot, ts_up_i)
         end
 
         #####

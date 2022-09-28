@@ -258,7 +258,6 @@ cent_prognostic_vars_up_moisture(
 ) where {FT} = (; ρaq_liq = FT(0), ρaq_ice = FT(0))
 cent_prognostic_vars_up(::Type{FT}, edmf) where {FT} = (;
     ρarea = FT(0),
-    # ρae_tot = FT(0),
     ρah_tot = FT(0),
     ρaθ_liq_ice = FT(0),
     ρaq_tot = FT(0),
