@@ -70,12 +70,12 @@ function update_aux!(
         @inbounds for i in 1:N_up
             if prog_up[i].ρarea[k] / ρ_c[k] >= edmf.minimum_area
                 aux_up[i].h_tot[k] = prog_up[i].ρah_tot[k] / prog_up[i].ρarea[k]
-                aux_up[i].θ_liq_ice[k] = prog_up[i].ρaθ_liq_ice[k] / prog_up[i].ρarea[k]
+                # aux_up[i].θ_liq_ice[k] = prog_up[i].ρaθ_liq_ice[k] / prog_up[i].ρarea[k]
                 aux_up[i].q_tot[k] = prog_up[i].ρaq_tot[k] / prog_up[i].ρarea[k]
                 aux_up[i].area[k] = prog_up[i].ρarea[k] / ρ_c[k]
             else
                 aux_up[i].h_tot[k] = aux_gm.h_tot[k]
-                aux_up[i].θ_liq_ice[k] = aux_gm.θ_liq_ice[k]
+                # aux_up[i].θ_liq_ice[k] = aux_gm.θ_liq_ice[k]
                 aux_up[i].q_tot[k] = aux_gm.q_tot[k]
                 aux_up[i].area[k] = 0
                 aux_up[i].e_kin[k] = aux_gm.e_kin[k]
@@ -213,13 +213,13 @@ function update_aux!(
                k > kc_surf &&
                aux_up[i].area[k - 1] > 0.0
                 qt = aux_up[i].q_tot[k - 1]
-                h = aux_up[i].θ_liq_ice[k - 1]
+                h = aux_up[i].h_tot[k - 1]
                 if edmf.moisture_model isa EquilibriumMoisture
-                    ts_up = thermo_state_pθq(param_set, p_c[k], h, qt)
+                    ts_up = thermo_state_phq(param_set, p_c[k], h, qt)
                 elseif edmf.moisture_model isa NonEquilibriumMoisture
                     ql = aux_up[i].q_liq[k - 1]
                     qi = aux_up[i].q_ice[k - 1]
-                    ts_up = thermo_state_pθq(param_set, p_c[k], h, qt, ql, qi)
+                    ts_up = thermo_state_phq(param_set, p_c[k - 1], h, qt, ql, qi)
                 else
                     error(
                         "Something went wrong. emdf.moisture_model options are equilibrium or nonequilibrium",
@@ -227,17 +227,17 @@ function update_aux!(
                 end
             else
                 if edmf.moisture_model isa EquilibriumMoisture
-                    ts_up = thermo_state_pθq(
+                    ts_up = thermo_state_phq(
                         param_set,
                         p_c[k],
-                        aux_up[i].θ_liq_ice[k],
+                        aux_up[i].h_tot[k],
                         aux_up[i].q_tot[k],
                     )
                 elseif edmf.moisture_model isa NonEquilibriumMoisture
-                    ts_up = thermo_state_pθq(
+                    ts_up = thermo_state_phq(
                         param_set,
                         p_c[k],
-                        aux_up[i].θ_liq_ice[k],
+                        aux_up[i].h_tot[k],
                         aux_up[i].q_tot[k],
                         aux_up[i].q_liq[k],
                         aux_up[i].q_ice[k],
