@@ -220,5 +220,6 @@ function gravity_wave_forcing(
 
     end # loop over ink 
 
-    return reshape(gwf, (length(ᶜu), 1))
+    # return reshape(gwf, (length(ᶜu), 1))
+    return gwf
 end
