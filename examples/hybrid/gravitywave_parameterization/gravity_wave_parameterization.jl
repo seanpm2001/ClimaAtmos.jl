@@ -1,3 +1,13 @@
+import ClimaCore.Geometry as CCG
+
+#=
+
+using Revise; include("examples/hybrid/cli_options.jl");
+dict = parsed_args_per_job_id();
+parsed_args = dict["sphere_single_column_nonorographic_gravity_wave"];
+include("examples/hybrid/driver.jl")
+=#
+
 function gravity_wave_cache(
     Y,
     ::Type{FT};
@@ -25,7 +35,8 @@ function gravity_wave_cache(
         gw_k = kwv,
         gw_k2 = kwv.^2,
         ᶜbuoyancy_frequency = similar(Y.c.ρ),
-        ᶜdTdz = similar(Y.c.ρ),
+        ᶜdTdz = similar(Y.c.ρ, typeof(CCG.Covariant3Vector(FT(0)))),
+        # ᶜsource_level = similar(Spaces.level(Y.c.ρ, 1), Int),
     )
 end
 
@@ -41,10 +52,17 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
     # compute buoyancy frequency
     @. ᶜT = TD.air_temperature(thermo_params, ᶜts)
 
-    parent(ᶜdTdz) .= parent(Geometry.WVector.(ᶜgradᵥ.(ᶠinterp.(ᶜT))))
 
-    ᶜbuoyancy_frequency = @. (grav / ᶜT) * (ᶜdTdz + grav / TD.cp_m(thermo_params, ᶜts))
-    ᶜbuoyancy_frequency = @. ifelse(ᶜbuoyancy_frequency < FT(2.5e-5), FT(sqrt(2.5e-5)), sqrt(abs(ᶜbuoyancy_frequency))) # to avoid small numbers
+    # TODO: which one should we use?
+    # wvec = CCG.WVector
+    wvec = x -> x
+    @. ᶜdTdz .= wvec(ᶜgradᵥ(ᶠinterp(ᶜT)))
+
+    to_scalar(vector) = vector.u₃
+    # to_scalar(vector) = vector
+
+    @. ᶜbuoyancy_frequency = (grav / ᶜT) * (to_scalar(ᶜdTdz) + grav / TD.cp_m(thermo_params, ᶜts))
+    @. ᶜbuoyancy_frequency = ifelse(ᶜbuoyancy_frequency < FT(2.5e-5), FT(sqrt(2.5e-5)), sqrt(abs(ᶜbuoyancy_frequency))) # to avoid small numbers
     # alternative
     # ᶜbuoyancy_frequency = [i > 2.5e-5 ? sqrt(i) : sqrt(2.5e-5)  for i in ᶜbuoyancy_frequency]
     # TODO: create an extra layer at model top so that the gravity wave forcing
@@ -52,7 +70,8 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
     # .     may be calculated
     #
 
-    # source level: get the index of the level that is closest to the source height (GFDL uses the fist level below instead)
+    # source level: get the index of the level that is closest to the source height (GFDL uses the first level below instead)
+    # TODO: add support for `findfirst(fn::Function, ::ColumnSpace)` or `argmin(fn::Function, ::ColumnSpace)`
     source_level = argmin(
         abs.(
             unique(parent(Fields.coordinate_field(Y.c).z) .- gw_source_height)
@@ -60,19 +79,19 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
     )
     ᶠz = Fields.coordinate_field(Y.f).z
 
+    # TODO: figure out a way to not allocate
     # TODO: prepare input variables for gravity_wave_forcing()
     #       1. grab column wise data
     #       2. convert coviant uv to physical uv
     # need to make everything an array befere
     u_phy = Geometry.UVVector.(Y.c.uₕ).components.data.:1
     v_phy = Geometry.UVVector.(Y.c.uₕ).components.data.:2
-
     uforcing = ones(axes(u_phy))
     vforcing = similar(v_phy)
     # bycolume
     Fields.bycolumn(axes(ᶜρ)) do colidx
-        parent(uforcing[colidx]) .= gravity_wave_forcing(
-            parent(u_phy[colidx])[:, 1],
+        uforcing[colidx] .= gravity_wave_forcing(
+            u_phy[colidx],
             source_level,
             gw_F_S0,
             gw_Bm,
@@ -82,12 +101,12 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
             gw_nk,
             gw_k,
             gw_k2,
-            parent(ᶜbuoyancy_frequency[colidx])[:, 1],
-            parent(ᶜρ[colidx])[:, 1],
-            parent(ᶠz[colidx])[:, 1],
+            ᶜbuoyancy_frequency[colidx],
+            ᶜρ[colidx],
+            ᶠz[colidx],
         )
-        parent(vforcing[colidx]) .= gravity_wave_forcing(
-            parent(v_phy[colidx])[:, 1],
+        vforcing[colidx] .= gravity_wave_forcing(
+            v_phy[colidx],
             source_level,
             gw_F_S0,
             gw_Bm,
@@ -97,9 +116,9 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
             gw_nk,
             gw_k,
             gw_k2,
-            parent(ᶜbuoyancy_frequency[colidx])[:, 1],
-            parent(ᶜρ[colidx])[:, 1],
-            parent(ᶠz[colidx])[:, 1],
+            ᶜbuoyancy_frequency[colidx],
+            ᶜρ[colidx],
+            ᶠz[colidx],
         )
 
     end
@@ -108,9 +127,9 @@ function gravity_wave_tendency!(Yₜ, Y, p, t)
         Geometry.Covariant12Vector.(Geometry.UVVector.(uforcing, vforcing))
 
 end
-
+import ClimaAtmos.TurbulenceConvection: Cent
 function gravity_wave_forcing(
-    ᶜu,
+    ᶜu::Fields.ColumnField,
     source_level,
     F_S0,
     Bm,
@@ -120,9 +139,9 @@ function gravity_wave_forcing(
     nk,
     kwv,
     k2,
-    ᶜbf,
-    ᶜρ,
-    ᶠz,
+    ᶜbf::Fields.ColumnField,
+    ᶜρ::Fields.ColumnField,
+    ᶠz::Fields.ColumnField,
 )
 
     nc = length(c)
@@ -131,9 +150,9 @@ function gravity_wave_forcing(
     # speed n, and the sum over all phase speeds (Bsum), which is needed
     # to calculate the intermittency.
 
-    c_hat0 = c .- ᶜu[source_level]
+    c_hat0 = c .- ᶜu[Cent(source_level)]
     # In GFDL code, flag is always 1: c = c0 * flag + c_hat0 * (1 - flag)
-    Bexp = @. exp(-log(2.0) * ( (c - c0) / cw)^2)
+    Bexp = @. exp(-log(FT(2)) * ( (c - c0) / cw)^2)
     B0 = @. sign(c_hat0) * Bm * Bexp
     # In GFDL code, it is: B0 = @. sign(c_hat0) * (Bw * Bexp + Bn * Bexp)
     # where Bw = Bm is the wide band and Bn is the narrow band
@@ -142,15 +161,18 @@ function gravity_wave_forcing(
         error("zero flux input at source level")
     end
     # define the intermittency factor eps. Assumes constant Δc.
-    eps = (F_S0 / ᶜρ[source_level] / nk) / Bsum # in GFDL code: eps = (ampl * 1.5 / nk) / Bsum, ampl is equivalent to F_S)/ρ_source 
+    eps = (F_S0 / ᶜρ[Cent(source_level)] / nk) / Bsum # in GFDL code: eps = (ampl * 1.5 / nk) / Bsum, ampl is equivalent to F_S)/ρ_source 
 
     ᶜdz = ᶠz[2:end] - ᶠz[1:(end - 1)]
     wave_forcing = zeros(nc)
-    gwf = zeros(length(ᶜu))
+    Nv = Spaces.nlevels(axes(ᶜu))
+    gwf = zeros(Nv)
+
     for ink in 1:nk # loop over all wave lengths
 
+        # TODO: add mask to cache
         mask = ones(nc)  # mask to determine which waves propagate upward
-        for k in source_level:length(ᶜu)
+        for k in source_level:Nv
             fac = FT(0.5) * (ᶜρ[k] / ᶜρ[source_level]) * kwv[ink] / ᶜbf[k]
 
             ᶜHb = - ᶜdz[k] / log(ᶜρ[k] / ᶜρ[k - 1])  # density scale height
