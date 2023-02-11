@@ -228,6 +228,15 @@ steps:
   - group: "MPI Examples"
     steps:
 
+      - label: ":computer: MPI SSP baroclinic wave (ρe_tot)"
+        key: "mpi_baro_wave_SSP"
+        command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id mpi_ssp_baroclinic_wave_rhoe --dt 580secs --ode_algo SSP333"
+        artifact_paths: "mpi_ssp_baroclinic_wave_rhoe/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 2
+
       - label: ":computer: Prep restart for MPI"
         key: "mpi_baro_wave_make_restart"
         command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --job_id mpi_make_restart --dt_save_restart 5days --dt_save_to_disk 5days"
@@ -255,6 +264,14 @@ steps:
       - label: ":computer: MPI no lim ARS aquaplanet (ρe) equilmoist clearsky radiation"
         command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme bulk --moist equil --rad clearsky --precip_model 0M --job_id mpi_sphere_aquaplanet_rhoe_equilmoist_clearsky --dt 400secs --t_end 4days --apply_limiter false"
         artifact_paths: "mpi_sphere_aquaplanet_rhoe_equilmoist_clearsky/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 2
+
+      - label: ":computer: MPI SSP aquaplanet (ρe) equilmoist clearsky radiation"
+        command: "mpiexec julia --color=yes --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme bulk --moist equil --rad clearsky --precip_model 0M --job_id mpi_sphere_ssp_aquaplanet_rhoe_equilmoist_clearsky --dt 400secs --t_end 4days --ode_algo SSP333"
+        artifact_paths: "mpi_sphere_ssp_aquaplanet_rhoe_equilmoist_clearsky/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
