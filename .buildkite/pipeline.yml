@@ -162,6 +162,18 @@ steps:
         command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --job_id sphere_ssp_baroclinic_wave_rhoe_equilmoist --regression_test true --dt 300secs --ode_algo SSP333"
         artifact_paths: "sphere_ssp_baroclinic_wave_rhoe_equilmoist/*"
 
+      - label: ":computer: no_lim baroclinic wave (ρe) equilmoist check conservation float64"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --rad clearsky --job_id sphere_no_lim_baroclinic_wave_rhoe_equilmoist_conservation_ft64 --check_conservation true --FLOAT_TYPE Float64 --bubble true --dt 300secs --dt_save_to_disk 5days --apply_limiter false"
+        artifact_paths: "sphere_no_lim_baroclinic_wave_rhoe_equilmoist_conservation_ft64/*"
+
+      - label: ":computer: baroclinic wave (ρe) equilmoist check conservation float64"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --rad clearsky --job_id sphere_baroclinic_wave_rhoe_equilmoist_conservation_ft64 --check_conservation true --FLOAT_TYPE Float64 --bubble true --dt 300secs --dt_save_to_disk 5days"
+        artifact_paths: "sphere_baroclinic_wave_rhoe_equilmoist_conservation_ft64/*"
+
+      - label: ":computer: no lim SSP baroclinic wave (ρe_tot) equilmoist check conservation float64"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --rad clearsky --job_id sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist_conservation_ft64 --check_conservation true --FLOAT_TYPE Float64 --bubble true --dt 300secs --ode_algo SSP333 --apply_limiter false"
+        artifact_paths: "sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist_conservation_ft64/*"
+
       - label: ":computer: SSP baroclinic wave (ρe_tot) equilmoist check conservation float64"
         command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --rad clearsky --job_id sphere_ssp_baroclinic_wave_rhoe_equilmoist_conservation_ft64 --check_conservation true --FLOAT_TYPE Float64 --bubble true --dt 450secs --ode_algo SSP333 --dt_save_to_disk 5days"
         artifact_paths: "sphere_ssp_baroclinic_wave_rhoe_equilmoist_conservation_ft64/*"
@@ -184,6 +196,10 @@ steps:
           - julia --color=yes --project=examples examples/hybrid/driver.jl --z_max 45e3 --z_elem 25 --dz_bottom 300 --vert_diff true --surface_scheme bulk --moist equil --forcing held_suarez --precip_model 0M --rayleigh_sponge true --alpha_rayleigh_uh 0 --viscous_sponge true --zd_rayleigh 30e3 --zd_viscous 30e3 --job_id sphere_held_suarez_rhoe_equilmoist_hightop_sponge --dt 450secs --t_end 4days --dt_save_to_disk 4days --regression_test true --apply_limiter false
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_held_suarez_rhoe_equilmoist_hightop_sponge --out_dir sphere_held_suarez_rhoe_equilmoist_hightop_sponge
         artifact_paths: "sphere_held_suarez_rhoe_equilmoist_hightop_sponge/*"
+
+      - label: ":computer: no lim SSP held suarez (ρe) equilmoist hightop sponge"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --z_max 45e3 --z_elem 25 --dz_bottom 300 --vert_diff true --surface_scheme bulk --moist equil --forcing held_suarez --precip_model 0M --rayleigh_sponge true --alpha_rayleigh_uh 0 --viscous_sponge true --zd_rayleigh 30e3 --zd_viscous 30e3 --job_id sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge --dt 300secs --t_end 5days --dt_save_to_disk 5days --regression_test true --ode_algo SSP333 --apply_limiter false"
+        artifact_paths: "sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge/*"
 
       - label: ":computer: SSP held suarez (ρe) equilmoist hightop sponge"
         command:
