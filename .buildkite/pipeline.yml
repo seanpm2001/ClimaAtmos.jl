@@ -159,7 +159,7 @@ steps:
         artifact_paths: "sphere_baroclinic_wave_rhoe_equilmoist_conservation_ft64/*"
 
       - label: ":computer: SSP baroclinic wave (ρe_tot) equilmoist"
-        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --job_id sphere_baroclinic_wave_rhoe_equilmoist --regression_test true --dt 300secs --ode_algo SSP333"
+        command: "julia --color=yes --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --job_id sphere_ssp_baroclinic_wave_rhoe_equilmoist --regression_test true --dt 300secs --ode_algo SSP333"
         artifact_paths: "sphere_ssp_baroclinic_wave_rhoe_equilmoist/*"
 
       - label: ":computer: SSP baroclinic wave (ρe_tot) equilmoist check conservation float64"
