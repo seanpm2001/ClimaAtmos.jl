@@ -65,19 +65,9 @@ steps:
 
       - label: ":computer: SSP baroclinic wave (ρe_tot) equilmoist high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 300secs --max_newton_iters 10 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_equil_highres --ode_algo SSP333"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 300secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_equil_highres --ode_algo SSP333"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_equil_highres --out_dir longrun_ssp_bw_rhoe_equil_highres
         artifact_paths: "longrun_ssp_bw_rhoe_equil_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: baroclinic wave (ρe_tot) equilmoist high resolution topography (dcmip)"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --topography DCMIP200 --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 400secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_bw_rhoe_equil_highres_topography --rayleigh_sponge true --viscous_sponge true
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_bw_rhoe_equil_highres_topography --out_dir longrun_bw_rhoe_equil_highres_topography
-        artifact_paths: "longrun_bw_rhoe_equil_highres_topography (dcmip)/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
