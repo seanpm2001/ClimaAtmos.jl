@@ -102,6 +102,12 @@ function hyperdiffusion_tendency!(Yₜ, Y, p, t, ::ClimaHyperdiffusion)
         @. Yₜ.c.ρq_tot -= κ₄ * wdivₕ(ᶜρ * gradₕ(ᶜχρq_tot))
         @. Yₜ.c.ρ -= κ₄ * wdivₕ(ᶜρ * gradₕ(ᶜχρq_tot))
     end
+
+    @info "Debug: hyperdiffusion_tendency Yₜ at time $t"
+    @show @. κ₄ * wdivₕ(ᶜρ * gradₕ(ᶜχρq_tot))
+    @show Yₜ.c.ρq_tot
+    @show @. Yₜ.c.ρ
+
     if is_3d_pt
         @. Yₜ.c.uₕ -=
             κ₄ * (

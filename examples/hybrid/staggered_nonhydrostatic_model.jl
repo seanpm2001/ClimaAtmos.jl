@@ -245,6 +245,16 @@ function implicit_tendency!(Yₜ, Y, p, t)
             end
         end
     end
+
+    @info "Debug: implicit_tendency Y at time $t"
+    for prop_chain in sort(Fields.property_chains(Y))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Y, prop_chain))
+    end
+
+    @info "Debug: implicit_tendency Yₜ at time $t"
+    for prop_chain in sort(Fields.property_chains(Yₜ))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Yₜ, prop_chain))
+    end
 end
 
 function dss!(Y, p, t)
@@ -280,6 +290,16 @@ function remaining_tendency!(Yₜ, Y, p, t)
         @nvtx "dss_remaining_tendency" color = colorant"blue" begin
             dss!(Yₜ, p, t)
         end
+    end
+
+    @info "Debug: Remaining tendency Y at time $t"
+    for prop_chain in sort(Fields.property_chains(Y))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Y, prop_chain))
+    end
+
+    @info "Debug: Remaining tendency Yₜ at time $t"
+    for prop_chain in sort(Fields.property_chains(Yₜ))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Yₜ, prop_chain))
     end
     return Yₜ
 end

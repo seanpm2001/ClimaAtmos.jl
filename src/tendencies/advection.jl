@@ -56,7 +56,10 @@ function horizontal_advection_tendency!(Yₜ, Y, p, t)
         ᶜρc = getproperty(Y.c, ᶜρc_name)
         ᶜρcₜ = getproperty(Yₜ.c, ᶜρc_name)
         @. ᶜρcₜ -= divₕ(ᶜρc * ᶜu_bar)
+        @info "Debug: advection tendency Yₜ at time $t"
+        @show @. divₕ(ᶜρc * ᶜu_bar)
     end
+
     return nothing
 end
 
