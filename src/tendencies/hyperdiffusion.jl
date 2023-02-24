@@ -211,5 +211,9 @@ function hyperdiffusion_tracers_tendency!(Yₜ, Y, p, t)
         end
 
     end
+    @info "Debug: hyperdiffusion_tendency Yₜ at time $t"
+    @show @. κ₄ * wdivₕ(ᶜρ * gradₕ(ᶜχρq_tot))
+    @show Yₜ.c.ρq_tot
+    @show @. Yₜ.c.ρ
     return nothing
 end
