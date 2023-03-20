@@ -39,91 +39,86 @@ steps:
 
   - wait
 
-  - group: "dry and moist baroclinic wave h_elem 16"
-
-    steps:
-
-      - label: ":computer: SSP iter1 baroclinic wave (ρe_tot) equilmoist high resolution"
-        command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 1 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp1_bw_rhoe_equil_highres --ode_algo SSP333 --apply_limiter false"
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp1_bw_rhoe_equil_highres --out_dir longrun_ssp1_bw_rhoe_equil_highres
-        artifact_paths: "longrun_ssp1_bw_rhoe_equil_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: SSP iter2 baroclinic wave (ρe_tot) equilmoist high resolution"
-        command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 200secs --max_newton_iters 2 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp2_bw_rhoe_equil_highres --ode_algo SSP333 --apply_limiter false"
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp2_bw_rhoe_equil_highres --out_dir longrun_ssp2_bw_rhoe_equil_highres
-        artifact_paths: "longrun_ssp2_bw_rhoe_equil_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: SSP iter1 baroclinic wave (ρe_tot) dry high resolution"
-        command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 150secs --max_newton_iters 1 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp1_bw_rhoe_dry_highres --ode_algo SSP333 --apply_limiter false"
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp1_bw_rhoe_dry_highres --out_dir longrun_ssp1_bw_rhoe_dry_highres
-        artifact_paths: "longrun_ssp1_bw_rhoe_dry_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: SSP iter2 baroclinic wave (ρe_tot) dry high resolution"
-        command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 300secs --max_newton_iters 2 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp2_bw_rhoe_dry_highres --ode_algo SSP333 --apply_limiter false"
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp2_bw_rhoe_dry_highres --out_dir longrun_ssp2_bw_rhoe_dry_highres
-        artifact_paths: "longrun_ssp2_bw_rhoe_dry_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32     
-
-
   - group: "dry and moist held-suarez"
 
     steps:
 
-      - label: ":computer: SSP inter1 held suarez (ρe_tot) equilmoist high resolution"
+      - label: ":computer: SSP inter2 dt100 held suarez (ρe_tot) equilmoist high resolution"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp1_hs_rhoe_equil_highres --ode_algo SSP333 --max_newton_iters 1 --apply_limiter false
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp1_hs_rhoe_equil_highres --out_dir longrun_ssp1_hs_rhoe_equil_highres
-        artifact_paths: "longrun_ssp1_hs_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp2_dt100_hs_rhoe_equil_highres --ode_algo SSP333 --max_newton_iters 2 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp2_dt100_hs_rhoe_equil_highres --out_dir longrun_ssp2_dt100_hs_rhoe_equil_highres
+        artifact_paths: "longrun_ssp2_dt100_hs_rhoe_equil_highres/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
-          slurm_ntasks: 32
+          slurm_ntasks: 64
 
-      - label: ":computer: SSP inter2 held suarez (ρe_tot) equilmoist high resolution"
+      - label: ":computer: SSP inter2 dt150 held suarez (ρe_tot) dry high resolution"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp2_hs_rhoe_equil_highres --ode_algo SSP333 --max_newton_iters 2 --apply_limiter false
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp2_hs_rhoe_equil_highres --out_dir longrun_ssp2_hs_rhoe_equil_highres
-        artifact_paths: "longrun_ssp2_hs_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 150secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp2_dt150_hs_rhoe_dry_highres --ode_algo SSP333 --max_newton_iters 2 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp2_dt150_hs_rhoe_dry_highres --out_dir longrun_ssp2_dt150_hs_rhoe_dry_highres
+        artifact_paths: "longrun_ssp2_dt150_hs_rhoe_dry_highres/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
-          slurm_ntasks: 32
+          slurm_ntasks: 64
+          
+      - label: ":computer: SSP inter6 dt300 held suarez (ρe_tot) equilmoist high resolution"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 300secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp6_dt300_hs_rhoe_equil_highres --ode_algo SSP333 --max_newton_iters 6 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp6_dt300_hs_rhoe_equil_highres --out_dir longrun_ssp6_dt300_hs_rhoe_equil_highres
+        artifact_paths: "longrun_ssp6_dt300_hs_rhoe_equil_highres/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 64
 
-      - label: ":computer: SSP inter1 held suarez (ρe_tot) dry high resolution"
+      - label: ":computer: SSP inter6 dt300 held suarez (ρe_tot) dry high resolution"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 150secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp1_hs_rhoe_dry_highres --ode_algo SSP333 --max_newton_iters 1 --apply_limiter false
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp1_hs_rhoe_dry_highres --out_dir longrun_ssp1_hs_rhoe_dry_highres
-        artifact_paths: "longrun_ssp1_hs_rhoe_dry_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 300secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp6_dt300_hs_rhoe_dry_highres --ode_algo SSP333 --max_newton_iters 6 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp6_dt300_hs_rhoe_dry_highres --out_dir longrun_ssp6_dt300_hs_rhoe_dry_highres
+        artifact_paths: "longrun_ssp6_dt300_hs_rhoe_dry_highres/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
-          slurm_ntasks: 32
+          slurm_ntasks: 64
+          
+      - label: ":computer: SSP inter6 dt400 held suarez (ρe_tot) equilmoist high resolution"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 400secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp6_dt400_hs_rhoe_equil_highres --ode_algo SSP333 --max_newton_iters 6 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp6_dt400_hs_rhoe_equil_highres --out_dir longrun_ssp6_dt400_hs_rhoe_equil_highres
+        artifact_paths: "longrun_ssp6_dt400_hs_rhoe_equil_highres/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 64
 
-      - label: ":computer: SSP inter2 held suarez (ρe_tot) dry high resolution"
+      - label: ":computer: SSP inter6 dt400 held suarez (ρe_tot) dry high resolution"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 150secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp2_hs_rhoe_dry_highres --ode_algo SSP333 --max_newton_iters 2 --apply_limiter false
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp2_hs_rhoe_dry_highres --out_dir longrun_ssp2_hs_rhoe_dry_highres
-        artifact_paths: "longrun_ssp2_hs_rhoe_dry_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 400secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp6_dt400_hs_rhoe_dry_highres --ode_algo SSP333 --max_newton_iters 6 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp6_dt400_hs_rhoe_dry_highres --out_dir longrun_ssp6_dt400_hs_rhoe_dry_highres
+        artifact_paths: "longrun_ssp6_dt400_hs_rhoe_dry_highres/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
-          slurm_ntasks: 32
+          slurm_ntasks: 64
+          
+      - label: ":computer: SSP inter6 dt200 held suarez (ρe_tot) equilmoist high resolution"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 200secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp6_dt200_hs_rhoe_equil_highres --ode_algo SSP333 --max_newton_iters 6 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp6_dt200_hs_rhoe_equil_highres --out_dir longrun_ssp6_dt200_hs_rhoe_equil_highres
+        artifact_paths: "longrun_ssp6_dt200_hs_rhoe_equil_highres/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 64
+
+      - label: ":computer: SSP inter6 dt200 held suarez (ρe_tot) dry high resolution"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 200secs --t_end 600days --dt_save_to_disk 10days --job_id longrun_ssp6_dt200_hs_rhoe_dry_highres --ode_algo SSP333 --max_newton_iters 6 --apply_limiter false
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp6_dt200_hs_rhoe_dry_highres --out_dir longrun_ssp6_dt200_hs_rhoe_dry_highres
+        artifact_paths: "longrun_ssp6_dt200_hs_rhoe_dry_highres/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 64
