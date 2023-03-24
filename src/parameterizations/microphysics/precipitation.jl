@@ -122,7 +122,7 @@ function precipitation_tendency!(
 
     if :ρe_tot in propertynames(Y.c)
         @. Yₜ.c.ρe_tot[colidx] +=
-            ᶜS_ρq_tot[colidx] * (
+            FT(0.1) * ᶜS_ρq_tot[colidx] * (
                 ᶜλ[colidx] *
                 TD.internal_energy_liquid(thermo_params, ᶜts[colidx]) +
                 (1 - ᶜλ[colidx]) *
