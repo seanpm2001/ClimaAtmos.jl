@@ -115,7 +115,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_zalesak_upwind_ssp_baroclinic_wave_rhoe_equilmoist --fig_dir sphere_zalesak_upwind_ssp_baroclinic_wave_rhoe_equilmoist --case_name moist_baroclinic_wave
         artifact_paths: "sphere_zalesak_upwind_ssp_baroclinic_wave_rhoe_equilmoist/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: explicit SSP zalesak tracer upwind baroclinic wave (ρe_tot) equilmoist"
         command:
@@ -124,7 +124,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_explicit_zalesak_upwind_ssp_baroclinic_wave_rhoe_equilmoist --fig_dir sphere_explicit_zalesak_upwind_ssp_baroclinic_wave_rhoe_equilmoist --case_name moist_baroclinic_wave
         artifact_paths: "sphere_explicit_zalesak_upwind_ssp_baroclinic_wave_rhoe_equilmoist/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: SSP zalesak all upwind baroclinic wave (ρe_tot) equilmoist"
         command:
@@ -133,7 +133,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_zalesak_all_upwind_ssp_baroclinic_wave_rhoe_equilmoist --fig_dir sphere_zalesak_all_upwind_ssp_baroclinic_wave_rhoe_equilmoist --case_name moist_baroclinic_wave
         artifact_paths: "sphere_zalesak_all_upwind_ssp_baroclinic_wave_rhoe_equilmoist/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: SSP explicit zalesak all upwind baroclinic wave (ρe_tot) equilmoist"
         command:
@@ -142,7 +142,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_explicit_zalesak_all_upwind_ssp_baroclinic_wave_rhoe_equilmoist --fig_dir sphere_explicit_zalesak_all_upwind_ssp_baroclinic_wave_rhoe_equilmoist --case_name moist_baroclinic_wave
         artifact_paths: "sphere_explicit_zalesak_all_upwind_ssp_baroclinic_wave_rhoe_equilmoist/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: no lim ARS held suarez (ρe) equilmoist hightop sponge"
         command:
@@ -195,7 +195,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp_zalesak_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --fig_dir sphere_ssp_zalesak_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --case_name moist_held_suarez
         artifact_paths: "sphere_ssp_zalesak_upwind_held_suarez_rhoe_equilmoist_hightop_sponge/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: explicit SSP zalesak tracer upwind held suarez (ρe) equilmoist hightop sponge"
         command:
@@ -203,7 +203,7 @@ steps:
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_explicit_ssp_zalesak_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --out_dir sphere_explicit_ssp_zalesak_upwind_held_suarez_rhoe_equilmoist_hightop_sponge
         artifact_paths: "sphere_explicit_ssp_zalesak_upwind_held_suarez_rhoe_equilmoist_hightop_sponge/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: SSP zalesak all upwind held suarez (ρe) equilmoist hightop sponge"
         command:
@@ -212,7 +212,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp_zalesak_all_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --fig_dir sphere_ssp_zalesak_all_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --case_name moist_held_suarez
         artifact_paths: "sphere_ssp_zalesak_all_upwind_held_suarez_rhoe_equilmoist_hightop_sponge/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
       - label: ":computer: SSP explicit zalesak all upwind held suarez (ρe) equilmoist hightop sponge"
         command:
@@ -221,7 +221,7 @@ steps:
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp_explicit_zalesak_all_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --fig_dir sphere_ssp_explicit_zalesak_all_upwind_held_suarez_rhoe_equilmoist_hightop_sponge --case_name moist_held_suarez
         artifact_paths: "sphere_ssp_explicit_zalesak_all_upwind_held_suarez_rhoe_equilmoist_hightop_sponge/*"
         agents:
-          slurm_mem: 20GB
+          slurm_mem: 32GB
 
   - wait: ~
     continue_on_failure: true
