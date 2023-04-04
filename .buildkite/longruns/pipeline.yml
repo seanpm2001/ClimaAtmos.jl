@@ -67,7 +67,7 @@ steps:
 
       - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres/*"
@@ -78,7 +78,7 @@ steps:
 
       - label: ":computer: explicit SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres --out_dir longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres --fig_dir longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_explicit_ssp_first_upwind_bw_rhoe_equil_highres/*"
@@ -89,7 +89,7 @@ steps:
 
       - label: ":computer: SSP 3rd-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_third_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_third_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_third_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_third_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_ssp_third_upwind_bw_rhoe_equil_highres/*"
@@ -100,7 +100,7 @@ steps:
 
       - label: ":computer: SSP 1st-order all upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_all_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_all_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_all_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_first_all_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_all_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_first_all_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_ssp_first_all_upwind_bw_rhoe_equil_highres/*"
@@ -111,7 +111,7 @@ steps:
 
       - label: ":computer: explicit SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres --out_dir longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres --fig_dir longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_explicit_ssp_first_all_upwind_bw_rhoe_equil_highres/*"
@@ -122,7 +122,7 @@ steps:
 
       - label: ":computer: SSP 3rd-order all upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_third_all_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order --density_upwinding third_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_third_all_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order --density_upwinding third_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_all_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_third_all_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_all_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_third_all_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_ssp_third_all_upwind_bw_rhoe_equil_highres/*"
@@ -133,7 +133,7 @@ steps:
 
       - label: ":computer: SSP zalesak tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_ssp_zalesak_upwind_bw_rhoe_equil_highres/*"
@@ -144,7 +144,7 @@ steps:
 
       - label: ":computer: explicit SSP zalesak tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres --out_dir longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres --fig_dir longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_explicit_ssp_zalesak_upwind_bw_rhoe_equil_highres/*"
@@ -155,7 +155,7 @@ steps:
 
       - label: ":computer: SSP zalesak all upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_ssp_zalesak_all_upwind_bw_rhoe_equil_highres/*"
@@ -166,7 +166,7 @@ steps:
 
       - label: ":computer: SSP explicit zalesak all upwind equilmoist baroclinic wave (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 100days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --out_dir longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --fig_dir longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
         artifact_paths: "longrun_explicit_ssp_zalesak_all_upwind_bw_rhoe_equil_highres/*"
@@ -210,7 +210,7 @@ steps:
 
       - label: ":computer: SSP 1st-order tracer upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 25secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_first_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_first_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_first_upwind_hs_rhoe_equil_highres/*"
@@ -221,7 +221,7 @@ steps:
 
       - label: ":computer: explicit SSP 1st-order tracer upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_explicit_first_upwind_hs_rhoe_equil_highres/*"
@@ -232,7 +232,7 @@ steps:
 
       - label: ":computer: SSP 3rd-order tracer upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_third_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 25secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_third_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_third_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_third_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_third_upwind_hs_rhoe_equil_highres/*"
@@ -243,7 +243,7 @@ steps:
 
       - label: ":computer: SSP 1st-order all upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_first_all_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 25secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_first_all_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_all_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_first_all_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_all_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_first_all_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_first_all_upwind_hs_rhoe_equil_highres/*"
@@ -254,7 +254,7 @@ steps:
 
       - label: ":computer: explicit SSP 1st-order all upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_explicit_first_all_upwind_hs_rhoe_equil_highres/*"
@@ -265,7 +265,7 @@ steps:
 
       - label: ":computer: SSP 3rd-order all upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_third_all_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order --density_upwinding third_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 25secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_third_all_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order --density_upwinding third_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_all_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_third_all_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_all_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_third_all_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_third_all_upwind_hs_rhoe_equil_highres/*"
@@ -276,7 +276,7 @@ steps:
 
       - label: ":computer: SSP zalesak tracer upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 25secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_zalesak_upwind_hs_rhoe_equil_highres/*"
@@ -287,7 +287,7 @@ steps:
 
       - label: ":computer: explicit SSP zalesak tracer upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres --out_dir longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres --fig_dir longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_explicit_ssp_zalesak_upwind_hs_rhoe_equil_highres/*"
@@ -298,7 +298,7 @@ steps:
 
       - label: ":computer: SSP zalesak all upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 50secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 25secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_ssp_zalesak_all_upwind_hs_rhoe_equil_highres/*"
@@ -309,7 +309,7 @@ steps:
 
       - label: ":computer: explicit SSP zalesak all upwind equilmoist held suarez (ρe_tot) high resolution"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_scheme bulk --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 5secs --max_newton_iters 6 --t_end 800days --dt_save_to_disk 10days --job_id longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --ode_algo SSP33ShuOsher --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --out_dir longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --fig_dir longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
         artifact_paths: "longrun_explicit_ssp_zalesak_all_upwind_hs_rhoe_equil_highres/*"
@@ -342,7 +342,7 @@ steps:
 
       - label: ":computer: SSP 1st-order tracer upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 50secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 25secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -353,7 +353,7 @@ steps:
 
       - label: ":computer: explicit SSP 1st-order tracer upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 5secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_explicit_ssp_first_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -364,7 +364,7 @@ steps:
 
       - label: ":computer: SSP 3rd-order tracer upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 50secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding third_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 25secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding third_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_third_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -375,7 +375,7 @@ steps:
 
       - label: ":computer: SSP 1st-order all upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 50secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 25secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -386,7 +386,7 @@ steps:
 
       - label: ":computer: explicit SSP 1st-order all upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 5secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding first_order --energy_upwinding first_order --density_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_explicit_ssp_first_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -397,7 +397,7 @@ steps:
 
       - label: ":computer: SSP 3rd-order all upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 50secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order --density_upwinding third_order"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 25secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order --density_upwinding third_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_third_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -408,7 +408,7 @@ steps:
 
       - label: ":computer: SSP zalesak tracer upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 50secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 25secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -419,7 +419,7 @@ steps:
 
       - label: ":computer: explicit SSP zalesak tracer upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 5secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_explicit_ssp_zalesak_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -430,7 +430,7 @@ steps:
 
       - label: ":computer: SSP zalesak all upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 75secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 5secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -441,7 +441,7 @@ steps:
 
       - label: ":computer: explicit SSP zalesak all upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64"
         command:
-          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
+          - "mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_scheme monin_obukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 5secs --max_newton_iters 6 --t_end 800days --fps 30 --job_id longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP33ShuOsher --tracer_upwinding zalesak --energy_upwinding zalesak --density_upwinding zalesak"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_explicit_ssp_zalesak_all_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
