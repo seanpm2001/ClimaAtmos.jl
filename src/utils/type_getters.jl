@@ -6,6 +6,7 @@ using ImageFiltering
 using Interpolations
 import ClimaCore: InputOutput, Meshes, Spaces
 import ClimaAtmos.RRTMGPInterface as RRTMGPI
+using ArtifactWrappers
 
 function get_atmos(::Type{FT}, parsed_args, turbconv_params) where {FT}
 
@@ -73,6 +74,8 @@ function get_numerics(parsed_args)
 
     return numerics
 end
+
+include(joinpath(pkgdir(ClimaAtmos), "artifacts", "artifact_funcs.jl"))
 
 function get_spaces(parsed_args, params, comms_ctx)
 

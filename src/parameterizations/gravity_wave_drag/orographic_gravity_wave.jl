@@ -14,6 +14,18 @@ use_uref_4stable = .true.
 Not yet included in our codebase
 =#
 
+fig = []
+push!(fig, Plots.plot(p.topo_info.hmax, clim=(0,3000)))
+push!(fig, Plots.plot(p.topo_info_new.hmax, clim=(0,5000)))
+Plots.png( Plots.plot(fig...), "./orodata/hmax.png")
+
+fig = []
+push!(fig, Plots.plot(p.topo_info.hmin, clim=(0,300)))
+push!(fig, Plots.plot(p.topo_info_new.hmin, clim=(0,500)))
+Plots.png( Plots.plot(fig...), "./orodata/hmin.png")
+
+# compare poz data with z_sfc
+
 using ClimaCore: InputOutput
 
 orographic_gravity_wave_cache(::Nothing, topo_dir, Y, comms_ctx) = NamedTuple()
@@ -28,13 +40,25 @@ function orographic_gravity_wave_cache(
     comms_ctx,
 )
     FT = Spaces.undertype(axes(Y.c))
-    (; γ, ϵ, β, ρscale, L0, a0, a1, Fr_crit) = ogw
+    (; γ, ϵ, β, ρscale, L0, a0, a1, Fr_crit, h_frac) = ogw
     hdfreader =
         InputOutput.HDF5Reader(joinpath(topo_dir, "topo_info.hdf5"), comms_ctx)
     topo_info = InputOutput.read_field(hdfreader, "topo_info")
     Base.close(hdfreader)
 
     rm(topo_dir, recursive = true)
+
+    # compute hmax/hmin, t tensor from z_sfc
+    z_sfc = Fields.level(Fields.coordinate_field(Y.f).z, half)
+
+    exponent = FT(2) - γ
+    z_sfc = @. max(FT(0), z_sfc)^exponent
+    hmax = @. (abs(z_sfc)*(γ + FT(2))/(FT(2)*γ) * (FT(1) - h_frac^(FT(2)*γ))/(FT(1) - h_frac^(γ + FT(2))))^(FT(1)/exponent)
+    hmin = @. hmax*h_frac
+
+    # compute t tensor here
+
+    topo_info_new = (; hmax = hmax, hmin = hmin)
 
     return (;
         Fr_crit = Fr_crit,
@@ -60,6 +84,7 @@ function orographic_gravity_wave_cache(
         topo_base_Vτ = similar(Fields.level(Y.c.ρ, 1)),
         topo_k_pbl = similar(Fields.level(Y.c.ρ, 1)),
         topo_info = topo_info,
+        topo_info_new = topo_info_new,
         ᶜN = similar(Fields.level(Y.c.ρ, 1)),
         ᶜdTdz = similar(Y.c.ρ),
     )

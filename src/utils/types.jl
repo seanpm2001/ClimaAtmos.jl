@@ -87,6 +87,7 @@ Base.@kwdef struct OrographicGravityWave{FT} <: AbstractGravityWave
     a0::FT = 0.9
     a1::FT = 3.0
     Fr_crit::FT = 0.7
+    h_frac::FT = 0.1
 end
 
 abstract type AbstractForcing end
