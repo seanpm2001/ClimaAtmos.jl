@@ -14,17 +14,35 @@ use_uref_4stable = .true.
 Not yet included in our codebase
 =#
 
-fig = []
-push!(fig, Plots.plot(p.topo_info.hmax, clim=(0,3000)))
-push!(fig, Plots.plot(p.topo_info_new.hmax, clim=(0,5000)))
-Plots.png( Plots.plot(fig...), "./orodata/hmax.png")
+# fig = []
+# push!(fig, Plots.plot(p.topo_info.hmax, clim=(0,3000)))
+# push!(fig, Plots.plot(p.topo_info_new.hmax, clim=(0,5000)))
+# Plots.png( Plots.plot(fig...), "./orodata/hmax.png")
 
-fig = []
-push!(fig, Plots.plot(p.topo_info.hmin, clim=(0,300)))
-push!(fig, Plots.plot(p.topo_info_new.hmin, clim=(0,500)))
-Plots.png( Plots.plot(fig...), "./orodata/hmin.png")
+# fig = []
+# push!(fig, Plots.plot(p.topo_info.hmin, clim=(0,300)))
+# push!(fig, Plots.plot(p.topo_info_new.hmin, clim=(0,500)))
+# Plots.png( Plots.plot(fig...), "./orodata/hmin.png")
 
 # compare poz data with z_sfc
+# li_obj = linear_interpolation( (lon, lat), hpoz_ll, extrapolation_bc = (Periodic(), Flat()), );
+# ᶜlocal_geometry = Fields.local_geometry_field(Fields.level(Y.c, 1))
+# hpoz_cg = Fields.Field(FT, axes(ᶜlocal_geometry))
+# Fields.bycolumn(axes(ᶜlocal_geometry)) do colidx
+#     lg = ᶜlocal_geometry[colidx]
+#     lat = lg.coordinates.lat
+#     lon = lg.coordinates.long
+#     parent(hpoz_cg[colidx]) .= FT.(li_obj(parent(lon), parent(lat)))
+# end
+
+# julia> hpoz_cg |> parent |> extrema
+# (0.0f0, 1563.914f0)
+
+# julia> z_sfc |> parent |> extrema
+# (0.0f0, 5554.6987f0)
+
+# julia> hpoz_ll |> extrema
+# (0.0f0, 2316.937f0)
 
 using ClimaCore: InputOutput
 
