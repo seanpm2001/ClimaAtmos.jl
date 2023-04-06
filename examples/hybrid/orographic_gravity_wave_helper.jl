@@ -2,46 +2,6 @@ using ClimaCoreTempestRemap
 using NCDatasets
 using ClimaCore: InputOutput, Fields, Spaces, Topologies
 
-function get_hpoz(Y, topo_dir, datafile_rll, comms_ctx)
-    # model grid/space information
-    cspace = axes(Y.c)
-    hspace = cspace.horizontal_space
-
-    # generate weight file for regridding
-    weightfile = create_regrid_weight_files(
-        comms_ctx,
-        topo_dir,
-        datafile_rll,
-        hspace;
-        hd_outfile_root = "hpoz",
-        mono = false,
-    )
-
-    varnames = ["hpoz"]
-
-    hpoz_info = FieldFromNamedTuple(
-        axes(Fields.level(Y.c.ρ, 1)),
-        (;
-            hpoz = FT(0),
-        ),
-    )
-
-    for varname in varnames
-        println(varname)
-        datafile_cgll = joinpath(topo_dir, "hpoz_" * varname * ".g")
-        apply_remap(datafile_cgll, datafile_rll, weightfile, [varname])
-        parent(getproperty(hpoz_info, Symbol(varname))) .=
-            parent(convert_g2field(datafile_cgll, weightfile, hspace, varname))
-    end
-
-    # write to hdf5
-    hdfwriter = InputOutput.HDF5Writer(joinpath(topo_dir, "hpoz_info.hdf5"))
-    InputOutput.write!(hdfwriter, topo_info, "hpoz_info")
-    Base.close(hdfwriter)
-
-    return
-
-end
 
 function get_topo_info(Y, topo_dir, datafile_rll, comms_ctx)
     # model grid/space information
