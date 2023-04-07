@@ -89,7 +89,7 @@ steps:
 
       - label: ":computer: SSP 1st-order tracer, energy upwind baroclinic wave (ρe_tot) equilmoist"
         command:
-          - "julia --color=yes --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --job_id sphere_first_upwind_ssp_baroclinic_wave_rhoe_equilmoist --regression_test true --dt 450secs --dt_save_to_disk 5days --ode_algo SSP333 --regression_test true --tracer_upwinding first_order --energy_upwinding first_order"
+          - "julia --color=yes --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --job_id sphere_first_upwind_tracer_energy_ssp_baroclinic_wave_rhoe_equilmoist --regression_test true --dt 450secs --dt_save_to_disk 5days --ode_algo SSP333 --regression_test true --tracer_upwinding first_order --energy_upwinding first_order"
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_first_upwind_tracer_energy_ssp_baroclinic_wave_rhoe_equilmoist --out_dir sphere_first_upwind_tracer_energy_ssp_baroclinic_wave_rhoe_equilmoist
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_first_upwind_tracer_energy_ssp_baroclinic_wave_rhoe_equilmoist --fig_dir sphere_first_upwind_tracer_energy_ssp_baroclinic_wave_rhoe_equilmoist --case_name moist_baroclinic_wave
         artifact_paths: "sphere_first_upwind_tracer_energy_ssp_baroclinic_wave_rhoe_equilmoist/*"
