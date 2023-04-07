@@ -28,6 +28,14 @@ all_best_mse["sphere_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :uₕ, :componen
 all_best_mse["sphere_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :ρq_tot)] = 0.0
 all_best_mse["sphere_ssp_baroclinic_wave_rhoe_equilmoist"][(:f, :w, :components, :data, 1)] = 0.0
 #
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"] = OrderedCollections.OrderedDict()
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :ρ)] = 0.0
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :ρe_tot)] = 0.0
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :uₕ, :components, :data, 1)] = 0.0
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :uₕ, :components, :data, 2)] = 0.0
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :ρq_tot)] = 0.0
+all_best_mse["sphere_no_lim_ssp_baroclinic_wave_rhoe_equilmoist"][(:f, :w, :components, :data, 1)] = 0.0
+#
 all_best_mse["sphere_first_upwind_ssp_baroclinic_wave_rhoe_equilmoist"] = OrderedCollections.OrderedDict()
 all_best_mse["sphere_first_upwind_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :ρ)] = 0.0
 all_best_mse["sphere_first_upwind_ssp_baroclinic_wave_rhoe_equilmoist"][(:c, :uₕ, :components, :data, 1)] = 0.0
@@ -66,6 +74,18 @@ all_best_mse["sphere_held_suarez_rhotheta"][(:c, :uₕ, :components, :data, 1)] 
 all_best_mse["sphere_held_suarez_rhotheta"][(:c, :uₕ, :components, :data, 2)] = 0.0
 all_best_mse["sphere_held_suarez_rhotheta"][(:f, :w, :components, :data, 1)] = 0.0
 #
+all_best_mse["sphere_dry_no_lim_ARS_hs_rhoe_hightop"] = OrderedCollections.OrderedDict()
+all_best_mse["sphere_dry_no_lim_ARS_hs_rhoe_hightop"][(:c, :ρ)] = 0.0
+all_best_mse["sphere_dry_no_lim_ARS_hs_rhoe_hightop"][(:c, :uₕ, :components, :data, 1)] = 0.0
+all_best_mse["sphere_dry_no_lim_ARS_hs_rhoe_hightop"][(:c, :uₕ, :components, :data, 2)] = 0.0
+all_best_mse["sphere_dry_no_lim_ARS_hs_rhoe_hightop"][(:f, :w, :components, :data, 1)] = 0.0
+#
+all_best_mse["sphere_dry_no_lim_SSP_hs_rhoe_hightop"] = OrderedCollections.OrderedDict()
+all_best_mse["sphere_dry_no_lim_SSP_hs_rhoe_hightop"][(:c, :ρ)] = 0.0
+all_best_mse["sphere_dry_no_lim_SSP_hs_rhoe_hightop"][(:c, :uₕ, :components, :data, 1)] = 0.0
+all_best_mse["sphere_dry_no_lim_SSP_hs_rhoe_hightop"][(:c, :uₕ, :components, :data, 2)] = 0.0
+all_best_mse["sphere_dry_no_lim_SSP_hs_rhoe_hightop"][(:f, :w, :components, :data, 1)] = 0.0
+#
 all_best_mse["sphere_held_suarez_rhoe_hightop"] = OrderedCollections.OrderedDict()
 all_best_mse["sphere_held_suarez_rhoe_hightop"][(:c, :ρ)] = 0.0
 all_best_mse["sphere_held_suarez_rhoe_hightop"][(:c, :ρe_tot)] = 0.0
@@ -88,6 +108,14 @@ all_best_mse["sphere_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :uₕ
 all_best_mse["sphere_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :uₕ, :components, :data, 2)] = 0.0
 all_best_mse["sphere_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :ρq_tot)] = 0.0
 all_best_mse["sphere_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:f, :w, :components, :data, 1)] = 0.0
+#
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"] = OrderedCollections.OrderedDict()
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :ρ)] = 0.0
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :ρe_tot)] = 0.0
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :uₕ, :components, :data, 1)] = 0.0
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :uₕ, :components, :data, 2)] = 0.0
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :ρq_tot)] = 0.0
+all_best_mse["sphere_no_lim_ssp_held_suarez_rhoe_equilmoist_hightop_sponge"][(:f, :w, :components, :data, 1)] = 0.0
 #
 all_best_mse["sphere_ssp_first_upwind_held_suarez_rhoe_equilmoist_hightop_sponge"] = OrderedCollections.OrderedDict()
 all_best_mse["sphere_ssp_first_upwind_held_suarez_rhoe_equilmoist_hightop_sponge"][(:c, :ρ)] = 0.0
