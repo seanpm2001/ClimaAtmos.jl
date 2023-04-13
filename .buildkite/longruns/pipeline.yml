@@ -54,6 +54,17 @@ steps:
         agents:
           slurm_ntasks: 32
 
+      - label: ":computer: dry SSP baroclinic wave (ρe_tot) first-order upwind energy high resolution"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 400secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_energy_bw_rhoe_highres --ode_algo SSP333 --tracer_upwind first_order --energy_upwind first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_energy_bw_rhoe_highres --out_dir longrun_ssp_first_upwind_energy_bw_rhoe_highres
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_energy_bw_rhoe_highres --fig_dir longrun_ssp_first_upwind_energy_bw_rhoe_highres --case_name dry_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_energy_bw_rhoe_highres/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
       - label: ":computer: no lim ARS baroclinic wave (ρe_tot) equilmoist high resolution"
         command:
           - mpiexec julia --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --initial_condition MoistBaroclinicWave --dt 400secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_bw_rhoe_equil_highres --apply_limiter false
@@ -248,6 +259,17 @@ steps:
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_hs_rhoe_highres_hightop --out_dir longrun_ssp_hs_rhoe_highres_hightop
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_hs_rhoe_highres_hightop --fig_dir longrun_ssp_hs_rhoe_highres_hightop --case_name dry_held_suarez
         artifact_paths: "longrun_ssp_hs_rhoe_highres_hightop/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: dry SSP held suarez (ρe_tot) first-order upwind energy high resolution hightop"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --z_max 45e3 --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 400secs --max_newton_iters 3 --t_end 800days --job_id longrun_ssp_first_upwind_energy_hs_rhoe_highres_hightop --dt_save_to_disk 10days --ode_algo SSP333 --tracer_upwind first_order --energy_upwind first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_energy_hs_rhoe_highres_hightop --out_dir longrun_ssp_first_upwind_energy_hs_rhoe_highres_hightop
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_energy_hs_rhoe_highres_hightop --fig_dir longrun_ssp_first_upwind_energy_hs_rhoe_highres_hightop --case_name dry_held_suarez
+        artifact_paths: "longrun_ssp_first_upwind_energy_hs_rhoe_highres_hightop/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
