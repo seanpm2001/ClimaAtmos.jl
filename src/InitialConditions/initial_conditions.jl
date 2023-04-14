@@ -243,7 +243,7 @@ function moist_baroclinic_wave_values(z, ϕ, λ, params, perturb)
     p_w = FT(3.4e4)
     p_t = FT(1e4)
     q_t = FT(1e-12) * FT(0.0)
-    q_0 = FT(0.018) * FT(0.01)
+    q_0 = FT(0.018) * FT(0.0)
     ϕ_w = FT(40)
     ε = FT(0.608)
 

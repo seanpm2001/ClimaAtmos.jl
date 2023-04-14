@@ -92,6 +92,16 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
     (; energy_upwinding, tracer_upwinding, density_upwinding) = p
     (; ᶠgradᵥ, ᶠinterp) = p.operators
 
+    @info "Debug: At time $t, before vertical_transport of tracer"
+
+    for prop_chain in sort(Fields.property_chains(Y))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Y, prop_chain))
+    end
+
+    for prop_chain in sort(Fields.property_chains(Yₜ))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Yₜ, prop_chain))
+    end
+
     vertical_transport!(
         Yₜ.c.ρ[colidx],
         ᶠu³[colidx],
@@ -100,6 +110,24 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
         p,
         density_upwinding,
     )
+
+    @info "Debug: At time $t, after vertical_transport of tracer"
+    for prop_chain in sort(Fields.property_chains(Y))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Y, prop_chain))
+    end
+
+    for prop_chain in sort(Fields.property_chains(Yₜ))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Yₜ, prop_chain))
+    end
+
+    @info "Debug: At time $t, before vertical_transport of energy"
+    for prop_chain in sort(Fields.property_chains(Y))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Y, prop_chain))
+    end
+
+    for prop_chain in sort(Fields.property_chains(Yₜ))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Yₜ, prop_chain))
+    end
 
     if :ρθ in propertynames(Y.c)
         vertical_transport!(
@@ -121,6 +149,15 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
             p,
             energy_upwinding,
         )
+    end
+
+    @info "Debug: At time $t, after vertical_transport of energy"
+    for prop_chain in sort(Fields.property_chains(Y))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Y, prop_chain))
+    end
+
+    for prop_chain in sort(Fields.property_chains(Yₜ))
+        println(join(prop_chain, '.'), ": ", Fields.single_field(Yₜ, prop_chain))
     end
 
     Yₜ.c.uₕ[colidx] .= tuple(zero(eltype(Yₜ.c.uₕ[colidx])))
