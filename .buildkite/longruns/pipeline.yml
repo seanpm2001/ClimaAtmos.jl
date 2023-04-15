@@ -54,6 +54,17 @@ steps:
         agents:
           slurm_ntasks: 32
 
+      - label: ":computer: dry SSP baroclinic wave (ρe_tot) high resolution dt400 newton3"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 400secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt400_newton3 --ode_algo SSP333 --max_newton_iters 3
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt400_newton3 --out_dir longrun_ssp_bw_rhoe_highres_dt400_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_bw_rhoe_highres_dt400_newton3 --fig_dir longrun_ssp_bw_rhoe_highres_dt400_newton3 --case_name dry_baroclinic_wave
+        artifact_paths: "longrun_ssp_bw_rhoe_highres_dt400_newton3/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
 
       - label: ":computer: dry SSP baroclinic wave (ρe_tot) high resolution dt350 newton3"
         command:
