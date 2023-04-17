@@ -43,52 +43,52 @@ steps:
 
     steps:
 
-      - label: ":computer: dry ARS baroclinic wave (ρe_tot) high resolution"
+      - label: ":computer: dry ARS baroclinic wave (ρe_tot) Gardner resolution dt300"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 400secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_bw_rhoe_highres
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_bw_rhoe_highres --out_dir longrun_bw_rhoe_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_bw_rhoe_highres --fig_dir longrun_bw_rhoe_highres --case_name dry_baroclinic_wave
-        artifact_paths: "longrun_bw_rhoe_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 300secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_bw_rhoe_highresdt300
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_bw_rhoe_highresdt300 --out_dir longrun_bw_rhoe_highresdt300
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_bw_rhoe_highresdt300 --fig_dir longrun_bw_rhoe_highresdt300 --case_name dry_baroclinic_wave
+        artifact_paths: "longrun_bw_rhoe_highresdt300/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
 
-      - label: ":computer: dry SSP baroclinic wave (ρe_tot) high resolution dt400 newton3"
+      - label: ":computer: dry ARS baroclinic wave (ρe_tot) Gardner resolution dt250"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 400secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt400_newton3 --ode_algo SSP333 --max_newton_iters 3
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt400_newton3 --out_dir longrun_ssp_bw_rhoe_highres_dt400_newton3
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_bw_rhoe_highres_dt400_newton3 --fig_dir longrun_ssp_bw_rhoe_highres_dt400_newton3 --case_name dry_baroclinic_wave
-        artifact_paths: "longrun_ssp_bw_rhoe_highres_dt400_newton3/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 250secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_bw_rhoe_highresdt250
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_bw_rhoe_highresdt250 --out_dir longrun_bw_rhoe_highresdt250
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_bw_rhoe_highresdt250 --fig_dir longrun_bw_rhoe_highresdt250 --case_name dry_baroclinic_wave
+        artifact_paths: "longrun_bw_rhoe_highresdt250/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: dry SSP baroclinic wave (ρe_tot) Gardner resolution dt150"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 150secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt150 --ode_algo SSP333
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt150 --out_dir longrun_ssp_bw_rhoe_highres_dt150
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_bw_rhoe_highres_dt150 --fig_dir longrun_ssp_bw_rhoe_highres_dt150 --case_name dry_baroclinic_wave
+        artifact_paths: "longrun_ssp_bw_rhoe_highres_dt150/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: dry SSP baroclinic wave (ρe_tot) Gardner resolution dt200 newton3"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 250secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt250_newton3 --ode_algo SSP333 --max_newton_iters 3
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt250_newton3 --out_dir longrun_ssp_bw_rhoe_highres_dt250_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_bw_rhoe_highres_dt250_newton3 --fig_dir longrun_ssp_bw_rhoe_highres_dt250_newton3 --case_name dry_baroclinic_wave
+        artifact_paths: "longrun_ssp_bw_rhoe_highres_dt250_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
 
 
-      - label: ":computer: dry SSP baroclinic wave (ρe_tot) high resolution dt350 newton3"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 350secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt350_newton3 --ode_algo SSP333 --max_newton_iters 3
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt350_newton3 --out_dir longrun_ssp_bw_rhoe_highres_dt350_newton3
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_bw_rhoe_highres_dt350_newton3 --fig_dir longrun_ssp_bw_rhoe_highres_dt350_newton3 --case_name dry_baroclinic_wave
-        artifact_paths: "longrun_ssp_bw_rhoe_highres_dt350_newton3/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: dry SSP baroclinic wave (ρe_tot) high resolution dt300"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 300secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt300 --ode_algo SSP333
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt300 --out_dir longrun_ssp_bw_rhoe_highres_dt300
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_bw_rhoe_highres_dt300 --fig_dir longrun_ssp_bw_rhoe_highres_dt300 --case_name dry_baroclinic_wave
-        artifact_paths: "longrun_ssp_bw_rhoe_highres_dt300/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: dry SSP baroclinic wave (ρe_tot) high resolution dt300 newton3"
+      - label: ":computer: dry SSP baroclinic wave (ρe_tot) Gardner resolution dt250 newton3"
         command:
           - mpiexec julia --project=examples examples/hybrid/driver.jl --z_elem 30 --dz_bottom 30 --h_elem 20 --kappa_4 1e16 --initial_condition DryBaroclinicWave --dt 300secs --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_bw_rhoe_highres_dt300_newton3 --ode_algo SSP333 --max_newton_iters 3
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_bw_rhoe_highres_dt300_newton3 --out_dir longrun_ssp_bw_rhoe_highres_dt300_newton3
@@ -98,6 +98,7 @@ steps:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
+
 
       - label: ":computer: dry SSP baroclinic wave (ρe_tot) first-order upwind energy high resolution"
         command:
