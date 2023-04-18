@@ -197,13 +197,29 @@ function implicit_sgs_flux_tendency!(Yₜ, Y, p, t, colidx, ::TC.EDMFModel)
 
     state = TC.tc_column_state(Y_filtered, p, Yₜ, colidx)
 
+    @inbounds for i in 1:1
+        print("implicit sgs: 111) ", Y.c.turbconv.up[i].ρae_tot, "\n")
+        print("implicit sgs: 111) ", Y.c.turbconv.up[i].ρarea, "\n")
+    end
+
     grid = TC.Grid(state)
     if test_consistency
         parent(state.aux.face) .= NaN
         parent(state.aux.cent) .= NaN
     end
 
+    @inbounds for i in 1:1
+        print("implicit sgs: 222) ", Y.c.turbconv.up[i].ρae_tot, "\n")
+        print("implicit sgs: 222) ", Y.c.turbconv.up[i].ρarea, "\n")
+    end
+
+
     assign_thermo_aux!(state, edmf.moisture_model, thermo_params)
+
+    @inbounds for i in 1:1
+        print("implicit sgs: 333) ", Y.c.turbconv.up[i].ρae_tot, "\n")
+        print("implicit sgs: 333) ", Y.c.turbconv.up[i].ρarea, "\n")
+    end
 
     surf = get_surface(
         p.atmos.model_config,
@@ -214,9 +230,9 @@ function implicit_sgs_flux_tendency!(Yₜ, Y, p, t, colidx, ::TC.EDMFModel)
         tc_params,
     )
 
-    TC.affect_filter!(edmf, grid, state, tc_params, surf, t)
-
     TC.update_aux!(edmf, grid, state, surf, tc_params, t, Δt)
+
+    TC.affect_filter!(edmf, grid, state, tc_params, surf, t)
 
     imex_edmf_turbconv &&
         TC.compute_implicit_turbconv_tendencies!(edmf, grid, state)
@@ -245,13 +261,28 @@ function explicit_sgs_flux_tendency!(Yₜ, Y, p, t, colidx, ::TC.EDMFModel)
 
     state = TC.tc_column_state(Y_filtered, p, Yₜ, colidx)
 
+    @inbounds for i in 1:1
+        print("explicit sgs: 111) ", Y.c.turbconv.up[i].ρae_tot, "\n")
+        print("explicit sgs: 111) ", Y.c.turbconv.up[i].ρarea, "\n")
+    end
+
     grid = TC.Grid(state)
     if test_consistency
         parent(state.aux.face) .= NaN
         parent(state.aux.cent) .= NaN
     end
 
+    @inbounds for i in 1:1
+        print("explicit sgs: 222) ", Y.c.turbconv.up[i].ρae_tot, "\n")
+        print("explicit sgs: 222) ", Y.c.turbconv.up[i].ρarea, "\n")
+    end
+
     assign_thermo_aux!(state, edmf.moisture_model, thermo_params)
+
+    @inbounds for i in 1:1
+        print("explicit sgs: 333) ", Y.c.turbconv.up[i].ρae_tot, "\n")
+        print("explicit sgs: 333) ", Y.c.turbconv.up[i].ρarea, "\n")
+    end
 
     surf = get_surface(
         p.atmos.model_config,
@@ -262,9 +293,9 @@ function explicit_sgs_flux_tendency!(Yₜ, Y, p, t, colidx, ::TC.EDMFModel)
         tc_params,
     )
 
-    TC.affect_filter!(edmf, grid, state, tc_params, surf, t)
-
     TC.update_aux!(edmf, grid, state, surf, tc_params, t, Δt)
+
+    TC.affect_filter!(edmf, grid, state, tc_params, surf, t)
 
     TC.compute_precipitation_sink_tendencies(
         p.precip_model,

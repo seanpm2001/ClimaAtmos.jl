@@ -264,31 +264,38 @@ function set_edmf_surface_bc(
     ts_gm = center_aux_grid_mean_ts(state)
     cp = TD.cp_m(thermo_params, ts_gm[kc_surf])
     ρ_c = prog_gm.ρ
-    ae_surf::FT = 1
-    aux_up = center_aux_updrafts(state)
     p_c = TD.air_pressure.(thermo_params, ts_gm)
     @inbounds for i in 1:N_up
+        print("Inside edmf surface bc: \n")
         θ_surf = θ_surface_bc(surf, grid, state, edmf, i, param_set)
         q_surf = q_surface_bc(surf, grid, state, edmf, i, param_set)
-        e_kin = aux_up[i].e_kin
+        #e_kin = aux_up[i].e_kin - cant use this, we are before update aux
+        e_kin_surf = FT(0)
         e_pot_surf = geopotential(thermo_params, grid.zc.z[kc_surf])
         ts_up_i_surf =
             TD.PhaseEquil_pθq(thermo_params, p_c[kc_surf], θ_surf, q_surf)
         e_tot_surf = TD.total_energy(
             thermo_params,
             ts_up_i_surf,
-            e_kin[kc_surf],
+            e_kin_surf,
             e_pot_surf,
         )
+        print("e_tot_surf = ", e_tot_surf , " -> computed from \n")
+        print("e_kin = ", e_kin_surf, " \n ")
+        print("e_pot = ", e_pot_surf, " \n ")
+        print("p_c = ", p_c[kc_surf]," \n ")
+        print("theta_surf = ", θ_surf," \n ")
+        print("q_surf = ", q_surf, "\n ")
+
         a_surf = area_surface_bc(surf, edmf, i)
         prog_up[i].ρarea[kc_surf] = ρ_c[kc_surf] * a_surf
         prog_up[i].ρae_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * e_tot_surf
         prog_up[i].ρaq_tot[kc_surf] = prog_up[i].ρarea[kc_surf] * q_surf
+        print("prog_up[i].ρae_tot[kc_surf] = ", prog_up[i].ρae_tot[kc_surf], " = ", prog_up[i].ρarea[kc_surf], " * ", e_tot_surf, "\n")
         prog_up_f[i].w[kf_surf] = CCG.Covariant3Vector(
             CCG.WVector(FT(0)),
             CC.Fields.local_geometry_field(axes(prog_up_f))[kf_surf],
         )
-        ae_surf -= a_surf
     end
     return nothing
 end
@@ -351,8 +358,14 @@ function θ_surface_bc(
     ts_gm = center_aux_grid_mean_ts(state)
     c_p = TD.cp_m(thermo_params, ts_gm[kc_surf])
     (; ustar, zLL, oblength, ρLL) = surface_helper(surf, grid, state)
+
+    print("Inside θ_surface_bc \n")
+    print("    aux_gm.θ_liq_ice[kc_surf] = ", aux_gm.θ_liq_ice[kc_surf], "\n")
+    print("    bflux(surf) = ", bflux(surf), "\n")
+
     θ_surf =
         aux_gm.θ_liq_ice[kc_surf] < FT(1) ? FT(300) : aux_gm.θ_liq_ice[kc_surf]
+    print("    θ_surf = ", θ_surf, "\n")
     bflux(surf) > 0 || return θ_surf
     a_total = edmf.surface_area
     a_ = area_surface_bc(surf, edmf, i)
@@ -371,6 +384,7 @@ function θ_surface_bc(
     θ_surf = aux_gm.θ_liq_ice[kc_surf] + surface_scalar_coeff * sqrt(h_var)
     # This is needed to fix an initialization issue for TRMM
     θ_surf = θ_surf < FT(1) ? FT(300) : θ_surf
+    print("    here if ", bflux(surf), " > 0. As a sresult θ_surf = ", θ_surf, "\n")
     return θ_surf
 end
 function q_surface_bc(

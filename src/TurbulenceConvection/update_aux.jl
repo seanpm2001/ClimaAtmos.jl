@@ -68,11 +68,15 @@ function update_aux!(
     e_pot(z) = geopotential(thermo_params, z)
     thresh_area(prog_up, ρ_c) = prog_up[i].ρarea / ρ_c[k] >= edmf.minimum_area
     @inbounds for i in 1:N_up
+        print("----------------- \n")
+
         @. aux_up[i].e_tot = ifelse(
             prog_up[i].ρarea / ρ_c >= edmf.minimum_area,
             prog_up[i].ρae_tot / prog_up[i].ρarea,
             aux_gm.e_tot,
         )
+        print("1) ", prog_up[i].ρae_tot, "\n")
+        print("2) ", prog_up[i].ρarea, "\n")
         @. aux_up[i].q_tot = ifelse(
             prog_up[i].ρarea / ρ_c >= edmf.minimum_area,
             prog_up[i].ρaq_tot / prog_up[i].ρarea,
@@ -91,7 +95,12 @@ function update_aux!(
         #####
         ##### Set primitive variables
         #####
+
         e_int = @. aux_up[i].e_tot - aux_up[i].e_kin - e_pot(zc)
+
+        print("e_tot = ", aux_up[i].e_tot, "\n")
+        print("----------------- \n")
+
         if edmf.moisture_model isa DryModel
             @. aux_up[i].ts = TD.PhaseDry_pe(thermo_params, p_c, e_int)
         elseif edmf.moisture_model isa EquilMoistModel

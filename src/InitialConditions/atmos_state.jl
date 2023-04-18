@@ -37,6 +37,8 @@ function atmos_center_variables(ls, atmos_model)
     gs_vars = grid_scale_center_variables(ls, atmos_model)
     sgs_vars =
         turbconv_center_variables(ls, atmos_model.turbconv_model, gs_vars)
+    print("inside atmos center variables ------------------------ \n")
+    print("sgs_vars: ", sgs_vars, "\n")
     return (; gs_vars..., sgs_vars...)
 end
 
