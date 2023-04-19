@@ -76,12 +76,67 @@ steps:
         agents:
           slurm_ntasks: 32
 
-      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution"
+      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution dt275"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt275 --ode_algo SSP333 --tracer_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt275 --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt275
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt275 --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt275 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt275/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution dt250"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt250 --ode_algo SSP333 --tracer_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt250 --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt250
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt250 --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt250 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt250/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution dt225"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt225 --ode_algo SSP333 --tracer_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt225 --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt225
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt225 --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt225 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt225/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution dt200"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt200 --ode_algo SSP333 --tracer_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt200 --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt200
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt200 --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt200 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt200/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution dt175"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt175 --ode_algo SSP333 --tracer_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt175 --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt175
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt175 --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt175 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt175/*"
+        env:
+          CLIMACORE_DISTRIBUTED: "MPI"
+        agents:
+          slurm_ntasks: 32
+
+      - label: ":computer: SSP 1st-order tracer upwind equilmoist baroclinic wave (ρe_tot) high resolution dt150"
+        command:
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 275secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt150 --ode_algo SSP333 --tracer_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt150 --out_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt150
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt150 --fig_dir longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt150 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp_first_upwind_bw_rhoe_equil_highres_dt150/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
