@@ -304,7 +304,7 @@ function Wfact!(W, Y, p, dtγ, t, colidx)
             ᶠw[colidx],
             ᶜρ[colidx],
             ᶜρc[colidx],
-            tracer_upwinding,
+            Val(:none),
         )
     end
     return nothing
