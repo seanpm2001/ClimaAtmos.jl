@@ -256,6 +256,17 @@ function perform_solve!(integrator, simulation, comms_ctx)
             GC.enable(true)
             return SimulationResults(sol, :success, walltime)
         else
+            # poison all the temporaries with NaNs
+            fill!(integrator.cache.U, NaN)
+            fill!(integrator.cache.U_lim, NaN)
+            fill!(integrator.cache.U_exp, NaN)
+            fill!(integrator.cache.T_exp, NaN)
+            fill!(integrator.cache.T_lim, NaN)
+            fill!(integrator.cache.T_imp, NaN)
+            for T_exp in integrator.cache.T_exp.data
+                fill!(T_exp, NaN)
+            end
+            fill!(integrator.cache.temp, NaN)
             sol = @timev OrdinaryDiffEq.solve!(integrator)
             return SimulationResults(sol, :success, nothing)
         end
