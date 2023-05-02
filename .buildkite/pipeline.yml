@@ -427,7 +427,7 @@ steps:
           julia --color=yes --project=examples examples/hybrid/driver.jl --job_id edmfx_adv_test_box 
           --initial_condition DryAdiabaticProfileEDMFX --edmfx_adv_test true --turbconv edmfx --config box --hyperdiff true --kappa_4 1e8
           --x_max 1e4 --y_max 1e4 --x_elem 2 --y_elem 2 --z_elem 45 --z_max 30e3 --dz_bottom 50
-          --moist equil --ode_algo SSP33ShuOsher --apply_limiter false --dt 0.1secs --t_end 1000secs
+          --moist equil --ode_algo SSP33ShuOsher --apply_limiter false --dt 10secs --t_end 500secs --edmfx_upwinding first_order
           --dt_save_to_disk 10secs
 
         artifact_paths: "edmfx_adv_test_box/*"
