@@ -60,6 +60,7 @@ const ᶠupwind3 = Operators.Upwind3rdOrderBiasedProductC2F(
     bottom = Operators.ThirdOrderOneSided(),
     top = Operators.ThirdOrderOneSided(),
 )
+const ᶠupwind3_no_bc = Operators.Upwind3rdOrderBiasedProductC2F()
 const ᶠfct_boris_book = Operators.FCTBorisBook(
     bottom = Operators.FirstOrderOneSided(),
     top = Operators.FirstOrderOneSided(),
