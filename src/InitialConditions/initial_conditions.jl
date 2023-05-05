@@ -393,7 +393,7 @@ end
 
 draft_area(::Type{FT}) where {FT} =
     x -> if (x >= 0.0)
-        FT(0.5) * exp(-(x - FT(4000.0))^2 / 2 / FT(1000.0)^2)
+        FT(0.5) * exp(-(x - FT(50000.0))^2 / 2 / FT(10000.0)^2)
     else
         FT(0)
     end
@@ -425,7 +425,7 @@ function (initial_condition::DryAdiabaticProfileEDMFX)(params)
             params,
             geometry = local_geometry,
             thermo_state = TD.PhaseEquil_pTq(thermo_params, p, T, q_tot),
-            velocity = Geometry.UVector(FT(1)),
+            velocity = Geometry.UVector(FT(10)),
             turbconv_state = EDMFState(;
                 tke = FT(0),
                 draft_area = draft_area(FT)(x),
