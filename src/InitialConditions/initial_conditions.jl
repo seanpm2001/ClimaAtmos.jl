@@ -391,12 +391,16 @@ Base.@kwdef struct DryAdiabaticProfileEDMFX <: InitialCondition
     perturb::Bool = true
 end
 
+#draft_area(::Type{FT}) where {FT} =
+#    x -> if (x >= 0.0)
+#        FT(0.5) * exp(-(x - FT(50000.0))^2 / 2 / FT(10000.0)^2)
+#    else
+#        FT(0)
+#    end
+
 draft_area(::Type{FT}) where {FT} =
-    x -> if (x >= 0.0)
-        FT(0.5) * exp(-(x - FT(50000.0))^2 / 2 / FT(10000.0)^2)
-    else
-        FT(0)
-    end
+    (x, z) -> 
+        FT(0.5) * exp(-((x - FT(50000.0))^2+(z - FT(4000.0))^2) / 2 / FT(10000.0)^2)
 
 get_q_tot(::Type{FT}) where {FT} =
     x -> if (x >= 0.0)
@@ -428,7 +432,7 @@ function (initial_condition::DryAdiabaticProfileEDMFX)(params)
             velocity = Geometry.UVector(FT(10)),
             turbconv_state = EDMFState(;
                 tke = FT(0),
-                draft_area = draft_area(FT)(x),
+                draft_area = draft_area(FT)(x, z),
                 velocity = Geometry.WVector(FT(0)),
             ),
         )
