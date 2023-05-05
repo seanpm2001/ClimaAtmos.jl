@@ -392,22 +392,14 @@ Base.@kwdef struct DryAdiabaticProfileEDMFX <: InitialCondition
 end
 
 #draft_area(::Type{FT}) where {FT} =
-#    x -> if (x >= 0.0)
-#        FT(0.5) * exp(-(x - FT(50000.0))^2 / 2 / FT(10000.0)^2)
-#    else
-#        FT(0)
-#    end
+#    z -> FT(0.5) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
 
 draft_area(::Type{FT}) where {FT} =
     (x, z) -> 
         FT(0.5) * exp(-((x - FT(50000.0))^2+(z - FT(4000.0))^2) / 2 / FT(10000.0)^2)
 
 get_q_tot(::Type{FT}) where {FT} =
-    x -> if (x >= 0.0)
-        FT(0.001) * exp(-(x - FT(4000.0))^2 / 2 / FT(1000.0)^2)
-    else
-        FT(0)
-    end
+    z -> FT(0.001) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
 
 function (initial_condition::DryAdiabaticProfileEDMFX)(params)
     (; perturb) = initial_condition
