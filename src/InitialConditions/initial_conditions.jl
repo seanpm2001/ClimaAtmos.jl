@@ -392,15 +392,15 @@ Base.@kwdef struct DryAdiabaticProfileEDMFX <: InitialCondition
 end
 
 draft_area(::Type{FT}) where {FT} =
-    z -> if (z >= 0.0)
-        FT(0.5) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
+    x -> if (x >= 0.0)
+        FT(0.5) * exp(-(x - FT(4000.0))^2 / 2 / FT(1000.0)^2)
     else
         FT(0)
     end
 
 get_q_tot(::Type{FT}) where {FT} =
-    z -> if (z >= 0.0)
-        FT(0.001) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
+    x -> if (x >= 0.0)
+        FT(0.001) * exp(-(x - FT(4000.0))^2 / 2 / FT(1000.0)^2)
     else
         FT(0)
     end
@@ -412,23 +412,24 @@ function (initial_condition::DryAdiabaticProfileEDMFX)(params)
         thermo_params = CAP.thermodynamics_params(params)
 
         temp_profile = DryAdiabaticProfile{FT}(thermo_params, FT(330), FT(200))
-        (; z) = local_geometry.coordinates
+        (; x, z) = local_geometry.coordinates
         T, p = temp_profile(thermo_params, z)
         if perturb
             T += rand(FT) * FT(0.1) * (z < 5000)
         end
 
-        q_tot = get_q_tot(FT)(z)
-        #q_tot = FT(0)
+        #q_tot = get_q_tot(FT)(z)
+        q_tot = FT(0)
 
         return LocalState(;
             params,
             geometry = local_geometry,
             thermo_state = TD.PhaseEquil_pTq(thermo_params, p, T, q_tot),
+            velocity = Geometry.UVector(FT(1)),
             turbconv_state = EDMFState(;
                 tke = FT(0),
-                draft_area = draft_area(FT)(z),
-                velocity = Geometry.WVector(FT(-1.0)),
+                draft_area = draft_area(FT)(x),
+                velocity = Geometry.WVector(FT(0)),
             ),
         )
     end
