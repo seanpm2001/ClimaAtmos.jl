@@ -391,12 +391,13 @@ Base.@kwdef struct DryAdiabaticProfileEDMFX <: InitialCondition
     perturb::Bool = true
 end
 
-#draft_area(::Type{FT}) where {FT} =
-#    z -> FT(0.5) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
+draft_area(::Type{FT}) where {FT} =
+    z -> z
+    #FT(0.5) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
 
 draft_area(::Type{FT}) where {FT} =
     (x, z) -> 
-        FT(0.5) * exp(-((x - FT(50000.0))^2+(z - FT(4000.0))^2) / 2 / FT(10000.0)^2)
+        FT(0.5) * exp(-((x - FT(10000.0))^2+(z - FT(4000.0))^2) / 2 / FT(1000.0)^2)
 
 get_q_tot(::Type{FT}) where {FT} =
     z -> FT(0.001) * exp(-(z - FT(4000.0))^2 / 2 / FT(1000.0)^2)
@@ -409,6 +410,7 @@ function (initial_condition::DryAdiabaticProfileEDMFX)(params)
 
         temp_profile = DryAdiabaticProfile{FT}(thermo_params, FT(330), FT(200))
         (; x, z) = local_geometry.coordinates
+        @info "x, z" x, z
         T, p = temp_profile(thermo_params, z)
         if perturb
             T += rand(FT) * FT(0.1) * (z < 5000)
