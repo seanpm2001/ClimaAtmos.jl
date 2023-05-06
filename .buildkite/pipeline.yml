@@ -430,7 +430,15 @@ steps:
           --moist equil --ode_algo SSP33ShuOsher --apply_limiter false --dt 10secs --t_end 500secs --edmfx_upwinding first_order
           --dt_save_to_disk 10secs
 
-        artifact_paths: "edmfx_adv_test_box/*"
+      - label: ":genie: EDMFX advection test in a plane"
+        command: >
+          julia --color=yes --project=examples examples/hybrid/driver.jl --job_id edmfx_adv_test_plane 
+          --initial_condition DryAdiabaticProfileEDMFX --edmfx_adv_test true --turbconv edmfx --config plane --hyperdiff true --kappa_4 1e8
+          --x_max 1e5 --x_elem 20 --z_elem 30 --z_max 30e3 --z_stretch false
+          --moist equil --ode_algo SSP33ShuOsher --apply_limiter false --dt 10secs --t_end 500secs --edmfx_upwinding first_order
+          --dt_save_to_disk 10secs
+
+        artifact_paths: "edmfx_adv_test_plane/*"
         agents:
           slurm_mem: 20GB
 
