@@ -29,14 +29,21 @@ function (initial_condition::IsothermalProfile)(params)
         grav = CAP.grav(params)
         thermo_params = CAP.thermodynamics_params(params)
         T = FT(temperature)
+        # Constants from paper
+        p_w = FT(3.4e4)
+        p_t = FT(1e4)
+        q_t = FT(1e-12)
+        q_0 = FT(0.018)
 
         (; z) = local_geometry.coordinates
         p = MSLP * exp(-z * grav / (R_d * T))
 
+        q_tot = (p <= p_t) ? q_t : q_0 * exp(-((p - MSLP) / p_w)^2)
+
         return LocalState(;
             params,
             geometry = local_geometry,
-            thermo_state = TD.PhaseDry_pT(thermo_params, p, T),
+            thermo_state = TD.PhaseEquil_pTq(thermo_params, p, T, q_tot),
         )
     end
     return local_state
