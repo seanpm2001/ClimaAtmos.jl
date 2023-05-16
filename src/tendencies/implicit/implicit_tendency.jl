@@ -56,7 +56,7 @@ vertical_transport!(ᶜρχₜ, ᶜJ, ᶜρ, ᶠu³, ᶜχ, dt, ::Val{:zalesak})
     @. ᶜρχₜ = -(ᶜadvdivᵥ(
         ᶠwinterp(ᶜJ, ᶜρ) * (
             ᶠupwind1(ᶠu³, ᶜχ) + ᶠfct_zalesak(
-                ᶠupwind3_no_bc(ᶠu³, ᶜχ) - ᶠupwind1(ᶠu³, ᶜχ),
+                ᶠupwind3(ᶠu³, ᶜχ) - ᶠupwind1(ᶠu³, ᶜχ),
                 ᶜχ / dt,
                 ᶜχ / dt - ᶜadvdivᵥ(ᶠwinterp(ᶜJ, ᶜρ) * ᶠupwind1(ᶠu³, ᶜχ)) / ᶜρ,
             )
