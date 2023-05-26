@@ -43,97 +43,75 @@ steps:
 
     steps:
 
-      - label: ":computer: SSP333 1st-order tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt200 newton 3"
+      - label: ":computer: SSP332 baroclinic wave (ρe_tot) equilmoist high resolution centered diff"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 200secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --out_dir longrun_ssp_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --fig_dir longrun_ssp_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 200secs --max_newton_iters 3 --initial_condition MoistBaroclinicWave --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_bw_rhoe_equil_highres --ode_algo SSP332
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_bw_rhoe_equil_highres --out_dir longrun_ssp332_bw_rhoe_equil_highres
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_bw_rhoe_equil_highres --fig_dir longrun_ssp332_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp332_bw_rhoe_equil_highres/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
 
-      - label: ":computer: SSP332 1st-order tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt200 newton 3"
+      - label: ":computer: SSP332 1st-order tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt175 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 200secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --ode_algo SSP332 --tracer_upwinding first_order --energy_upwinding first_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --out_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --fig_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3 --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt200_newton3/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 175secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt175_newton3 --ode_algo SSP332 --tracer_upwinding first_order --energy_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt175_newton3 --out_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt175_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt175_newton3 --fig_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt175_newton3 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt175_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
 
-      - label: ":computer: SSP333 3rd-order tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt150 newton 3"
+      - label: ":computer: SSP332 1st-order tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt150 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 2e16 --dt 150secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp_third_tracer_energy_upwind_bw_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_tracer_energy_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp_third_tracer_energy_upwind_bw_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_tracer_energy_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp_third_tracer_energy_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp_third_tracer_energy_upwind_bw_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 150secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt150_newton3 --ode_algo SSP332 --tracer_upwinding first_order --energy_upwinding first_order
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt150_newton3 --out_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt150_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt150_newton3 --fig_dir longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt150_newton3 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp332_first_tracer_energy_upwind_bw_rhoe_equil_highres_dt150_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
 
-      - label: ":computer: SSP332 3rd-order tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt150 newton 3"
+      - label: ":computer: SSP332 held suarez (ρe_tot) equilmoist high resolution"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 2e16 --dt 150secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_third_tracer_energy_upwind_bw_rhoe_equil_highres --ode_algo SSP332 --tracer_upwinding third_order --energy_upwinding third_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_third_tracer_energy_upwind_bw_rhoe_equil_highres --out_dir longrun_ssp332_third_tracer_energy_upwind_bw_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_third_tracer_energy_upwind_bw_rhoe_equil_highres --fig_dir longrun_ssp332_third_tracer_energy_upwind_bw_rhoe_equil_highres --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp332_third_tracer_energy_upwind_bw_rhoe_equil_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 32
-
-      - label: ":computer: SSP333 1st-order tracer & energy upwind equilmoist held suarez (ρe_tot) high resolution dt75 newton 3"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 75secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id longrun_ssp_first_tracer_energy_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_tracer_energy_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_first_tracer_energy_upwind_hs_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_tracer_energy_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_first_tracer_energy_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
-        artifact_paths: "longrun_ssp_first_tracer_energy_upwind_hs_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 100secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id longrun_ssp332_hs_rhoe_equil_highres --ode_algo SSP332
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_hs_rhoe_equil_highres --out_dir longrun_ssp332_hs_rhoe_equil_highres
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_hs_rhoe_equil_highres --fig_dir longrun_ssp332_hs_rhoe_equil_highres --case_name moist_held_suarez
+        artifact_paths: "longrun_ssp332_hs_rhoe_equil_highres/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 64
 
-      - label: ":computer: SSP332 1st-order tracer & energy upwind equilmoist held suarez (ρe_tot) high resolution dt75 newton 3"
+      - label: ":computer: SSP333 aquaplanet (ρe_tot) equilmoist high resolution clearsky radiation Float64"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 75secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id longrun_ssp332_first_tracer_energy_upwind_hs_rhoe_equil_highres --ode_algo SSP332 --tracer_upwinding first_order --energy_upwinding first_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_first_tracer_energy_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp332_first_tracer_energy_upwind_hs_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_first_tracer_energy_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp332_first_tracer_energy_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
-        artifact_paths: "longrun_ssp332_first_tracer_energy_upwind_hs_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --max_newton_iters 3 --t_end 200days --fps 30 --job_id longrun_ssp_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_aquaplanet_rhoe_equil_highres_clearsky_ft64
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
+        artifact_paths: "longrun_ssp_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 64
 
-      - label: ":computer: SSP333 3rd-order tracer & energy upwind equilmoist held suarez (ρe_tot) high resolution dt75 newton 3"
+      - label: ":computer: SSP332 aquaplanet (ρe_tot) equilmoist high resolution clearsky radiation Float64"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 75secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id longrun_ssp_third_tracer_energy_upwind_hs_rhoe_equil_highres --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_tracer_energy_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp_third_tracer_energy_upwind_hs_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_tracer_energy_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp_third_tracer_energy_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
-        artifact_paths: "longrun_ssp_third_tracer_energy_upwind_hs_rhoe_equil_highres/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --max_newton_iters 3 --t_end 200days --fps 30 --job_id longrun_ssp332_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp332_aquaplanet_rhoe_equil_highres_clearsky_ft64
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp332_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
+        artifact_paths: "longrun_ssp332_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 64
 
-      - label: ":computer: SSP332 3rd-order tracer & energy upwind equilmoist held suarez (ρe_tot) high resolution dt75 newton 3"
+      - label: ":computer: SSP333 1st-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt75 newton3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 75secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id longrun_ssp332_third_tracer_energy_upwind_hs_rhoe_equil_highres --ode_algo SSP332 --tracer_upwinding third_order --energy_upwinding third_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_third_tracer_energy_upwind_hs_rhoe_equil_highres --out_dir longrun_ssp332_third_tracer_energy_upwind_hs_rhoe_equil_highres
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_third_tracer_energy_upwind_hs_rhoe_equil_highres --fig_dir longrun_ssp332_third_tracer_energy_upwind_hs_rhoe_equil_highres --case_name moist_held_suarez
-        artifact_paths: "longrun_ssp332_third_tracer_energy_upwind_hs_rhoe_equil_highres/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 64
-
-      - label: ":computer: SSP333 1st-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt100 newton3"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 75secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding first_order --energy_upwinding first_order
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -142,9 +120,9 @@ steps:
         agents:
           slurm_ntasks: 64
 
-      - label: ":computer: SSP332 1st-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt75 newton3"
+      - label: ":computer: SSP332 1st-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt50 newton3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 75secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332 --tracer_upwinding first_order --energy_upwinding first_order
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 50secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332 --tracer_upwinding first_order --energy_upwinding first_order
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp332_first_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -153,20 +131,9 @@ steps:
         agents:
           slurm_ntasks: 64
 
-      - label: ":computer: SSP333 3rd-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt100 newton 3"
+      - label: ":computer: SSP332 3rd-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt75 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding third_order --energy_upwinding third_order
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
-        artifact_paths: "longrun_ssp_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
-        env:
-          CLIMACORE_DISTRIBUTED: "MPI"
-        agents:
-          slurm_ntasks: 64
-
-      - label: ":computer: SSP332 3rd-order tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt100 newton 3"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332 --tracer_upwinding third_order --energy_upwinding third_order
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 75secs --max_newton_iters 3 --t_end 400days --fps 30 --job_id longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332 --tracer_upwinding third_order --energy_upwinding third_order
           - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --out_dir longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64
           - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --fig_dir longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "longrun_ssp332_third_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64/*"
@@ -175,72 +142,76 @@ steps:
         agents:
           slurm_ntasks: 64
 
-      - label: ":computer: SSP333 zalesak tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt 25 newton 4"
+  - group: "Zalesak"
+
+    steps:
+
+      - label: ":computer: SSP333 zalesak tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt 20 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 2e16 --dt 25secs --max_newton_iters 4 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --out_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --fig_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 2e16 --dt 20secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --out_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --fig_dir longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp333_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
           slurm_mem: 40GB
 
-      - label: ":computer: SSP332 zalesak tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt 25 newton 4"
+      - label: ":computer: SSP332 zalesak tracer & energy upwind equilmoist baroclinic wave (ρe_tot) high resolution dt 20 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 2e16 --dt 25secs --max_newton_iters 4 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --ode_algo SSP332 --tracer_upwinding zalesak --energy_upwinding zalesak
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --out_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --fig_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4 --case_name moist_baroclinic_wave
-        artifact_paths: "longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt50_newton4/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --initial_condition MoistBaroclinicWave --moist equil --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 2e16 --dt 20secs --max_newton_iters 3 --t_end 100days --dt_save_to_disk 10days --job_id longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --ode_algo SSP332 --tracer_upwinding zalesak --energy_upwinding zalesak
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --out_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --fig_dir longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3 --case_name moist_baroclinic_wave
+        artifact_paths: "longrun_ssp332_zalesak_tracer_energy_upwind_bw_rhoe_equil_highres_dt20_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
           slurm_mem: 40GB
 
-      - label: ":computer: SSP333 zalesak tracer & energy upwind held suarez (ρe) equilmoist hightop sponge dt 15 newton 4"
+      - label: ":computer: SSP333 zalesak tracer & energy upwind held suarez (ρe) equilmoist hightop sponge dt 15 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 4 --t_end 200days --dt_save_to_disk 10days --job_id sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --out_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --fig_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --case_name moist_held_suarez
-        artifact_paths: "sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --out_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --fig_dir sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --case_name moist_held_suarez
+        artifact_paths: "sphere_ssp333_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
           slurm_mem: 40GB
 
-      - label: ":computer: SSP332 zalesak tracer & energy upwind held suarez (ρe) equilmoist hightop sponge dt 15 newton 4"
+      - label: ":computer: SSP332 zalesak tracer & energy upwind held suarez (ρe) equilmoist hightop sponge dt 15 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 4 --t_end 200days --dt_save_to_disk 10days --job_id sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --ode_algo SSP332 --tracer_upwinding zalesak --energy_upwinding zalesak
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --out_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --fig_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4 --case_name moist_held_suarez
-        artifact_paths: "sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt25_newton4/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --forcing held_suarez --moist equil --vert_diff true --surface_setup DefaultExchangeCoefficients --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --dt 15secs --max_newton_iters 3 --t_end 200days --dt_save_to_disk 10days --job_id sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --ode_algo SSP332 --tracer_upwinding zalesak --energy_upwinding zalesak
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --out_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --fig_dir sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3 --case_name moist_held_suarez
+        artifact_paths: "sphere_ssp332_zalesak_tracer_energy_upwind_held_suarez_rhoe_equilmoist_hightop_sponge_dt15_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 32
           slurm_mem: 40GB
 
-      - label: ":computer: SSP333 zalesak tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt15 newton 4"
+      - label: ":computer: SSP333 zalesak tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt15 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 4 --t_end 200days --fps 30 --job_id longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --out_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --fig_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --case_name aquaplanet
-        artifact_paths: "longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 3 --t_end 200days --fps 30 --job_id longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP333 --tracer_upwinding zalesak --energy_upwinding zalesak
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --out_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --fig_dir longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --case_name aquaplanet
+        artifact_paths: "longrun_ssp_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 64
           slurm_mem: 40GB
 
-      - label: ":computer: SSP332 zalesak tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt15 newton 4"
+      - label: ":computer: SSP332 zalesak tracer & energy upwind equilmoist aquaplanet (ρe_tot) high resolution clearsky radiation Float64 dt15 newton 3"
         command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 4 --t_end 200days --fps 30 --job_id longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332 --tracer_upwinding zalesak --energy_upwinding zalesak
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --out_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --fig_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4 --case_name aquaplanet
-        artifact_paths: "longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt25_newton4/*"
+          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 45 --dz_bottom 30 --h_elem 16 --kappa_4 1e16 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 15secs --max_newton_iters 3 --t_end 200days --fps 30 --job_id longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --dt_save_to_sol 10days --dt_save_to_disk 10days --FLOAT_TYPE Float64 --ode_algo SSP332 --tracer_upwinding zalesak --energy_upwinding zalesak
+          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --out_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3
+          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --fig_dir longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3 --case_name aquaplanet
+        artifact_paths: "longrun_ssp332_zalesak_tracer_energy_upwind_aquaplanet_rhoe_equil_highres_clearsky_ft64_dt15_newton3/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
