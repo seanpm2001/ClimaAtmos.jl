@@ -78,7 +78,7 @@ function (initial_condition::DecayingProfile)(params)
         q_t = FT(1e-12)
         q_0 = FT(0.018)
         q_tot = (p <= p_t) ? q_t : q_0 * exp(-((p - MSLP) / p_w)^2)
-        velocity = @. Geometry.UVVector(FT(0), FT(0.5))
+        velocity = @. Geometry.UVVector(FT(0), FT(1))
 
         return LocalState(;
             params,
