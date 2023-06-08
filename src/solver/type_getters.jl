@@ -137,7 +137,8 @@ function get_spaces(parsed_args, params, comms_ctx)
     radius = CAP.planet_radius(params)
     center_space, face_space = if parsed_args["config"] == "sphere"
         nh_poly = parsed_args["nh_poly"]
-        quad = Spaces.Quadratures.GLL{nh_poly + 1}()
+        # quad = Spaces.Quadratures.GLL{nh_poly + 1}()
+        quad = Spaces.Quadratures.GL{nh_poly + 1}()
         horizontal_mesh = cubed_sphere_mesh(; radius, h_elem)
         h_space =
             make_horizontal_space(horizontal_mesh, quad, comms_ctx, bubble)
@@ -183,7 +184,8 @@ function get_spaces(parsed_args, params, comms_ctx)
     elseif parsed_args["config"] == "box"
         FT = eltype(params)
         nh_poly = parsed_args["nh_poly"]
-        quad = Spaces.Quadratures.GLL{nh_poly + 1}()
+        # quad = Spaces.Quadratures.GLL{nh_poly + 1}()
+        quad = Spaces.Quadratures.GL{nh_poly + 1}()
         x_elem = Int(parsed_args["x_elem"])
         x_max = FT(parsed_args["x_max"])
         y_elem = Int(parsed_args["y_elem"])
@@ -211,7 +213,8 @@ function get_spaces(parsed_args, params, comms_ctx)
     elseif parsed_args["config"] == "plane"
         FT = eltype(params)
         nh_poly = parsed_args["nh_poly"]
-        quad = Spaces.Quadratures.GLL{nh_poly + 1}()
+        # quad = Spaces.Quadratures.GLL{nh_poly + 1}()
+        quad = Spaces.Quadratures.GL{nh_poly + 1}()
         x_elem = Int(parsed_args["x_elem"])
         x_max = FT(parsed_args["x_max"])
         horizontal_mesh =

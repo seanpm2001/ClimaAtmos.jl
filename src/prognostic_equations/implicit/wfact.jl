@@ -214,7 +214,7 @@ function Wfact!(W, Y, p, dtγ, t, colidx)
             -1 / ᶠinterp(ᶜρ[colidx]) * ᶠgradᵥ_stencil(
                 R_d / (1 - κ_d) * (ᶜρθ[colidx] * R_d / MSLP)^(κ_d / (1 - κ_d)),
             ),
-        )
+        ) * FT(0)
 
         # ∂(ᶠu₃ₜ)/∂(ᶜρ) =
         #     ∂(ᶠu₃ₜ)/∂(ᶠinterp(ᶜρ - ᶜρ_ref)) * ∂(ᶠinterp(ᶜρ - ᶜρ_ref))/∂(ᶜρ) +
@@ -229,11 +229,11 @@ function Wfact!(W, Y, p, dtγ, t, colidx)
                 ᶠgradᵥ(ᶜp[colidx] - ᶜp_ref[colidx]) -
                 ᶠinterp(ᶜρ_ref[colidx]) * ᶠgradᵥ_ᶜΦ[colidx]
             ) / abs2(ᶠinterp(ᶜρ[colidx])) * ᶠinterp_stencil(ᶜ1[colidx]),
-        )
+        ) * FT(0)
 
         # ∂(ᶠu₃ₜ)/∂(ᶠu₃_data) = 0
         ∂ᶠ𝕄ₜ∂ᶠ𝕄[colidx] .=
-            tuple(Operators.StencilCoefs{-1, 1}((FT(0), FT(0), FT(0))))
+            tuple(Operators.StencilCoefs{-1, 1}((FT(0), FT(0), FT(0)))) * FT(0)
     elseif :ρe_tot in propertynames(Y.c)
         # ∂(ᶠu₃ₜ)/∂(ᶜρe_tot) =
         #     ∂(ᶠu₃ₜ)/∂(ᶠgradᵥ(ᶜp - ᶜp_ref)) * ∂(ᶠgradᵥ(ᶜp - ᶜp_ref))/∂(ᶜρe_tot)
@@ -242,7 +242,7 @@ function Wfact!(W, Y, p, dtγ, t, colidx)
         # ∂(ᶠgradᵥ(ᶜp - ᶜp_ref))/∂(ᶜρe_tot) = ᶠgradᵥ_stencil(R_d / cv_d)
         @. ∂ᶠ𝕄ₜ∂ᶜ𝔼[colidx] = map_get_data(
             -1 / ᶠinterp(ᶜρ[colidx]) * ᶠgradᵥ_stencil(R_d / cv_d * ᶜ1[colidx]),
-        )
+        ) * FT(0)
 
         # ∂(ᶠu₃ₜ)/∂(ᶜρ) =
         #     ∂(ᶠu₃ₜ)/∂(ᶠgradᵥ(ᶜp - ᶜp_ref)) * ∂(ᶠgradᵥ(ᶜp - ᶜp_ref))/∂(ᶜρ) +
@@ -265,7 +265,7 @@ function Wfact!(W, Y, p, dtγ, t, colidx)
                 ᶠgradᵥ(ᶜp[colidx] - ᶜp_ref[colidx]) -
                 ᶠinterp(ᶜρ_ref[colidx]) * ᶠgradᵥ_ᶜΦ[colidx]
             ) / abs2(ᶠinterp(ᶜρ[colidx])) * ᶠinterp_stencil(ᶜ1[colidx]),
-        )
+        ) * FT(0)
 
         # ∂(ᶠu₃ₜ)/∂(ᶠu₃_data) =
         #     ∂(ᶠu₃ₜ)/∂(ᶠgradᵥ(ᶜp - ᶜp_ref)) * ∂(ᶠgradᵥ(ᶜp - ᶜp_ref))/∂(ᶠu₃_data) =
@@ -279,13 +279,13 @@ function Wfact!(W, Y, p, dtγ, t, colidx)
                 ᶠgradᵥ_stencil(-(ᶜρ[colidx] * R_d / cv_d)),
                 ∂ᶜK∂ᶠu₃_data[colidx],
             ),
-        )
+        ) * FT(0)
     end
 
     if p.atmos.rayleigh_sponge isa RayleighSponge
         # ᶠu₃ₜ -= p.ᶠβ_rayleigh_w * ᶠu₃
         # ∂(ᶠu₃ₜ)/∂(ᶠu₃_data) -= p.ᶠβ_rayleigh_w * ᶠu₃_unit
-        @. ∂ᶠ𝕄ₜ∂ᶠ𝕄[colidx].coefs.:2 -= p.ᶠβ_rayleigh_w[colidx]
+        @. ∂ᶠ𝕄ₜ∂ᶠ𝕄[colidx].coefs.:2 -= p.ᶠβ_rayleigh_w[colidx] * FT(0)
     end
 
     return nothing
