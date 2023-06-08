@@ -71,10 +71,20 @@ function (initial_condition::DecayingProfile)(params)
             T += rand(FT) * FT(0.1) * (z < 5000)
         end
 
+        # Constants from paper
+        MSLP = CAP.MSLP(params)
+        p_w = FT(3.4e4)
+        p_t = FT(1e4)
+        q_t = FT(1e-12)
+        q_0 = FT(0.018)
+        q_tot = (p <= p_t) ? q_t : q_0 * exp(-((p - MSLP) / p_w)^2)
+        velocity = @. Geometry.UVVector(FT(0), FT(0.5))
+
         return LocalState(;
             params,
             geometry = local_geometry,
-            thermo_state = TD.PhaseDry_pT(thermo_params, p, T),
+            thermo_state = TD.PhaseEquil_pTq(thermo_params, p, T, q_tot),
+            velocity = velocity,
         )
     end
     return local_state
