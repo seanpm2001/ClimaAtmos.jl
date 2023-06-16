@@ -7,7 +7,7 @@ Base.Broadcast.BroadcastStyle(
 """
     unit_basis_vector_data(type, local_geometry)
 
-The component of the vector of the specified type with length 1 in physical units. 
+The component of the vector of the specified type with length 1 in physical units.
 The type should correspond to a vector with only one component, i.e., a basis vector.
 """
 function unit_basis_vector_data(::Type{V}, local_geometry) where {V}
@@ -34,7 +34,7 @@ is not a PrescribedSurface.
 function update_surface_conditions!(Y, p, t)
     isnothing(p.sfc_setup) && return
     # Need to extract the field values so that we can do
-    # a DataLayout broadcast rather than a Field broadcast 
+    # a DataLayout broadcast rather than a Field broadcast
     # because we are mixing surface and interior fields
     sfc_local_geometry_values = Fields.field_values(
         Fields.level(Fields.local_geometry_field(Y.f), Fields.half),
@@ -56,6 +56,9 @@ function update_surface_conditions!(Y, p, t)
             int_z_values,
             t,
         )
+
+    elseif sfc_setup isa Fields.Field
+        Fields.field_values(sfc_setup) # This case is needed for the Coupler
     elseif sfc_setup isa SurfaceState
         (sfc_setup,)
     end
@@ -77,7 +80,7 @@ end
 
 Sets `p.sfc_conditions` according to `surface_conditions` and `surface_ts`,
 which are `Field`s of `SurfaceFluxes.SurfaceFluxConditions` and `Thermodynamics.ThermodynamicState`s
-This functions needs to be called by the coupler whenever either field changes 
+This functions needs to be called by the coupler whenever either field changes
 to ensure that the simulation is properly updated.
 """
 function set_surface_conditions!(p, surface_conditions, surface_ts)
