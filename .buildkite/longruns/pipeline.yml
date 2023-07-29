@@ -1,17 +1,16 @@
-env:
-  JULIA_VERSION: "1.8.5"
-  MPI_IMPL: "openmpi"
-  OPENMPI_VERSION: "4.1.1"
-  CUDA_VERSION: "11.2"
-  OPENBLAS_NUM_THREADS: 1
-  BUILDKITE_COMMIT: "${BUILDKITE_COMMIT}"
-  BUILDKITE_BRANCH: "${BUILDKITE_BRANCH}"
-
 agents:
-  config: cpu
   queue: central
-  slurm_ntasks: 1
-  slurm_time: 24:00:00
+  slurm_mem: 8G
+  modules: julia/1.8.5 cuda/11.8 ucx/1.14.1_cuda-11.8 openmpi/4.1.5_cuda-11.8 hdf5/1.12.2-ompi415 nsight-systems/2023.2.1
+
+env:
+  JULIA_LOAD_PATH: "${JULIA_LOAD_PATH}:${BUILDKITE_BUILD_CHECKOUT_PATH}/.buildkite"
+  OPENBLAS_NUM_THREADS: 1
+  JULIA_NVTX_CALLBACKS: gc
+  OMPI_MCA_opal_warn_on_missing_libcuda: 0
+  JULIA_MAX_NUM_PRECOMPILE_FILES: 100
+  JULIA_DEPOT_PATH: "${BUILDKITE_BUILD_PATH}/${BUILDKITE_PIPELINE_SLUG}/depot/cpu"
+
 
 timeout_in_minutes: 1440
 
@@ -68,15 +67,18 @@ steps:
       #     slurm_mem_per_cpu: 16GB
       
       - label: ":computer: no lim ARS aquaplanet equilmoist clearsky radiation h_elem 24"
-        command:
-          - mpiexec julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 35 --dz_bottom 50 --h_elem 24 --kappa_4 3e15 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --t_end 200days --job_id aquaplanet_equil_clearsky_ft64 --dt_save_to_sol Inf --dt_save_to_disk 10days --FLOAT_TYPE Float64 --apply_limiter false
-          - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir aquaplanet_equil_clearsky_ft64 --out_dir aquaplanet_equil_clearsky_ft64
-          - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir aquaplanet_equil_clearsky_ft64 --fig_dir aquaplanet_equil_clearsky_ft64 --case_name aquaplanet
+        command: >
+          srun --cpu-bind=cores 
+          nsys profile --trace=mpi,nvtx,cuda --mpi-impl=openmpi --output=aquaplanet_equil_clearsky_ft64/report-%q{PMI_RANK} -- 
+          julia --project=examples examples/hybrid/driver.jl --vert_diff true --surface_setup DefaultMoninObukhov --moist equil --rad clearsky --precip_model 0M --z_elem 35 --dz_bottom 50 --h_elem 24 --kappa_4 3e15 --rayleigh_sponge true --alpha_rayleigh_uh 0 --dt 100secs --t_end 1days --job_id aquaplanet_equil_clearsky_ft64 --dt_save_to_sol Inf --dt_save_to_disk 10days --FLOAT_TYPE Float64 --apply_limiter false
+          # - julia --color=yes --project=examples post_processing/remap/remap_pipeline.jl --data_dir aquaplanet_equil_clearsky_ft64 --out_dir aquaplanet_equil_clearsky_ft64
+          # - julia --color=yes --project=examples post_processing/plot/plot_pipeline.jl --nc_dir aquaplanet_equil_clearsky_ft64 --fig_dir aquaplanet_equil_clearsky_ft64 --case_name aquaplanet
         artifact_paths: "aquaplanet_equil_clearsky_ft64/*"
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
           slurm_ntasks: 128
-          slurm_mem_per_cpu: 16GB
+          slurm_mem_per_cpu: 8GB
+          slurm_cpus_per_task: 2
 
      
