@@ -9,7 +9,6 @@ env:
   JULIA_NVTX_CALLBACKS: gc
   OMPI_MCA_opal_warn_on_missing_libcuda: 0
   JULIA_MAX_NUM_PRECOMPILE_FILES: 100
-  JULIA_DEPOT_PATH: "${BUILDKITE_BUILD_PATH}/${BUILDKITE_PIPELINE_SLUG}/depot/cpu"
 
 
 timeout_in_minutes: 1440
@@ -18,18 +17,10 @@ steps:
   - label: "init :computer:"
     key: "init_cpu_env"
     command:
-      - echo "--- Configure MPI"
-      - julia -e 'using Pkg; Pkg.add("MPIPreferences"); using MPIPreferences; use_system_binary()'
-
       - echo "--- Instantiate"
       - "julia --project=examples -e 'using Pkg; Pkg.instantiate(;verbose=true)'"
       - "julia --project=examples -e 'using Pkg; Pkg.precompile()'"
       - "julia --project=examples -e 'using Pkg; Pkg.status()'"
-
-      - echo "--- Instantiate perf"
-      - "julia --project=perf -e 'using Pkg; Pkg.instantiate(;verbose=true)'"
-      - "julia --project=perf -e 'using Pkg; Pkg.precompile()'"
-      - "julia --project=perf -e 'using Pkg; Pkg.status()'"
 
     agents:
       slurm_cpus_per_task: 8
