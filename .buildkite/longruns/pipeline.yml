@@ -68,7 +68,7 @@ steps:
         env:
           CLIMACORE_DISTRIBUTED: "MPI"
         agents:
-          slurm_ntasks: 128
+          slurm_ntasks: 32
           slurm_mem_per_cpu: 8GB
           slurm_cpus_per_task: 2
 
