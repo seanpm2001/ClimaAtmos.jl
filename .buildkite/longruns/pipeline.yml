@@ -60,6 +60,7 @@ steps:
       - label: ":computer: no lim ARS aquaplanet equilmoist clearsky radiation h_elem 24"
         command: 
           - mkdir -p aquaplanet_equil_clearsky_ft64
+          - which nsys
           - >
             srun --cpu-bind=cores 
             nsys profile --gpu-metrics-device=none --trace=mpi,nvtx --mpi-impl=openmpi --output=aquaplanet_equil_clearsky_ft64/report-%q{PMI_RANK} 
