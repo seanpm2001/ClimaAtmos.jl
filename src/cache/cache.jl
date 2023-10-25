@@ -12,6 +12,14 @@ using ClimaCore.Utilities: half
 
 import ClimaCore.Fields: ColumnField
 
+function do_dss(space::Spaces.AbstractSpace)
+    quadrature_style = Spaces.horizontal_space(space).quadrature_style
+    return quadrature_style isa Spaces.Quadratures.GLL
+end
+
+do_dss(Yc::Fields.Field) = do_dss(axes(Yc))
+do_dss(Y::Fields.FieldVector) = do_dss(Y.c)
+
 # Functions on which the model depends:
 # CAP.R_d(params)         # dry specific gas constant
 # CAP.kappa_d(params)     # dry adiabatic exponent
@@ -60,10 +68,8 @@ function default_cache(
     end
     ᶜf = @. CT3(Geometry.WVector(ᶜf))
 
-    quadrature_style = Spaces.horizontal_space(axes(Y.c)).quadrature_style
-    do_dss = quadrature_style isa Spaces.Quadratures.GLL
     ghost_buffer =
-        !do_dss ? (;) :
+        !do_dss(Y) ? (;) :
         (; c = Spaces.create_dss_buffer(Y.c), f = Spaces.create_dss_buffer(Y.f))
 
     limiter =
@@ -87,14 +93,13 @@ function default_cache(
         ᶜf,
         ∂ᶜK_∂ᶠu₃ = similar(Y.c, BidiagonalMatrixRow{Adjoint{FT, CT3{FT}}}),
         params,
-        do_dss,
         ghost_buffer,
         net_energy_flux_toa,
         net_energy_flux_sfc,
         env_thermo_quad = SGSQuadrature(FT),
         precomputed_quantities(Y, atmos)...,
         temporary_quantities(atmos, spaces.center_space, spaces.face_space)...,
-        hyperdiffusion_cache(Y, atmos, do_dss)...,
+        hyperdiffusion_cache(Y, atmos)...,
     )
     set_precomputed_quantities!(Y, default_cache, FT(0))
     default_cache.is_init[] = false

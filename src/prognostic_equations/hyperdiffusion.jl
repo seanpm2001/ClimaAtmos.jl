@@ -6,7 +6,7 @@ import ClimaCore.Geometry as Geometry
 import ClimaCore.Fields as Fields
 import ClimaCore.Spaces as Spaces
 
-function hyperdiffusion_cache(Y, atmos, do_dss)
+function hyperdiffusion_cache(Y, atmos)
     isnothing(atmos.hyperdiff) && return (;)
     FT = eltype(Y)
     n = n_mass_flux_subdomains(atmos.turbconv_model)
@@ -35,7 +35,7 @@ function hyperdiffusion_cache(Y, atmos, do_dss)
         atmos.turbconv_model isa DiagnosticEDMFX ?
         (; ᶜ∇²tke⁰ = similar(Y.c, FT)) : (;)
     quantities = (; gs_quantities..., sgs_quantities...)
-    if do_dss
+    if do_dss(Y)
         quantities = (;
             quantities...,
             hyperdiffusion_ghost_buffer = map(
@@ -56,14 +56,14 @@ NVTX.@annotate function hyperdiffusion_tendency!(Yₜ, Y, p, t)
     diffuse_tke = use_prognostic_tke(turbconv_model)
     ᶜJ = Fields.local_geometry_field(Y.c).J
     point_type = eltype(Fields.coordinate_field(Y.c))
-    (; do_dss, ᶜp, ᶜspecific, ᶜ∇²u, ᶜ∇²specific_energy) = p
+    (; ᶜp, ᶜspecific, ᶜ∇²u, ᶜ∇²specific_energy) = p
     if turbconv_model isa PrognosticEDMFX
         (; ᶜρa⁰, ᶜρʲs, ᶜ∇²tke⁰, ᶜtke⁰, ᶜ∇²uₕʲs, ᶜ∇²uᵥʲs, ᶜ∇²uʲs, ᶜ∇²h_totʲs) = p
     end
     if turbconv_model isa DiagnosticEDMFX
         (; ᶜtke⁰, ᶜ∇²tke⁰) = p
     end
-    if do_dss
+    if do_dss(Y)
         buffer = p.hyperdiffusion_ghost_buffer
     end
 
@@ -89,7 +89,7 @@ NVTX.@annotate function hyperdiffusion_tendency!(Yₜ, Y, p, t)
         end
     end
 
-    if do_dss
+    if do_dss(Y)
         NVTX.@range "dss_hyperdiffusion_tendency" color = colorant"green" begin
             for dss_op! in (
                 Spaces.weighted_dss_start!,
@@ -97,7 +97,7 @@ NVTX.@annotate function hyperdiffusion_tendency!(Yₜ, Y, p, t)
                 Spaces.weighted_dss_ghost!,
             )
                 # DSS on Grid scale quantities
-                # Need to split the DSS computation here, because our DSS 
+                # Need to split the DSS computation here, because our DSS
                 # operations do not accept Covariant123Vector types
                 dss_op!(ᶜ∇²u, buffer.ᶜ∇²u)
                 dss_op!(ᶜ∇²specific_energy, buffer.ᶜ∇²specific_energy)
@@ -105,8 +105,8 @@ NVTX.@annotate function hyperdiffusion_tendency!(Yₜ, Y, p, t)
                     dss_op!(ᶜ∇²tke⁰, buffer.ᶜ∇²tke⁰)
                 end
                 if turbconv_model isa PrognosticEDMFX
-                    # Need to split the DSS computation here, because our DSS 
-                    # operations do not accept Covariant123Vector types     
+                    # Need to split the DSS computation here, because our DSS
+                    # operations do not accept Covariant123Vector types
                     for j in 1:n
                         @. ᶜ∇²uₕʲs.:($$j) = C12(ᶜ∇²uʲs.:($$j))
                         @. ᶜ∇²uᵥʲs.:($$j) = C3(ᶜ∇²uʲs.:($$j))
@@ -162,11 +162,11 @@ NVTX.@annotate function tracer_hyperdiffusion_tendency!(Yₜ, Y, p, t)
     (; κ₄) = hyperdiff
     n = n_mass_flux_subdomains(turbconv_model)
 
-    (; do_dss, ᶜspecific, ᶜ∇²specific_tracers) = p
+    (; ᶜspecific, ᶜ∇²specific_tracers) = p
     if turbconv_model isa PrognosticEDMFX
         (; ᶜ∇²q_totʲs) = p
     end
-    if do_dss
+    if do_dss(Y)
         buffer = p.hyperdiffusion_ghost_buffer
     end
 
@@ -181,7 +181,7 @@ NVTX.@annotate function tracer_hyperdiffusion_tendency!(Yₜ, Y, p, t)
         end
     end
 
-    if do_dss
+    if do_dss(Y)
         NVTX.@range "dss_hyperdiffusion_tendency" color = colorant"green" begin
             for dss_op! in (
                 Spaces.weighted_dss_start!,
