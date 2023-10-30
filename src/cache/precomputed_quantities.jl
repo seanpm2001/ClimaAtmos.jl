@@ -78,6 +78,7 @@ function precomputed_quantities(Y, atmos)
             ᶜmixing_length = similar(Y.c, FT),
             ᶜK_u = similar(Y.c, FT),
             ᶜK_h = similar(Y.c, FT),
+            ρatke_flux = similar(Fields.level(Y.f, half), C3{FT}),
             ᶜuʲs = similar(Y.c, NTuple{n, C123{FT}}),
             ᶠu³ʲs = similar(Y.f, NTuple{n, CT3{FT}}),
             ᶜKʲs = similar(Y.c, NTuple{n, FT}),
@@ -154,7 +155,7 @@ end
 """
     set_velocity_at_top!(Y, turbconv_model)
 
-Modifies `Y.f.u₃` so that `u₃` is 0 at the model top. 
+Modifies `Y.f.u₃` so that `u₃` is 0 at the model top.
 """
 function set_velocity_at_top!(Y, turbconv_model)
     top_u₃ = Fields.level(
@@ -301,8 +302,9 @@ NVTX.@annotate function set_precomputed_quantities!(Y, p, t)
     thermo_params = CAP.thermodynamics_params(p.params)
     n = n_mass_flux_subdomains(turbconv_model)
     thermo_args = (thermo_params, energy_form, moisture_model)
-    (; ᶜspecific, ᶜu, ᶠu³, ᶜK, ᶜts, ᶜp, ᶜΦ) = p
-    ᶠuₕ³ = p.ᶠtemp_CT3
+    (; ᶜΦ) = p.core
+    (; ᶜspecific, ᶜu, ᶠu³, ᶜK, ᶜts, ᶜp) = p.precomputed
+    ᶠuₕ³ = p.scratch.ᶠtemp_CT3
 
     @. ᶜspecific = specific_gs(Y.c)
     set_ᶠuₕ³!(ᶠuₕ³, Y)
@@ -332,19 +334,26 @@ NVTX.@annotate function set_precomputed_quantities!(Y, p, t)
     @. ᶜp = TD.air_pressure(thermo_params, ᶜts)
 
     if energy_form isa TotalEnergy
-        (; ᶜh_tot) = p
+        (; ᶜh_tot) = p.precomputed
         @. ᶜh_tot =
             TD.total_specific_enthalpy(thermo_params, ᶜts, ᶜspecific.e_tot)
     end
 
-    SurfaceConditions.update_surface_conditions!(Y, p, t)
+    if !isnothing(p.sfc_setup)
+        SurfaceConditions.update_surface_conditions!(Y, p, t)
+    end
 
     if turbconv_model isa PrognosticEDMFX
-        set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
+        set_prognostic_edmf_precomputed_quantities_environment!(Y, p, ᶠuₕ³, t)
+        set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ³, t)
+        set_prognostic_edmf_precomputed_quantities_closures!(Y, p, t)
     end
 
     if turbconv_model isa DiagnosticEDMFX
-        set_diagnostic_edmf_precomputed_quantities!(Y, p, t)
+        set_diagnostic_edmf_precomputed_quantities_bottom_bc!(Y, p, t)
+        set_diagnostic_edmf_precomputed_quantities_do_integral!(Y, p, t)
+        set_diagnostic_edmf_precomputed_quantities_top_bc!(Y, p, t)
+        set_diagnostic_edmf_precomputed_quantities_env_closures!(Y, p, t)
     end
 
     return nothing
@@ -359,10 +368,16 @@ values of the first updraft.
 function output_prognostic_sgs_quantities(Y, p, t)
     (; turbconv_model) = p.atmos
     thermo_params = CAP.thermodynamics_params(p.params)
-    (; ᶜp, ᶜρa⁰, ᶜρ⁰, ᶜΦ, ᶜtsʲs) = p
-    ᶠuₕ³ = p.ᶠtemp_CT3
+    (; ᶜρa⁰, ᶜρ⁰, ᶜtsʲs) = p.precomputed
+    ᶠuₕ³ = p.scratch.ᶠtemp_CT3
     set_ᶠuₕ³!(ᶠuₕ³, Y)
-    (ᶠu₃⁺, ᶜu⁺, ᶠu³⁺, ᶜK⁺) = similar.((p.ᶠu₃⁰, p.ᶜu⁰, p.ᶠu³⁰, p.ᶜK⁰))
+    (ᶠu₃⁺, ᶜu⁺, ᶠu³⁺, ᶜK⁺) =
+        similar.((
+            p.precomputed.ᶠu₃⁰,
+            p.precomputed.ᶜu⁰,
+            p.precomputed.ᶠu³⁰,
+            p.precomputed.ᶜK⁰,
+        ))
     set_sgs_ᶠu₃!(u₃⁺, ᶠu₃⁺, Y, turbconv_model)
     set_velocity_quantities!(ᶜu⁺, ᶠu³⁺, ᶜK⁺, ᶠu₃⁺, Y.c.uₕ, ᶠuₕ³)
     ᶜts⁺ = ᶜtsʲs.:1
@@ -379,8 +394,8 @@ values of the first updraft.
 """
 function output_diagnostic_sgs_quantities(Y, p, t)
     thermo_params = CAP.thermodynamics_params(p.params)
-    (; ᶜρaʲs, ᶜtsʲs) = p
-    ᶠu³⁺ = p.ᶠu³ʲs.:1
+    (; ᶜρaʲs, ᶜtsʲs) = p.precomputed
+    ᶠu³⁺ = p.precomputed.ᶠu³ʲs.:1
     ᶜu⁺ = @. (C123(Y.c.uₕ) + C123(ᶜinterp(ᶠu³⁺)))
     ᶜts⁺ = @. ᶜtsʲs.:1
     ᶜa⁺ = @. draft_area(ᶜρaʲs.:1, TD.air_density(thermo_params, ᶜts⁺))

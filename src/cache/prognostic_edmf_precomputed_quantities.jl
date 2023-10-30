@@ -5,28 +5,19 @@ import Thermodynamics as TD
 import ClimaCore: Spaces, Fields
 
 """
-    set_prognostic_edmf_precomputed_quantities!(Y, p, t)
+    set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
 
-Updates the precomputed quantities stored in `p` for edmfx.
+Updates the edmf environment precomputed quantities stored in `p` for edmfx.
 """
-function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
-    (; energy_form, moisture_model, turbconv_model) = p.atmos
-    #EDMFX BCs only support total energy as state variable
-    @assert energy_form isa TotalEnergy
-    @assert !(moisture_model isa DryModel)
+function set_prognostic_edmf_precomputed_quantities_environment!(Y, p, ᶠuₕ³, t)
+    @assert !(p.atmos.moisture_model isa DryModel)
 
-    FT = Spaces.undertype(axes(Y.c))
-    (; params) = p
-    (; dt) = p.simulation
-    thermo_params = CAP.thermodynamics_params(params)
-    n = n_mass_flux_subdomains(turbconv_model)
-    thermo_args = (thermo_params, energy_form, moisture_model)
-
-    (; ᶜspecific, ᶜp, ᶜΦ, ᶜh_tot, ᶜρ_ref) = p
-    (; ᶜtke⁰, ᶜρa⁰, ᶠu₃⁰, ᶜu⁰, ᶠu³⁰, ᶜK⁰, ᶜts⁰, ᶜρ⁰, ᶜh_tot⁰, ᶜq_tot⁰) = p
-    (; ᶜmixing_length, ᶜlinear_buoygrad, ᶜstrain_rate_norm, ᶜK_u, ᶜK_h) = p
-    (; ᶜuʲs, ᶠu³ʲs, ᶜKʲs, ᶜtsʲs, ᶜρʲs, ᶜentrʲs, ᶜdetrʲs) = p
-    (; ustar, obukhov_length, buoyancy_flux) = p.sfc_conditions
+    thermo_params = CAP.thermodynamics_params(p.params)
+    (; turbconv_model) = p.atmos
+    (; ᶜΦ,) = p.core
+    (; ᶜp, ᶜh_tot) = p.precomputed
+    (; ᶜtke⁰, ᶜρa⁰, ᶠu₃⁰, ᶜu⁰, ᶠu³⁰, ᶜK⁰, ᶜts⁰, ᶜρ⁰, ᶜh_tot⁰, ᶜq_tot⁰) =
+        p.precomputed
 
     @. ᶜρa⁰ = ρa⁰(Y.c)
     @. ᶜtke⁰ = divide_by_ρa(Y.c.sgs⁰.ρatke, ᶜρa⁰, 0, Y.c.ρ, turbconv_model)
@@ -49,6 +40,31 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
     @. ᶜK⁰ += ᶜtke⁰
     @. ᶜts⁰ = TD.PhaseEquil_phq(thermo_params, ᶜp, ᶜh_tot⁰ - ᶜK⁰ - ᶜΦ, ᶜq_tot⁰)
     @. ᶜρ⁰ = TD.air_density(thermo_params, ᶜts⁰)
+    return nothing
+end
+
+"""
+    set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ³, t)
+
+Updates the draft thermo state and boundary conditions
+precomputed quantities stored in `p` for edmfx.
+"""
+function set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ³, t)
+    (; energy_form, moisture_model, turbconv_model) = p.atmos
+    #EDMFX BCs only support total energy as state variable
+    @assert energy_form isa TotalEnergy
+    @assert !(moisture_model isa DryModel)
+
+    FT = Spaces.undertype(axes(Y.c))
+    n = n_mass_flux_subdomains(turbconv_model)
+
+    (; params) = p
+    thermo_params = CAP.thermodynamics_params(params)
+
+    (; ᶜΦ,) = p.core
+    (; ᶜspecific, ᶜp, ᶜh_tot) = p.precomputed
+    (; ᶜuʲs, ᶠu³ʲs, ᶜKʲs, ᶜtsʲs, ᶜρʲs) = p.precomputed
+    (; ustar, obukhov_length, buoyancy_flux) = p.precomputed.sfc_conditions
 
     for j in 1:n
         ᶜuʲ = ᶜuʲs.:($j)
@@ -77,7 +93,8 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
         )
         ᶜρ_int_val = Fields.field_values(Fields.level(Y.c.ρ, 1))
         ᶜp_int_val = Fields.field_values(Fields.level(ᶜp, 1))
-        (; ρ_flux_h_tot, ρ_flux_q_tot, ustar, obukhov_length) = p.sfc_conditions
+        (; ρ_flux_h_tot, ρ_flux_q_tot, ustar, obukhov_length) =
+            p.precomputed.sfc_conditions
         buoyancy_flux_val = Fields.field_values(buoyancy_flux)
         ρ_flux_h_tot_val = Fields.field_values(ρ_flux_h_tot)
         ρ_flux_q_tot_val = Fields.field_values(ρ_flux_q_tot)
@@ -135,6 +152,39 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
             $(FT(turbconv_params.surface_area)) *
             TD.air_density(thermo_params, ᶜtsʲ_int_val)
     end
+    return nothing
+end
+
+"""
+    set_prognostic_edmf_precomputed_quantities_closures!(Y, p, t)
+
+Updates the precomputed quantities stored in `p` for edmfx closures.
+"""
+function set_prognostic_edmf_precomputed_quantities_closures!(Y, p, t)
+
+    (; moisture_model, turbconv_model) = p.atmos
+    @assert !(moisture_model isa DryModel)
+
+    (; params) = p
+    (; dt) = p.simulation
+    thermo_params = CAP.thermodynamics_params(params)
+
+    FT = eltype(params)
+    n = n_mass_flux_subdomains(turbconv_model)
+
+    (; ᶜρ_ref) = p.core
+    (; ᶜspecific, ᶜtke⁰, ᶜu, ᶜp, ᶜρa⁰, ᶜu⁰, ᶠu³⁰, ᶜts⁰, ᶜρ⁰, ᶜq_tot⁰) =
+        p.precomputed
+    (;
+        ᶜmixing_length,
+        ᶜlinear_buoygrad,
+        ᶜstrain_rate_norm,
+        ᶜK_u,
+        ᶜK_h,
+        ρatke_flux,
+    ) = p.precomputed
+    (; ᶜuʲs, ᶜtsʲs, ᶠu³ʲs, ᶜρʲs, ᶜentrʲs, ᶜdetrʲs) = p.precomputed
+    (; ustar, obukhov_length, buoyancy_flux) = p.precomputed.sfc_conditions
 
     ᶜz = Fields.coordinate_field(Y.c).z
     z_sfc = Fields.level(Fields.coordinate_field(Y.f).z, Fields.half)
@@ -152,10 +202,10 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
             draft_area(Y.c.sgsʲs.:($$j).ρa, ᶜρʲs.:($$j)),
             get_physical_w(ᶜuʲs.:($$j), ᶜlg),
             TD.relative_humidity(thermo_params, ᶜtsʲs.:($$j)),
-            ᶜphysical_buoyancy(params, ᶜρ_ref, ᶜρʲs.:($$j)),
-            get_physical_w(ᶜu⁰, ᶜlg),
+            ᶜphysical_buoyancy(params, Y.c.ρ, ᶜρʲs.:($$j)),
+            get_physical_w(ᶜu, ᶜlg),
             TD.relative_humidity(thermo_params, ᶜts⁰),
-            ᶜphysical_buoyancy(params, ᶜρ_ref, ᶜρ⁰),
+            FT(0),
             dt,
             p.atmos.edmfx_entr_model,
         )
@@ -169,10 +219,10 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
             draft_area(Y.c.sgsʲs.:($$j).ρa, ᶜρʲs.:($$j)),
             get_physical_w(ᶜuʲs.:($$j), ᶜlg),
             TD.relative_humidity(thermo_params, ᶜtsʲs.:($$j)),
-            ᶜphysical_buoyancy(params, ᶜρ_ref, ᶜρʲs.:($$j)),
-            get_physical_w(ᶜu⁰, ᶜlg),
+            ᶜphysical_buoyancy(params, Y.c.ρ, ᶜρʲs.:($$j)),
+            get_physical_w(ᶜu, ᶜlg),
             TD.relative_humidity(thermo_params, ᶜts⁰),
-            ᶜphysical_buoyancy(params, ᶜρ_ref, ᶜρ⁰),
+            FT(0),
             dt,
             p.atmos.edmfx_detr_model,
         )
@@ -207,29 +257,26 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
     )
 
     # TODO: Currently the shear production only includes vertical gradients
-    ᶠu⁰ = p.ᶠtemp_C123
+    ᶠu⁰ = p.scratch.ᶠtemp_C123
     @. ᶠu⁰ = C123(ᶠinterp(Y.c.uₕ)) + C123(ᶠu³⁰)
-    ᶜstrain_rate = p.ᶜtemp_UVWxUVW
+    ᶜstrain_rate = p.scratch.ᶜtemp_UVWxUVW
     compute_strain_rate_center!(ᶜstrain_rate, ᶠu⁰)
     @. ᶜstrain_rate_norm = norm_sqr(ᶜstrain_rate)
 
-    ᶜprandtl_nvec = p.ᶜtemp_scalar
+    ᶜprandtl_nvec = p.scratch.ᶜtemp_scalar
     @. ᶜprandtl_nvec = turbulent_prandtl_number(
         params,
         obukhov_length,
         ᶜlinear_buoygrad,
         ᶜstrain_rate_norm,
     )
-    ᶜtke_exch = p.ᶜtemp_scalar_2
+    ᶜtke_exch = p.scratch.ᶜtemp_scalar_2
     @. ᶜtke_exch = 0
     for j in 1:n
+        ᶠu³ʲ = ᶠu³ʲs.:($j)
         @. ᶜtke_exch +=
-            Y.c.sgsʲs.:($$j).ρa * ᶜdetrʲs.:($$j) / ᶜρa⁰ * (
-                1 / 2 *
-                (
-                    get_physical_w(ᶜuʲs.:($$j), ᶜlg) - get_physical_w(ᶜu⁰, ᶜlg)
-                )^2 - ᶜtke⁰
-            )
+            Y.c.sgsʲs.:($$j).ρa * ᶜdetrʲs.:($$j) / ᶜρa⁰ *
+            (1 / 2 * norm_sqr(ᶜinterp(ᶠu³⁰) - ᶜinterp(ᶠu³ʲs.:($$j))) - ᶜtke⁰)
     end
 
     sfc_tke = Fields.level(ᶜtke⁰, 1)
@@ -239,9 +286,9 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
         ᶜz,
         z_sfc,
         ᶜdz,
-        sfc_tke,
+        max(sfc_tke, eps(FT)),
         ᶜlinear_buoygrad,
-        ᶜtke⁰,
+        max(ᶜtke⁰, 0),
         obukhov_length,
         ᶜstrain_rate_norm,
         ᶜprandtl_nvec,
@@ -249,10 +296,27 @@ function set_prognostic_edmf_precomputed_quantities!(Y, p, ᶠuₕ³, t)
     )
 
     turbconv_params = CAP.turbconv_params(params)
-    c_m = TCP.tke_ed_coeff(turbconv_params)
+    c_m = CAP.tke_ed_coeff(turbconv_params)
     @. ᶜK_u = c_m * ᶜmixing_length * sqrt(max(ᶜtke⁰, 0))
-    # TODO: add Prantdl number
     @. ᶜK_h = ᶜK_u / ᶜprandtl_nvec
+
+    ρatke_flux_values = Fields.field_values(ρatke_flux)
+    ρ_int_values = Fields.field_values(Fields.level(ᶜρa⁰, 1))
+    u_int_values = Fields.field_values(Fields.level(ᶜu, 1))
+    ustar_values = Fields.field_values(ustar)
+    int_local_geometry_values =
+        Fields.field_values(Fields.level(Fields.local_geometry_field(Y.c), 1))
+    sfc_local_geometry_values = Fields.field_values(
+        Fields.level(Fields.local_geometry_field(Y.f), half),
+    )
+    @. ρatke_flux_values = surface_flux_tke(
+        turbconv_params,
+        ρ_int_values,
+        u_int_values,
+        ustar_values,
+        int_local_geometry_values,
+        sfc_local_geometry_values,
+    )
 
     return nothing
 end

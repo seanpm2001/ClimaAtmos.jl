@@ -8,7 +8,6 @@ import ClimaAtmos.RRTMGPInterface as RRTMGPI
 import ClimaAtmos as CA
 import LinearAlgebra
 import ClimaCore.Fields
-import OrdinaryDiffEq as ODE
 import ClimaTimeSteppers as CTS
 import DiffEqCallbacks as DECB
 
@@ -58,13 +57,7 @@ function get_atmos(config::AtmosConfig, params)
         edmfx_nh_pressure,
         precip_model,
         forcing_type,
-        turbconv_model = get_turbconv_model(
-            FT,
-            moisture_model,
-            precip_model,
-            parsed_args,
-            turbconv_params,
-        ),
+        turbconv_model = get_turbconv_model(FT, parsed_args, turbconv_params),
         non_orographic_gravity_wave = get_non_orographic_gravity_wave_model(
             parsed_args,
             model_config,
@@ -99,7 +92,6 @@ function get_numerics(parsed_args)
 
     limiter =
         parsed_args["apply_limiter"] ? Limiters.QuasiMonotoneLimiter : nothing
-
 
     # wrap each upwinding mode in a Val for dispatch
     numerics = AtmosNumerics(;
@@ -297,51 +289,44 @@ function get_state_restart(comms_ctx)
 end
 
 function get_initial_condition(parsed_args)
-    if isnothing(parsed_args["turbconv_case"])
-        if parsed_args["initial_condition"] in [
-            "DryBaroclinicWave",
-            "MoistBaroclinicWave",
-            "DecayingProfile",
-            "MoistBaroclinicWaveWithEDMF",
-            "MoistAdiabaticProfileEDMFX",
-        ]
-            return getproperty(ICs, Symbol(parsed_args["initial_condition"]))(
-                parsed_args["perturb_initstate"],
-            )
-        elseif parsed_args["initial_condition"] in [
-            "Nieuwstadt",
-            "GABLS",
-            "GATE_III",
-            "Soares",
-            "Bomex",
-            "LifeCycleTan2018",
-            "ARM_SGP",
-            "DYCOMS_RF01",
-            "DYCOMS_RF02",
-            "Rico",
-            "TRMM_LBA",
-        ]
-            return getproperty(ICs, Symbol(parsed_args["initial_condition"]))(
-                parsed_args["prognostic_tke"],
-            )
-        elseif parsed_args["initial_condition"] in [
-            "IsothermalProfile",
-            "AgnesiHProfile",
-            "DryDensityCurrentProfile",
-            "RisingThermalBubbleProfile",
-            "ScharProfile",
-        ]
-            return getproperty(ICs, Symbol(parsed_args["initial_condition"]))()
-        else
-            error(
-                "Unknown `initial_condition`: $(parsed_args["initial_condition"])",
-            )
-        end
+    if parsed_args["initial_condition"] in [
+        "DryBaroclinicWave",
+        "MoistBaroclinicWave",
+        "DecayingProfile",
+        "MoistBaroclinicWaveWithEDMF",
+        "MoistAdiabaticProfileEDMFX",
+    ]
+        return getproperty(ICs, Symbol(parsed_args["initial_condition"]))(
+            parsed_args["perturb_initstate"],
+        )
+    elseif parsed_args["initial_condition"] in [
+        "Nieuwstadt",
+        "GABLS",
+        "GATE_III",
+        "Soares",
+        "Bomex",
+        "LifeCycleTan2018",
+        "ARM_SGP",
+        "DYCOMS_RF01",
+        "DYCOMS_RF02",
+        "Rico",
+        "TRMM_LBA",
+    ]
+        return getproperty(ICs, Symbol(parsed_args["initial_condition"]))(
+            parsed_args["prognostic_tke"],
+        )
+    elseif parsed_args["initial_condition"] in [
+        "IsothermalProfile",
+        "AgnesiHProfile",
+        "DryDensityCurrentProfile",
+        "RisingThermalBubbleProfile",
+        "ScharProfile",
+    ]
+        return getproperty(ICs, Symbol(parsed_args["initial_condition"]))()
     else
-        # turbconv_case is also used for surface fluxes for TRMM and ARM cases.
-        # I don't want to change that right now, so I'm leaving the
-        # EDMF logic as is. This should be obsolete soon.
-        return getproperty(ICs, Symbol(parsed_args["turbconv_case"]))()
+        error(
+            "Unknown `initial_condition`: $(parsed_args["initial_condition"])",
+        )
     end
 end
 
@@ -355,29 +340,13 @@ is_explicit_CTS_algo_type(alg_or_tableau) =
 is_imex_CTS_algo_type(alg_or_tableau) =
     alg_or_tableau <: CTS.IMEXARKAlgorithmName
 
-is_implicit_type(::typeof(ODE.IMEXEuler)) = true
-is_implicit_type(alg_or_tableau) =
-    alg_or_tableau <: Union{
-        ODE.OrdinaryDiffEqImplicitAlgorithm,
-        ODE.OrdinaryDiffEqAdaptiveImplicitAlgorithm,
-    } || is_imex_CTS_algo_type(alg_or_tableau)
-
-is_ordinary_diffeq_newton(::typeof(ODE.IMEXEuler)) = true
-is_ordinary_diffeq_newton(alg_or_tableau) =
-    alg_or_tableau <: Union{
-        ODE.OrdinaryDiffEqNewtonAlgorithm,
-        ODE.OrdinaryDiffEqNewtonAdaptiveAlgorithm,
-    }
+is_implicit_type(alg_or_tableau) = is_imex_CTS_algo_type(alg_or_tableau)
 
 is_imex_CTS_algo(::CTS.IMEXAlgorithm) = true
 is_imex_CTS_algo(::SciMLBase.AbstractODEAlgorithm) = false
 
-is_implicit(::ODE.OrdinaryDiffEqImplicitAlgorithm) = true
-is_implicit(::ODE.OrdinaryDiffEqAdaptiveImplicitAlgorithm) = true
 is_implicit(ode_algo) = is_imex_CTS_algo(ode_algo)
 
-is_rosenbrock(::ODE.Rosenbrock23) = true
-is_rosenbrock(::ODE.Rosenbrock32) = true
 is_rosenbrock(::SciMLBase.AbstractODEAlgorithm) = false
 use_transform(ode_algo) =
     !(is_imex_CTS_algo(ode_algo) || is_rosenbrock(ode_algo))
@@ -417,28 +386,13 @@ Returns the ode algorithm
 =#
 function ode_configuration(::Type{FT}, parsed_args) where {FT}
     ode_name = parsed_args["ode_algo"]
-    alg_or_tableau = if startswith(ode_name, "ODE.")
-        @warn "apply_limiter flag is ignored for OrdinaryDiffEq algorithms"
-        getproperty(ODE, Symbol(split(ode_name, ".")[2]))
-    else
-        getproperty(CTS, Symbol(ode_name))
-    end
+    alg_or_tableau = getproperty(CTS, Symbol(ode_name))
     @info "Using ODE config: `$alg_or_tableau`"
 
     if is_explicit_CTS_algo_type(alg_or_tableau)
         return CTS.ExplicitAlgorithm(alg_or_tableau())
     elseif !is_implicit_type(alg_or_tableau)
         return alg_or_tableau()
-    elseif is_ordinary_diffeq_newton(alg_or_tableau)
-        if parsed_args["max_newton_iters_ode"] == 1
-            error("OridinaryDiffEq requires at least 2 Newton iterations")
-        end
-        # κ like a relative tolerance; its default value in ODE is 0.01
-        nlsolve = ODE.NLNewton(;
-            κ = parsed_args["max_newton_iters_ode"] == 2 ? Inf : 0.01,
-            max_iter = parsed_args["max_newton_iters_ode"],
-        )
-        return alg_or_tableau(; linsolve = linsolve!, nlsolve)
     elseif is_imex_CTS_algo_type(alg_or_tableau)
         newtons_method = CTS.NewtonsMethod(;
             max_iters = parsed_args["max_newton_iters_ode"],
@@ -536,48 +490,7 @@ function get_callbacks(parsed_args, simulation, atmos, params, comms_ctx)
             (callbacks..., call_every_dt(rrtmgp_model_callback!, dt_rad))
     end
 
-    if atmos.turbconv_model isa TC.EDMFModel
-        callbacks = (
-            callbacks...,
-            call_every_n_steps(turb_conv_affect_filter!; skip_first = true),
-        )
-    end
-
     return callbacks
-end
-
-function get_cache(
-    Y,
-    parsed_args,
-    params,
-    spaces,
-    atmos,
-    numerics,
-    simulation,
-    initial_condition,
-    surface_setup,
-)
-    _default_cache = default_cache(
-        Y,
-        params,
-        atmos,
-        spaces,
-        numerics,
-        simulation,
-        surface_setup,
-    )
-    merge(
-        _default_cache,
-        additional_cache(
-            Y,
-            _default_cache,
-            parsed_args,
-            params,
-            atmos,
-            simulation.dt,
-            initial_condition,
-        ),
-    )
 end
 
 function get_simulation(config::AtmosConfig)
@@ -821,17 +734,7 @@ function get_integrator(config::AtmosConfig)
     @info "Allocating Y: $s"
 
     s = @timed_str begin
-        p = get_cache(
-            Y,
-            config.parsed_args,
-            params,
-            spaces,
-            atmos,
-            numerics,
-            simulation,
-            initial_condition,
-            surface_setup,
-        )
+        p = build_cache(Y, atmos, params, surface_setup, simulation)
     end
     @info "Allocating cache (p): $s"
 

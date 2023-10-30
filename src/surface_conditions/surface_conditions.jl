@@ -1,7 +1,7 @@
 """
     update_surface_conditions!(Y, p, t)
 
-Updates the value of `p.sfc_conditions` based on the current state `Y` and time
+Updates the value of `p.precomputed.sfc_conditions` based on the current state `Y` and time
 `t`. This function will only update the surface conditions if the surface_setup
 is not a PrescribedSurface.
 """
@@ -10,16 +10,13 @@ function update_surface_conditions!(Y, p, t)
     # Need to extract the field values so that we can do
     # a DataLayout broadcast rather than a Field broadcast
     # because we are mixing surface and interior fields
-    if isnothing(p.sfc_setup)
-        p.is_init[] && set_dummy_surface_conditions!(p)
-        return
-    end
     sfc_local_geometry_values = Fields.field_values(
         Fields.level(Fields.local_geometry_field(Y.f), Fields.half),
     )
     int_local_geometry_values =
         Fields.field_values(Fields.level(Fields.local_geometry_field(Y.c), 1))
-    (; ᶜts, ᶜu, sfc_conditions, params, sfc_setup, atmos) = p
+    (; ᶜts, ᶜu, sfc_conditions) = p.precomputed
+    (; params, sfc_setup, atmos) = p
     int_ts_values = Fields.field_values(Fields.level(ᶜts, 1))
     int_u_values = Fields.field_values(Fields.level(ᶜu, 1))
     int_z_values =
@@ -74,9 +71,10 @@ surface_state(
 # conditions, but without throwing an error during the computation of
 # precomputed quantities for diagnostic EDMF due to uninitialized surface
 # conditions.
-# TODO: Refactor the surface conditions API to avoid needing to do this. 
+# TODO: Refactor the surface conditions API to avoid needing to do this.
 function set_dummy_surface_conditions!(p)
-    (; sfc_conditions, params, atmos) = p
+    (; params, atmos) = p
+    (; sfc_conditions) = p.precomputed
     FT = eltype(params)
     thermo_params = CAP.thermodynamics_params(params)
     @. sfc_conditions.ustar = FT(0.2)
@@ -101,13 +99,15 @@ end
 """
     set_surface_conditions!(p, surface_conditions, surface_ts)
 
-Sets `p.sfc_conditions` according to `surface_conditions` and `surface_ts`,
+Sets `p.precomputed.sfc_conditions` according to `surface_conditions` and `surface_ts`,
 which are `Field`s of `SurfaceFluxes.SurfaceFluxConditions` and `Thermodynamics.ThermodynamicState`s
 This functions needs to be called by the coupler whenever either field changes
 to ensure that the simulation is properly updated.
 """
 function set_surface_conditions!(p, surface_conditions, surface_ts)
-    (; sfc_conditions, params, atmos, ᶠtemp_scalar) = p
+    (; params, atmos) = p
+    (; sfc_conditions,) = p.precomputed
+    (; ᶠtemp_scalar) = p.scratch
 
     FT = eltype(params)
     FT′ = eltype(parent(surface_conditions))
@@ -387,18 +387,10 @@ function atmos_surface_conditions(
     energy_flux = if atmos.energy_form isa PotentialTemperature
         (; ρ_flux_θ = shf / TD.cp_m(thermo_params, ts) * surface_normal)
     elseif atmos.energy_form isa TotalEnergy
-        if atmos.turbconv_model isa TC.EDMFModel
-            (;
-                ρ_flux_h_tot = (shf + lhf) * surface_normal,
-                ρ_flux_θ = shf / TD.cp_m(thermo_params, ts) * surface_normal,
-            )
-        else
-            (; ρ_flux_h_tot = (shf + lhf) * surface_normal)
-        end
+        (; ρ_flux_h_tot = (shf + lhf) * surface_normal)
     end
     moisture_flux =
-        atmos.moisture_model isa DryModel &&
-        !(atmos.turbconv_model isa TC.EDMFModel) ? (;) :
+        atmos.moisture_model isa DryModel ? (;) :
         (; ρ_flux_q_tot = evaporation * surface_normal)
     return (;
         ts,
@@ -431,15 +423,10 @@ function surface_conditions_type(atmos, ::Type{FT}) where {FT}
     energy_flux_names = if atmos.energy_form isa PotentialTemperature
         (:ρ_flux_θ,)
     elseif atmos.energy_form isa TotalEnergy
-        if atmos.turbconv_model isa TC.EDMFModel
-            (:ρ_flux_h_tot, :ρ_flux_θ)
-        else
-            (:ρ_flux_h_tot,)
-        end
+        (:ρ_flux_h_tot,)
     end
     moisture_flux_names =
-        atmos.moisture_model isa DryModel &&
-        !(atmos.turbconv_model isa TC.EDMFModel) ? () : (:ρ_flux_q_tot,)
+        atmos.moisture_model isa DryModel ? () : (:ρ_flux_q_tot,)
     names = (
         :ts,
         :ustar,

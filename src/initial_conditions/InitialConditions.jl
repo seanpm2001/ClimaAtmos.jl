@@ -25,10 +25,8 @@ import ClimaCore: Fields, Geometry
 import LinearAlgebra: norm_sqr
 
 import ..Parameters as CAP
-import ..TurbulenceConvection as TC
 import Thermodynamics as TD
 import AtmosphericProfilesLibrary as APL
-import OrdinaryDiffEq as ODE
 import SciMLBase
 import Dierckx
 

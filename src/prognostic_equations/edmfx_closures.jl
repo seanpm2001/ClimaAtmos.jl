@@ -29,6 +29,28 @@ function ᶠbuoyancy(ᶠρ_ref, ᶠρ, ᶠgradᵥ_ᶜΦ)
 end
 
 """
+    Return surface flux of TKE, a C3 vector used by ClimaAtmos operator boundary conditions
+"""
+function surface_flux_tke(
+    turbconv_params,
+    ρ_int,
+    u_int,
+    ustar,
+    interior_local_geometry,
+    surface_local_geometry,
+)
+    c_d = CAP.tke_diss_coeff(turbconv_params)
+    c_m = CAP.tke_ed_coeff(turbconv_params)
+    k_star² = CAP.tke_surf_scale(turbconv_params)
+    speed = Geometry._norm(
+        CA.CT12(u_int, interior_local_geometry),
+        interior_local_geometry,
+    )
+    c3_unit = C3(unit_basis_vector_data(C3, surface_local_geometry))
+    return ρ_int * (1 - c_d * c_m * k_star²^2) * ustar^2 * speed * c3_unit
+end
+
+"""
    Return the nonhydrostatic pressure drag for updrafts [m/s2 * m]
 
    Inputs (everything defined on cell faces):
@@ -57,13 +79,13 @@ function ᶠupdraft_nh_pressure(
     else
         turbconv_params = CAP.turbconv_params(params)
         # factor multiplier for pressure buoyancy terms (effective buoyancy is (1-α_b))
-        α_b = TCP.pressure_normalmode_buoy_coeff1(turbconv_params)
+        α_b = CAP.pressure_normalmode_buoy_coeff1(turbconv_params)
         # factor multiplier for pressure drag
-        α_d = TCP.pressure_normalmode_drag_coeff(turbconv_params)
+        α_d = CAP.pressure_normalmode_drag_coeff(turbconv_params)
 
         # Independence of aspect ratio hardcoded: α₂_asp_ratio² = FT(0)
 
-        H_up_min = TCP.min_updraft_top(turbconv_params)
+        H_up_min = CAP.min_updraft_top(turbconv_params)
         plume_scale_height = max(updraft_top, H_up_min)
 
         # We also used to have advection term here: α_a * w_up * div_w_up
@@ -72,8 +94,6 @@ function ᶠupdraft_nh_pressure(
                plume_scale_height
     end
 end
-
-edmfx_nh_pressure_cache(Y, turbconv_model) = (;)
 
 edmfx_nh_pressure_tendency!(Yₜ, Y, p, t, colidx, turbconv_model) = nothing
 function edmfx_nh_pressure_tendency!(
@@ -86,14 +106,16 @@ function edmfx_nh_pressure_tendency!(
 )
 
     n = n_mass_flux_subdomains(turbconv_model)
-    (; params, ᶜρʲs, ᶠgradᵥ_ᶜΦ, ᶠu₃⁰) = p
+    (; params) = p
+    (; ᶠgradᵥ_ᶜΦ) = p.core
+    (; ᶜρʲs, ᶠu₃⁰) = p.precomputed
     FT = eltype(Y)
     ᶜz = Fields.coordinate_field(Y.c).z
     z_sfc = Fields.level(Fields.coordinate_field(Y.f).z, Fields.half)
     ᶠlg = Fields.local_geometry_field(Y.f)
 
     turbconv_params = CAP.turbconv_params(params)
-    a_min = TCP.min_area(turbconv_params)
+    a_min = CAP.min_area(turbconv_params)
 
     for j in 1:n
 
@@ -179,12 +201,12 @@ function mixing_length(
 ) where {FT}
 
     turbconv_params = CAP.turbconv_params(params)
-    c_m = TCP.tke_ed_coeff(turbconv_params)
-    c_d = TCP.tke_diss_coeff(turbconv_params)
-    smin_ub = TCP.smin_ub(turbconv_params)
-    smin_rm = TCP.smin_rm(turbconv_params)
-    c_b = TCP.static_stab_coeff(turbconv_params)
-    vkc = TCP.von_karman_const(turbconv_params)
+    c_m = CAP.tke_ed_coeff(turbconv_params)
+    c_d = CAP.tke_diss_coeff(turbconv_params)
+    smin_ub = CAP.smin_ub(turbconv_params)
+    smin_rm = CAP.smin_rm(turbconv_params)
+    c_b = CAP.static_stab_coeff(turbconv_params)
+    vkc = CAP.von_karman_const(params)
 
     # compute the maximum mixing length at height z
     l_z = ᶜz - z_sfc
@@ -201,7 +223,7 @@ function mixing_length(
     end
 
     # compute l_TKE - the production-dissipation balanced length scale
-    a_pd = c_m * (ᶜstrain_rate_norm - ᶜlinear_buoygrad / ᶜPr) * sqrt(ᶜtke)
+    a_pd = c_m * (2 * ᶜstrain_rate_norm - ᶜlinear_buoygrad / ᶜPr) * sqrt(ᶜtke)
     # Dissipation term
     c_neg = c_d * ᶜtke * sqrt(ᶜtke)
     if abs(a_pd) > eps(FT) && 4 * a_pd * c_neg > -(ᶜtke_exch * ᶜtke_exch)
@@ -230,7 +252,9 @@ function mixing_length(
     N_eff = sqrt(max(ᶜlinear_buoygrad, 0))
     if N_eff > 0.0
         l_smag =
-            c_smag * ᶜdz * max(0, 1 - N_eff^2 / ᶜPr / ᶜstrain_rate_norm)^(1 / 4)
+            c_smag *
+            ᶜdz *
+            max(0, 1 - N_eff^2 / ᶜPr / (2 * ᶜstrain_rate_norm))^(1 / 4)
     else
         l_smag = c_smag * ᶜdz
     end
@@ -265,10 +289,10 @@ function turbulent_prandtl_number(
     ᶜstrain_rate_norm::FT,
 ) where {FT}
     turbconv_params = CAP.turbconv_params(params)
-    Ri_c = TCP.Ri_crit(turbconv_params)
-    ω_pr = TCP.Prandtl_number_scale(turbconv_params)
-    Pr_n = TCP.Prandtl_number_0(turbconv_params)
-    ᶜRi_grad = min(ᶜlinear_buoygrad / max(ᶜstrain_rate_norm, eps(FT)), Ri_c)
+    Ri_c = CAP.Ri_crit(turbconv_params)
+    ω_pr = CAP.Prandtl_number_scale(turbconv_params)
+    Pr_n = CAP.Prandtl_number_0(turbconv_params)
+    ᶜRi_grad = min(ᶜlinear_buoygrad / max(2 * ᶜstrain_rate_norm, eps(FT)), Ri_c)
     if obukhov_length > 0 && ᶜRi_grad > 0 #stable
         # CSB (Dan Li, 2019, eq. 75), where ω_pr = ω_1 + 1 = 53.0 / 13.0
         prandtl_nvec =

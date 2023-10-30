@@ -23,8 +23,10 @@ horizontal_integral_at_boundary(f, lev) = sum(
 function flux_accumulation!(integrator)
     Y = integrator.u
     p = integrator.p
-    if !isnothing(p.radiation_model)
-        (; ᶠradiation_flux, net_energy_flux_toa, net_energy_flux_sfc, Δt) = p
+    if !isnothing(p.radiation)
+        Δt = integrator.dt
+        (; ᶠradiation_flux) = p.radiation
+        (; net_energy_flux_toa, net_energy_flux_sfc) = p
         nlevels = Spaces.nlevels(axes(Y.c))
         net_energy_flux_toa[] +=
             horizontal_integral_at_boundary(ᶠradiation_flux, nlevels + half) *
@@ -35,35 +37,15 @@ function flux_accumulation!(integrator)
     return nothing
 end
 
-NVTX.@annotate function turb_conv_affect_filter!(integrator)
-    p = integrator.p
-    (; edmf_cache) = p
-    (; edmf, param_set) = edmf_cache
-    t = integrator.t
-    Y = integrator.u
-    tc_params = CAP.turbconv_params(param_set)
-
-    Fields.bycolumn(axes(Y.c)) do colidx
-        state = TC.tc_column_state(Y, p, nothing, colidx, t)
-        grid = TC.Grid(state)
-        TC.affect_filter!(edmf, grid, state, tc_params, t)
-    end
-
-    # We're lying to OrdinaryDiffEq.jl, in order to avoid
-    # paying for an additional `∑tendencies!` call, which is required
-    # to support supplying a continuous representation of the
-    # solution.
-    SciMLBase.u_modified!(integrator, false)
-end
-
 NVTX.@annotate function rrtmgp_model_callback!(integrator)
     Y = integrator.u
     p = integrator.p
     t = integrator.t
 
-    (; ᶜts, sfc_conditions, params, env_thermo_quad) = p
-    (; idealized_insolation, idealized_h2o, idealized_clouds) = p
-    (; insolation_tuple, ᶠradiation_flux, radiation_model) = p
+    (; ᶜts, sfc_conditions) = p.precomputed
+    (; params) = p
+    (; idealized_insolation, idealized_h2o, idealized_clouds) = p.radiation
+    (; insolation_tuple, ᶠradiation_flux, radiation_model) = p.radiation
 
     FT = eltype(params)
     thermo_params = CAP.thermodynamics_params(params)
@@ -120,7 +102,7 @@ NVTX.@annotate function rrtmgp_model_callback!(integrator)
         max_zenith_angle = FT(π) / 2 - eps(FT)
         irradiance = FT(CAP.tot_solar_irrad(params))
         au = FT(CAP.astro_unit(params))
-        (; orbital_data) = p
+        (; orbital_data) = p.radiation
 
         bottom_coords = Fields.coordinate_field(Spaces.level(Y.c, 1))
         if eltype(bottom_coords) <: Geometry.LatLongZPoint
@@ -136,8 +118,8 @@ NVTX.@annotate function rrtmgp_model_callback!(integrator)
             @. insolation_tuple = instantaneous_zenith_angle(
                 current_datetime,
                 orbital_data,
-                Float64(bottom_coords.long),
-                Float64(bottom_coords.lat),
+                bottom_coords.long,
+                bottom_coords.lat,
                 ref_insolation_params,
             ) # the tuple is (zenith angle, azimuthal angle, earth-sun distance)
             @. solar_zenith_angle =
@@ -201,7 +183,7 @@ function common_diagnostics(p, ᶜu, ᶜts)
         temperature = TD.air_temperature.(thermo_params, ᶜts),
         potential_temperature = TD.dry_pottemp.(thermo_params, ᶜts),
         specific_enthalpy = TD.specific_enthalpy.(thermo_params, ᶜts),
-        buoyancy = CAP.grav(p.params) .* (p.ᶜρ_ref .- ᶜρ) ./ ᶜρ,
+        buoyancy = CAP.grav(p.params) .* (p.core.ᶜρ_ref .- ᶜρ) ./ ᶜρ,
         density = TD.air_density.(thermo_params, ᶜts),
     )
     if !(p.atmos.moisture_model isa DryModel)
@@ -215,7 +197,7 @@ function common_diagnostics(p, ᶜu, ᶜts)
             cloud_fraction_gm = get_cloud_fraction.(
                 thermo_params,
                 env_thermo_quad,
-                p.ᶜp,
+                p.precomputed.ᶜp,
                 ᶜts,
             ),
         )
@@ -238,7 +220,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
     FT = eltype(params)
     thermo_params = CAP.thermodynamics_params(params)
 
-    (; ᶜu, ᶜK, ᶜts, ᶜp, sfc_conditions) = p
+    (; ᶜu, ᶜK, ᶜts, ᶜp, sfc_conditions) = p.precomputed
     dycore_diagnostic = (;
         common_diagnostics(p, ᶜu, ᶜts)...,
         pressure = ᶜp,
@@ -256,9 +238,17 @@ NVTX.@annotate function compute_diagnostics(integrator)
     end
 
     if p.atmos.precip_model isa Microphysics0Moment
-        (; ᶜS_ρq_tot, col_integrated_rain, col_integrated_snow) = p
+        (; ᶜS_ρq_tot, col_integrated_rain, col_integrated_snow) =
+            p.precipitation
         Fields.bycolumn(axes(Y.c)) do colidx
-            precipitation_tendency!(nothing, Y, p, t, colidx, p.precip_model)
+            precipitation_tendency!(
+                nothing,
+                Y,
+                p,
+                t,
+                colidx,
+                p.atmos.precip_model,
+            )
         end # TODO: Set the diagnostics without computing the tendency.
         precip_diagnostic = (;
             precipitation_removal = ᶜS_ρq_tot,
@@ -274,7 +264,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
     end
 
     if p.atmos.turbconv_model isa PrognosticEDMFX
-        (; ᶜtke⁰, ᶜu⁰, ᶜts⁰, ᶜmixing_length) = p
+        (; ᶜtke⁰, ᶜu⁰, ᶜts⁰, ᶜmixing_length) = p.precomputed
         (; ᶜu⁺, ᶜts⁺, ᶜa⁺, ᶜa⁰) = output_prognostic_sgs_quantities(Y, p, t)
         env_diagnostics = (;
             common_diagnostics(p, ᶜu⁰, ᶜts⁰)...,
@@ -305,7 +295,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
             ) .+ ᶜa⁺ .* cloud_fraction.(thermo_params, ᶜts⁺, ᶜa⁺),
         )
     elseif p.atmos.turbconv_model isa DiagnosticEDMFX
-        (; ᶜtke⁰, ᶜmixing_length) = p
+        (; ᶜtke⁰, ᶜmixing_length) = p.precomputed
         (; ᶜu⁺, ᶜts⁺, ᶜa⁺) = output_diagnostic_sgs_quantities(Y, p, t)
         env_diagnostics = (;
             cloud_fraction = get_cloud_fraction.(
@@ -332,60 +322,6 @@ NVTX.@annotate function compute_diagnostics(integrator)
                 ᶜts,
             ) .+ ᶜa⁺ .* cloud_fraction.(thermo_params, ᶜts⁺, ᶜa⁺),
         )
-    elseif p.atmos.turbconv_model isa TC.EDMFModel
-        tc_cent(p) = p.edmf_cache.aux.c.turbconv
-        tc_face(p) = p.edmf_cache.aux.f.turbconv
-        turbulence_convection_diagnostic = (;
-            bulk_up_area = tc_cent(p).bulk.area,
-            bulk_up_h_tot = tc_cent(p).bulk.h_tot,
-            bulk_up_q_tot = tc_cent(p).bulk.q_tot,
-            bulk_up_q_liq = tc_cent(p).bulk.q_liq,
-            bulk_up_q_ice = tc_cent(p).bulk.q_ice,
-            bulk_up_temperature = tc_cent(p).bulk.T,
-            bulk_up_cloud_fraction = tc_cent(p).bulk.cloud_fraction,
-            bulk_up_e_tot_tendency_precip_formation = tc_cent(
-                p,
-            ).bulk.e_tot_tendency_precip_formation,
-            bulk_up_qt_tendency_precip_formation = tc_cent(
-                p,
-            ).bulk.qt_tendency_precip_formation,
-            env_area = tc_cent(p).en.area,
-            env_q_tot = tc_cent(p).en.q_tot,
-            env_q_liq = tc_cent(p).en.q_liq,
-            env_q_ice = tc_cent(p).en.q_ice,
-            env_theta_liq_ice = tc_cent(p).en.θ_liq_ice,
-            env_theta_virt = tc_cent(p).en.θ_virt,
-            env_theta_dry = tc_cent(p).en.θ_dry,
-            env_e_tot = tc_cent(p).en.e_tot,
-            env_e_kin = tc_cent(p).en.e_kin,
-            env_h_tot = tc_cent(p).en.h_tot,
-            env_RH = tc_cent(p).en.RH,
-            env_temperature = tc_cent(p).en.T,
-            env_cloud_fraction = tc_cent(p).en.cloud_fraction,
-            env_TKE = tc_cent(p).en.tke,
-            env_e_tot_tendency_precip_formation = tc_cent(
-                p,
-            ).en.e_tot_tendency_precip_formation,
-            env_qt_tendency_precip_formation = tc_cent(
-                p,
-            ).en.qt_tendency_precip_formation,
-            face_env_buoyancy = tc_face(p).en.buoy,
-            face_up1_buoyancy = tc_face(p).bulk.buoy_up1,
-            face_bulk_w = tc_face(p).bulk.w,
-            face_env_w = tc_face(p).en.w,
-            bulk_up_filter_flag_1 = tc_cent(p).bulk.filter_flag_1,
-            bulk_up_filter_flag_2 = tc_cent(p).bulk.filter_flag_2,
-            bulk_up_filter_flag_3 = tc_cent(p).bulk.filter_flag_3,
-            bulk_up_filter_flag_4 = tc_cent(p).bulk.filter_flag_4,
-            env_q_vap = tc_cent(p).en.q_tot .- tc_cent(p).en.q_liq .-
-                        tc_cent(p).en.q_ice,
-            draft_q_vap = tc_cent(p).bulk.q_tot .- tc_cent(p).bulk.q_liq .-
-                          tc_cent(p).bulk.q_ice,
-            cloud_fraction = tc_cent(p).en.area .*
-                             tc_cent(p).en.cloud_fraction .+
-                             tc_cent(p).bulk.area .*
-                             tc_cent(p).bulk.cloud_fraction,
-        )
     else
         turbulence_convection_diagnostic = NamedTuple()
     end
@@ -395,7 +331,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
             Fields.level(Fields.local_geometry_field(Y.f), Fields.half)
         surface_ct3_unit =
             CT3.(unit_basis_vector_data.(CT3, sfc_local_geometry))
-        (; ρ_flux_uₕ, ρ_flux_h_tot) = p.sfc_conditions
+        (; ρ_flux_uₕ, ρ_flux_h_tot) = p.precomputed.sfc_conditions
         sfc_flux_momentum =
             Geometry.UVVector.(
                 adjoint.(ρ_flux_uₕ ./ Spaces.level(ᶠinterp.(Y.c.ρ), half)) .*
@@ -407,7 +343,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
             sfc_flux_energy = dot.(ρ_flux_h_tot, surface_ct3_unit),
         )
         if :ρq_tot in propertynames(Y.c)
-            (; ρ_flux_q_tot) = p.sfc_conditions
+            (; ρ_flux_q_tot) = p.precomputed.sfc_conditions
             vert_diff_diagnostic = (;
                 vert_diff_diagnostic...,
                 sfc_evaporation = dot.(ρ_flux_q_tot, surface_ct3_unit),
@@ -419,7 +355,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
 
     if p.atmos.radiation_mode isa RRTMGPI.AbstractRRTMGPMode
         (; face_lw_flux_dn, face_lw_flux_up, face_sw_flux_dn, face_sw_flux_up) =
-            p.radiation_model
+            p.radiation.radiation_model
         rad_diagnostic = (;
             lw_flux_down = RRTMGPI.array2field(FT.(face_lw_flux_dn), axes(Y.f)),
             lw_flux_up = RRTMGPI.array2field(FT.(face_lw_flux_up), axes(Y.f)),
@@ -433,7 +369,7 @@ NVTX.@annotate function compute_diagnostics(integrator)
                 face_clear_lw_flux_up,
                 face_clear_sw_flux_dn,
                 face_clear_sw_flux_up,
-            ) = p.radiation_model
+            ) = p.radiation.radiation_model
             rad_clear_diagnostic = (;
                 clear_lw_flux_down = RRTMGPI.array2field(
                     FT.(face_clear_lw_flux_dn),

@@ -9,9 +9,6 @@ NVTX.@annotate function implicit_tendency!(Yₜ, Y, p, t)
     Yₜ .= zero(eltype(Yₜ))
     Fields.bycolumn(axes(Y.c)) do colidx
         implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
-        if p.turbconv_model isa TurbulenceConvection.EDMFModel
-            implicit_sgs_flux_tendency!(Yₜ, Y, p, t, colidx, p.turbconv_model)
-        end
         # NOTE: All ρa tendencies should be applied before calling this function
         pressure_work_tendency!(Yₜ, Y, p, t, colidx, p.atmos.turbconv_model)
 
@@ -65,9 +62,10 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
     (; dt) = p.simulation
     n = n_mass_flux_subdomains(turbconv_model)
     ᶜJ = Fields.local_geometry_field(Y.c).J
-    (; ᶜspecific, ᶠu³, ᶜp, ᶠgradᵥ_ᶜΦ, ᶜρ_ref, ᶜp_ref, ᶜtemp_scalar) = p
+    (; ᶠgradᵥ_ᶜΦ, ᶜρ_ref, ᶜp_ref) = p.core
+    (; ᶜspecific, ᶠu³, ᶜp) = p.precomputed
 
-    ᶜ1 = ᶜtemp_scalar
+    ᶜ1 = p.scratch.ᶜtemp_scalar
     @. ᶜ1[colidx] = one(Y.c.ρ[colidx])
     vertical_transport!(
         Yₜ.c.ρ[colidx],
@@ -80,7 +78,7 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
     )
 
     if :ρe_tot in propertynames(Yₜ.c)
-        (; ᶜh_tot) = p
+        (; ᶜh_tot) = p.precomputed
         vertical_transport!(
             Yₜ.c.ρe_tot[colidx],
             ᶜJ[colidx],
@@ -111,7 +109,7 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
         ) / ᶠinterp(Y.c.ρ[colidx])
 
     if rayleigh_sponge isa RayleighSponge
-        (; ᶠβ_rayleigh_w) = p
+        (; ᶠβ_rayleigh_w) = p.rayleigh_sponge
         @. Yₜ.f.u₃[colidx] -= ᶠβ_rayleigh_w[colidx] * Y.f.u₃[colidx]
         if turbconv_model isa PrognosticEDMFX
             for j in 1:n

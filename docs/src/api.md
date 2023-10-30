@@ -1,9 +1,5 @@
 # API
 
-```@docs
-ClimaAtmos.TurbulenceConvection.Parameters
-```
-
 ## Initial conditions
 
 ### General
@@ -52,4 +48,10 @@ ClimaAtmos.InitialConditions.Soares
 
 ```@docs
 ClimaAtmos.ImplicitEquationJacobian
+```
+
+### Helper
+
+```@docs
+ClimaAtmos.InitialConditions.ColumnInterpolatableField
 ```

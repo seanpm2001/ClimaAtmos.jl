@@ -333,26 +333,12 @@ function get_edmf_coriolis(parsed_args, ::Type{FT}) where {FT}
     return EDMFCoriolis(prof_u, prof_v, coriolis_param)
 end
 
-function get_turbconv_model(
-    FT,
-    moisture_model,
-    precip_model,
-    parsed_args,
-    turbconv_params,
-)
+function get_turbconv_model(FT, parsed_args, turbconv_params)
     turbconv = parsed_args["turbconv"]
     @assert turbconv in
-            (nothing, "edmf", "edmfx", "prognostic_edmfx", "diagnostic_edmfx")
+            (nothing, "edmfx", "prognostic_edmfx", "diagnostic_edmfx")
 
-    return if turbconv == "edmf"
-        TC.EDMFModel(
-            FT,
-            moisture_model,
-            precip_model,
-            parsed_args,
-            turbconv_params,
-        )
-    elseif turbconv == "prognostic_edmfx"
+    return if turbconv == "prognostic_edmfx"
         N = turbconv_params.updraft_number
         TKE = parsed_args["prognostic_tke"]
         PrognosticEDMFX{N, TKE}(turbconv_params.min_area)
@@ -371,12 +357,10 @@ function get_entrainment_model(parsed_args)
         NoEntrainment()
     elseif entr_model == "PiGroups"
         PiGroupsEntrainment()
-    elseif entr_model == "ConstantCoefficient"
-        ConstantCoefficientEntrainment()
-    elseif entr_model == "ConstantCoefficientHarmonics"
-        ConstantCoefficientHarmonicsEntrainment()
-    elseif entr_model == "ConstantTimescale"
-        ConstantTimescaleEntrainment()
+    elseif entr_model == "Generalized"
+        GeneralizedEntrainment()
+    elseif entr_model == "GeneralizedHarmonics"
+        GeneralizedHarmonicsEntrainment()
     else
         error("Invalid entr_model $(entr_model)")
     end
@@ -388,12 +372,10 @@ function get_detrainment_model(parsed_args)
         NoDetrainment()
     elseif detr_model == "PiGroups"
         PiGroupsDetrainment()
-    elseif detr_model == "BOverW"
-        BOverWDetrainment()
-    elseif detr_model == "ConstantCoefficientHarmonics"
-        ConstantCoefficientHarmonicsDetrainment()
-    elseif detr_model == "ConstantTimescale"
-        ConstantTimescaleDetrainment()
+    elseif detr_model == "Generalized"
+        GeneralizedDetrainment()
+    elseif detr_model == "GeneralizedHarmonics"
+        GeneralizedHarmonicsDetrainment()
     else
         error("Invalid detr_model $(detr_model)")
     end

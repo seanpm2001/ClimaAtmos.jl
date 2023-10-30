@@ -77,14 +77,14 @@ function vertical_diffusion_boundary_layer_tendency!(
 )
     ᶜρ = Y.c.ρ
     FT = Spaces.undertype(axes(ᶜρ))
-    (; ᶜp, sfc_conditions, ᶜspecific) = p # assume ᶜts and ᶜp have been updated
+    (; ᶜp, ᶜspecific, sfc_conditions) = p.precomputed # assume ᶜts and ᶜp have been updated
     (; C_E) = p.atmos.vert_diff
 
     ᶠgradᵥ = Operators.GradientC2F() # apply BCs to ᶜdivᵥ, which wraps ᶠgradᵥ
 
     FT = eltype(Y)
     interior_uₕ = Fields.level(Y.c.uₕ, 1)
-    ᶠp = ᶠρK_E = p.ᶠtemp_scalar
+    ᶠp = ᶠρK_E = p.scratch.ᶠtemp_scalar
     @. ᶠp[colidx] = ᶠinterp(ᶜp[colidx])
     ᶜΔz_surface = Fields.Δz_field(interior_uₕ)
     @. ᶠρK_E[colidx] =
@@ -105,7 +105,7 @@ function vertical_diffusion_boundary_layer_tendency!(
     end
 
     if :ρe_tot in propertynames(Y.c)
-        (; ᶜh_tot) = p
+        (; ᶜh_tot) = p.precomputed
 
         ᶜdivᵥ_ρe_tot = Operators.DivergenceF2C(
             top = Operators.SetValue(C3(FT(0))),
@@ -114,8 +114,8 @@ function vertical_diffusion_boundary_layer_tendency!(
         @. Yₜ.c.ρe_tot[colidx] -=
             ᶜdivᵥ_ρe_tot(-(ᶠρK_E[colidx] * ᶠgradᵥ(ᶜh_tot[colidx])))
     end
-    ᶜρχₜ_diffusion = p.ᶜtemp_scalar
-    ρ_flux_χ = p.sfc_temp_C3
+    ᶜρχₜ_diffusion = p.scratch.ᶜtemp_scalar
+    ρ_flux_χ = p.scratch.sfc_temp_C3
     for (ᶜρχₜ, ᶜχ, χ_name) in matching_subfields(Yₜ.c, ᶜspecific)
         χ_name == :e_tot && continue
         if χ_name == :q_tot
