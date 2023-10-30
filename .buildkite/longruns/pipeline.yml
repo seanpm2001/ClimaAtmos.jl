@@ -63,7 +63,6 @@ steps:
           slurm_time: 24:00:00
         env: 
           JOB_NAME: "longrun_aquaplanet_rhoe_equil_highres_clearsky_ft32_earth"
-          RESTART_FILE: "/central/scratch/esm/slurm-buildkite/climaatmos-longruns/1199/climaatmos-longruns/longrun_aquaplanet_rhoe_equil_highres_clearsky_ft32_earth/day180.0.hdf5"
 
   - group: "Low resolution long runs"
 
