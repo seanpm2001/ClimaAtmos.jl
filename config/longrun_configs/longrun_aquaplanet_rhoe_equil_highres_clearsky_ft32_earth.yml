@@ -6,7 +6,7 @@ z_elem: 45
 dt: "90secs"
 surface_setup: "DefaultMoninObukhov"
 fps: 30
-t_end: "400days"
+t_end: "900days"
 dz_bottom: 30.0
 vert_diff: "true"
 h_elem: 16
