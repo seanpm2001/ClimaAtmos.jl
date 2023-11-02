@@ -3,7 +3,7 @@ dt_save_to_disk: "10days"
 rayleigh_sponge: true
 topo_smoothing: true
 z_elem: 45
-dt: "90secs"
+dt: "75secs"
 surface_setup: "DefaultMoninObukhov"
 fps: 30
 t_end: "900days"
