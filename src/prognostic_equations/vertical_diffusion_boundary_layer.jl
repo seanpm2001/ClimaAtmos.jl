@@ -17,12 +17,29 @@ import ClimaCore.Operators as Operators
 # 1) turn the liquid_theta into theta version
 # 2) have a total energy version (primary goal)
 
+# function eddy_diffusivity_coefficient(C_E::FT, norm_v_a, z_a, p) where {FT}
+#     p_pbl = FT(85000)
+#     p_strato = FT(10000)
+#     K_E = C_E * norm_v_a * z_a
+#     return p > p_pbl ? K_E : K_E * exp(-((p_pbl - p) / p_strato)^2)
+# end
+
+# function eddy_diffusivity_coefficient(C_E::FT, norm_v_a, z_a, p) where {FT}
+#     p_pbl = FT(100000)
+#     p_strato = FT(10000)
+#     K_E = C_E # lowest 30m > 1, 2, 4
+#     return p > p_pbl ? K_E : K_E * exp(-((p_pbl - p) / p_strato)^2)
+# end
+
+
 function eddy_diffusivity_coefficient(C_E::FT, norm_v_a, z_a, p) where {FT}
-    p_pbl = FT(85000)
+    p_pbl = FT(95000)
     p_strato = FT(10000)
-    K_E = C_E * norm_v_a * z_a
+    K_E = C_E
     return p > p_pbl ? K_E : K_E * exp(-((p_pbl - p) / p_strato)^2)
 end
+
+
 
 function surface_thermo_state(
     ::GCMSurfaceThermoState,
