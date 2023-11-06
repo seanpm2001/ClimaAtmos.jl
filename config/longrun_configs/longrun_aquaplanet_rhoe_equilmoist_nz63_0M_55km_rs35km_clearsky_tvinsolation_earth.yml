@@ -1,6 +1,6 @@
 FLOAT_TYPE: "Float32"
 dt_save_to_disk: "10days"
-dt: "50secs"
+dt: "40secs"
 t_end: "500days"
 h_elem: 16
 z_elem: 63
