@@ -103,7 +103,7 @@ function make_hybrid_spaces(
         face_space = Spaces.ExtrudedFiniteDifferenceSpace(
             h_space,
             z_face_space,
-            Hypsography.SLEVEAdaption(z_surface, FT(0.75), FT(10.0)),
+            Hypsography.SLEVEAdaption(z_surface, 0.75, 10.0),
         )
         center_space = Spaces.CenterExtrudedFiniteDifferenceSpace(face_space)
     end
