@@ -44,8 +44,6 @@ function precomputed_quantities(Y, atmos)
         !(atmos.moisture_model isa DryModel) &&
         atmos.energy_form isa TotalEnergy
     ) || !(atmos.turbconv_model isa PrognosticEDMFX)
-    @assert !(atmos.edmfx_detr_model isa ConstantAreaDetrainment) ||
-            !(atmos.turbconv_model isa DiagnosticEDMFX)
     TST = thermo_state_type(atmos.moisture_model, FT)
     SCT = SurfaceConditions.surface_conditions_type(atmos, FT)
     n = n_mass_flux_subdomains(atmos.turbconv_model)
@@ -346,8 +344,8 @@ NVTX.@annotate function set_precomputed_quantities!(Y, p, t)
     end
 
     if turbconv_model isa PrognosticEDMFX
-        set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ³, t)
         set_prognostic_edmf_precomputed_quantities_environment!(Y, p, ᶠuₕ³, t)
+        set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ³, t)
         set_prognostic_edmf_precomputed_quantities_closures!(Y, p, t)
     end
 

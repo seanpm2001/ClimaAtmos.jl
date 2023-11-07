@@ -3,10 +3,10 @@ dt_save_to_disk: "10days"
 rayleigh_sponge: true
 topo_smoothing: true
 z_elem: 45
-dt: "100secs"
+dt: "75secs"
 surface_setup: "DefaultMoninObukhov"
 fps: 30
-t_end: "300days"
+t_end: "900days"
 dz_bottom: 30.0
 vert_diff: "true"
 h_elem: 16
@@ -15,6 +15,8 @@ kappa_4: 3.0e16
 FLOAT_TYPE: "Float32"
 precip_model: "0M"
 topography: "Earth"
+idealized_insolation: false
+dt_rad: "1hours"
 dt_save_to_sol: "10days"
 job_id: "longrun_aquaplanet_rhoe_equil_highres_clearsky_ft32_earth"
 moist: "equil"
