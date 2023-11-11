@@ -24,7 +24,7 @@ import ClimaCore.Operators as Operators
 #     return p > p_pbl ? K_E : K_E * exp(-((p_pbl - p) / p_strato)^2)
 # end
 
-unction eddy_diffusivity_coefficient(C_E::FT, norm_v_a, z_a, p) where {FT}
+function eddy_diffusivity_coefficient(C_E::FT, norm_v_a, z_a, p) where {FT}
     p_pbl = FT(95000)
     p_strato = FT(10000)
     K_E = FT(4)
