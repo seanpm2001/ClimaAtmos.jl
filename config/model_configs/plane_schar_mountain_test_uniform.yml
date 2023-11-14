@@ -8,7 +8,6 @@ t_end: "14400.0secs"
 z_stretch: false
 x_elem: 100
 use_reference_state: false
-ode_algo: "SSP33ShuOsher"
 config: "plane"
 kappa_4: 5.0e7
 z_max: 25000.0

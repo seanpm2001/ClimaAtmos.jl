@@ -3,13 +3,12 @@ rayleigh_sponge: true
 initial_condition: "ScharProfile"
 x_max: 120000.0
 z_elem: 45
-dt: "0.5secs"
+dt: "0.90secs"
 t_end: "14400.0secs"
 dz_top: 1000.0
 x_elem: 100
-dz_bottom: 200.0
+dz_bottom: 50.0
 use_reference_state: false
-ode_algo: "SSP33ShuOsher"
 config: "plane"
 kappa_4: 5.0e7
 z_max: 25000.0
