@@ -45,7 +45,7 @@ steps:
 
   - wait
 
-  - group: "Targeted resolution AMIP long runs"
+  - group: "Targeted resolution AMIP long runs - testing 1M"
 
     steps:
 
