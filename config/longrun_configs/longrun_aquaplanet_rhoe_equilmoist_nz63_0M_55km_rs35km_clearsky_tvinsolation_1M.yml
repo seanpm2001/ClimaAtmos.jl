@@ -1,7 +1,7 @@
 FLOAT_TYPE: "Float32"
-dt_save_to_disk: "5days"
-dt: "50secs"
-t_end: "100days"
+dt_save_to_disk: "1days"
+dt: "10secs"
+t_end: "20days"
 h_elem: 16
 z_elem: 63
 dz_bottom: 30.0
