@@ -210,6 +210,22 @@ add_diagnostic_variable!(
     end,
 )
 
+###
+# Cloud fraction (3d)
+###
+add_diagnostic_variable!(
+    short_name = "cf",
+    long_name = "Cloud fraction",
+    units = "%",
+    compute! = (out, state, cache, time) -> begin
+        FT = eltype(cache.precomputed.ᶜcloud_fraction)
+        if isnothing(out)
+            return copy(cache.precomputed.ᶜcloud_fraction) .* FT(100)
+        else
+            out .= cache.precomputed.ᶜcloud_fraction .* FT(100)
+        end
+    end,
+)
 
 ###
 # Relative humidity (3d)
