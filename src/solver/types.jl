@@ -109,6 +109,7 @@ struct BuoyGradMean <: AbstractEnvBuoyGradClosure end
 
 Base.broadcastable(x::BuoyGradMean) = tuple(x)
 
+# TODO
 """
     EnvBuoyGrad
 
@@ -121,6 +122,10 @@ Base.@kwdef struct EnvBuoyGrad{FT, EBC <: AbstractEnvBuoyGradClosure}
     qv_sat::FT
     "total specific humidity in the saturated part"
     qt_sat::FT
+    "liquid specific humidity in the saturated part"
+    ql_sat::FT
+    "ice specific humidity in the saturated part"
+    qi_sat::FT
     "potential temperature in the saturated part"
     θ_sat::FT
     "liquid ice potential temperature in the saturated part"
