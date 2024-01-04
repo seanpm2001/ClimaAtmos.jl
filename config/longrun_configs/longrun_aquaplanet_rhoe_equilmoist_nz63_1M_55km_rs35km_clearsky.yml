@@ -11,11 +11,30 @@ rayleigh_sponge: true
 kappa_4_vorticity: 1.0e16
 kappa_4_tracer: 1.0e16
 moist: "equil"
-precip_model: "0M"
+precip_model: "1M"
+precip_upwinding: "first_order"
 surface_setup: "DefaultMoninObukhov"
 vert_diff: "true"
 rad: "clearsky"
 dt_rad: "6hours"
 job_id: "longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky"
 toml: [toml/longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky.toml]
-
+diagnostics:
+  - short_name: cl
+    period: 6hours
+  - short_name: cli
+    period: 6hours
+  - short_name: clw
+    period: 6hours
+  - short_name: husra
+    period: 6hours
+  - short_name: hussn
+    period: 6hours
+  - short_name: ta
+    period: 6hours
+  - short_name: hus
+    period: 6hours
+  - short_name: hur
+    period: 6hours
+  - short_name: lmix
+    period: 6hours
