@@ -465,25 +465,16 @@ function get_callbacks(parsed_args, sim_info, atmos, params, comms_ctx)
             ),
         )
     end
-    dt_save_to_disk = time_to_seconds(parsed_args["dt_save_to_disk"])
-    if !(dt_save_to_disk == Inf)
+    dt_save_state_to_disk =
+        time_to_seconds(parsed_args["dt_save_state_to_disk"])
+    if !(dt_save_state_to_disk == Inf)
         callbacks = (
             callbacks...,
             call_every_dt(
-                (integrator) -> save_to_disk_func(integrator, output_dir),
-                dt_save_to_disk;
+                (integrator) ->
+                    save_state_to_disk_func(integrator, output_dir),
+                dt_save_state_to_disk;
                 skip_first = sim_info.restart,
-            ),
-        )
-    end
-
-    dt_save_restart = time_to_seconds(parsed_args["dt_save_restart"])
-    if !(dt_save_restart == Inf)
-        callbacks = (
-            callbacks...,
-            call_every_dt(
-                (integrator) -> save_restart_func(integrator, output_dir),
-                dt_save_restart,
             ),
         )
     end
@@ -857,7 +848,7 @@ function get_simulation(config::AtmosConfig)
 
     function orchestrate_diagnostics(integrator)
         for d in diagnostics_functions
-            if d.cbf.n > 0 && integrator.step % d.cbf.n == 0
+            if d.cbf.n > 0 && integrator.step % d.cbf.n == 0 && integrator.t > 60*60*7
                 d.f!(integrator)
             end
         end
