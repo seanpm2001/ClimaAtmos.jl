@@ -22,20 +22,20 @@ toml: [toml/longrun_aquaplanet_rhoe_equil_gray_55km_nz63_0M.toml]
 output_default_diagnostics: false
 diagnostics:
   - short_name: cl
-    period: 60secs
+    period: 120secs
   - short_name: cli
-    period: 60secs
+    period: 120secs
   - short_name: clw
-    period: 60secs
+    period: 120secs
   - short_name: husra
-    period: 60secs
+    period: 120secs
   - short_name: hussn
-    period: 60secs
+    period: 120secs
   - short_name: ta
-    period: 60secs
+    period: 120secs
   - short_name: hus
-    period: 60secs
+    period: 120secs
   - short_name: hur
-    period: 60secs
+    period: 120secs
   - short_name: lmix
-    period: 60secs
+    period: 120secs
