@@ -1,7 +1,7 @@
 FLOAT_TYPE: "Float32"
-dt_save_to_disk: "10days"
+dt_save_to_disk: "1200secs"
 dt: "150secs"
-t_end: "300days"
+t_end: "12hours"
 h_elem: 16
 z_elem: 63
 dz_bottom: 30.0
@@ -17,8 +17,8 @@ surface_setup: "DefaultMoninObukhov"
 vert_diff: "true"
 rad: "clearsky"
 dt_rad: "6hours"
-job_id: "longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky"
-toml: [toml/longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky.toml]
+job_id: "longrun_aquaplanet_rhoe_equilmoist_nz63_1M_55km_rs35km_clearsky"
+toml: [toml/longrun_aquaplanet_rhoe_equilmoist_nz63_1M_55km_rs35km_clearsky.toml]
 diagnostics:
   - short_name: cl
     period: 6hours
