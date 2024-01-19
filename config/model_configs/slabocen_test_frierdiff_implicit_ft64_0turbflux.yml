@@ -13,7 +13,7 @@ dt_rad: "1hours"
 prognostic_surface: "PrognosticSurfaceTemperature"
 check_conservation: true
 bubble: false
-job_id: "aquaplanet_rhoe_equil_clearsky_tvinsol_0M_slabocean"
+job_id: "slabocen_test_frierdiff_implicit_ft64_0turbflux"
 output_default_diagnostics: false
 toml: [toml/single_column_radiative_equilibrium_clearsky_prognostic_surface_temp.toml]
 diagnostics:
