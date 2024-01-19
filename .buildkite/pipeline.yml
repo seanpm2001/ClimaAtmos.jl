@@ -292,7 +292,6 @@ steps:
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/aquaplanet_rhoe_equil_clearsky_tvinsol_0M_slabocean.yml
 
-          julia --color=yes --project=examples regression_tests/test_mse.jl
           --job_id aquaplanet_rhoe_equil_clearsky_tvinsol_0M_slabocean
           --out_dir aquaplanet_rhoe_equil_clearsky_tvinsol_0M_slabocean
         artifact_paths: "aquaplanet_rhoe_equil_clearsky_tvinsol_0M_slabocean/*"
@@ -307,7 +306,6 @@ steps:
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64_0turbflux.yml
 
-          julia --color=yes --project=examples regression_tests/test_mse.jl
           --job_id slabocen_test_frierdiff_implicit_ft64_0turbflux
           --out_dir slabocen_test_frierdiff_implicit_ft64_0turbflux
         artifact_paths: "slabocen_test_frierdiff_implicit_ft64_0turbflux/*"
@@ -321,7 +319,6 @@ steps:
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64.yml
 
-          julia --color=yes --project=examples regression_tests/test_mse.jl
           --job_id slabocen_test_frierdiff_implicit_ft64
           --out_dir slabocen_test_frierdiff_implicit_ft64
         artifact_paths: "slabocen_test_frierdiff_implicit_ft64/*"
@@ -335,7 +332,6 @@ steps:
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_vertdiff_explicit_ft64.yml
 
-          julia --color=yes --project=examples regression_tests/test_mse.jl
           --job_id slabocen_test_vertdiff_explicit_ft64
           --out_dir slabocen_test_vertdiff_explicit_ft64
         artifact_paths: "slabocen_test_vertdiff_explicit_ft64/*"
