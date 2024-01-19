@@ -1,4 +1,4 @@
-FLOAT_TYPE: "Float64"
+FLOAT_TYPE: "Float32"
 dt_save_state_to_disk: "10days"
 t_end: "10days"
 moist: "equil"

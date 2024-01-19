@@ -302,7 +302,7 @@ steps:
 
       # tests
       # slabocen_test_frierdiff_implicit_ft64_0turbflux
-      - label: "slabocen_test_frierdiff_implicit_ft64_0turbflux"
+      - label: "slabocen_test_frierdiff_implicit_ft32_0turbflux"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64_0turbflux.yml
@@ -316,7 +316,7 @@ steps:
           slurm_constraint: icelake|cascadelake|skylake|epyc
 
       # slabocen_test_frierdiff_implicit_ft64
-      - label: "slabocen_test_frierdiff_implicit_ft64"
+      - label: "slabocen_test_frierdiff_implicit_ft32"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64.yml
@@ -330,7 +330,7 @@ steps:
           slurm_constraint: icelake|cascadelake|skylake|epyc
 
       # slabocen_test_vertdiff_explicit_ft64
-      - label: "slabocen_test_vertdiff_explicit_ft64"
+      - label: "slabocen_test_vertdiff_explicit_ft32"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_vertdiff_explicit_ft64.yml
