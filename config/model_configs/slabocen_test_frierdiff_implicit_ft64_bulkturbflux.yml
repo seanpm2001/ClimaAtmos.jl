@@ -1,0 +1,21 @@
+FLOAT_TYPE: "Float32"
+dt_save_state_to_disk: "10days"
+t_end: "10days"
+moist: "equil"
+precip_model: "0M"
+surface_setup: "DefaultExchangeCoefficients"
+vert_diff: "FriersonDiffusion"
+implicit_diffusion: true
+max_newton_iters_ode: 2
+rad: "clearsky"
+idealized_insolation: false
+dt_rad: "1hours"
+prognostic_surface: "PrognosticSurfaceTemperature"
+check_conservation: true
+bubble: false
+job_id: "slabocen_test_frierdiff_implicit_ft64_bulkturbflux"
+output_default_diagnostics: false
+diagnostics:
+  - short_name: ["ts", "ta", "thetaa", "ha", "pfull", "rhoa", "ua", "va", "wa", "hfes", "hur", "hus", "clw", "cli", "evspsbl", "rsd", "rsu", "rld", "rlu"]
+    reduction_time: nothing
+    period: 10days

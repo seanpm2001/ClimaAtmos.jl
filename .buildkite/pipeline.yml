@@ -301,7 +301,7 @@ steps:
 
       # tests
       # slabocen_test_frierdiff_implicit_ft64_0turbflux
-      - label: "slabocen_test_frierdiff_implicit_ft32_0turbflux"
+      - label: "slabocen_test_frierdiff_implicit_ft64_0turbflux"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64_0turbflux.yml
@@ -314,7 +314,7 @@ steps:
           slurm_constraint: icelake|cascadelake|skylake|epyc
 
       # slabocen_test_frierdiff_implicit_ft64
-      - label: "slabocen_test_frierdiff_implicit_ft32"
+      - label: "slabocen_test_frierdiff_implicit_ft64"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64.yml
@@ -327,7 +327,7 @@ steps:
           slurm_constraint: icelake|cascadelake|skylake|epyc
 
       # slabocen_test_vertdiff_explicit_ft64
-      - label: "slabocen_test_vertdiff_explicit_ft32"
+      - label: "slabocen_test_vertdiff_explicit_ft64"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_vertdiff_explicit_ft64.yml
@@ -339,7 +339,17 @@ steps:
           slurm_mem: 20GB
           slurm_constraint: icelake|cascadelake|skylake|epyc
 
+      - label: "slabocen_test_frierdiff_implicit_ft64_bulkturbflux"
+        command: >
+          julia --color=yes --project=examples examples/hybrid/driver.jl
+          --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64_bulkturbflux.yml
 
+          --job_id slabocen_test_frierdiff_implicit_ft64_bulkturbflux
+          --out_dir slabocen_test_frierdiff_implicit_ft64_bulkturbflux
+        artifact_paths: "slabocen_test_frierdiff_implicit_ft64_bulkturbflux/*"
+        agents:
+          slurm_mem: 20GB
+          slurm_constraint: icelake|cascadelake|skylake|epyc
 
   # - group: "Sphere Examples (Topography)"
   #   steps:
