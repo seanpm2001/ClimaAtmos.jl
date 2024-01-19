@@ -316,7 +316,7 @@ steps:
           slurm_constraint: icelake|cascadelake|skylake|epyc
 
       # slabocen_test_frierdiff_implicit_ft64
-            - label: "slabocen_test_frierdiff_implicit_ft64"
+      - label: "slabocen_test_frierdiff_implicit_ft64"
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/slabocen_test_frierdiff_implicit_ft64.yml
