@@ -378,8 +378,8 @@ function atmos_surface_conditions(
 )
     # surface_conditions.lhf .= 0
     # surface_conditions.evaporation .= 0
-    surface_conditions.ρτxz .= 0
-    surface_conditions.ρτyz .= 0
+    # surface_conditions.ρτxz = 0
+    # surface_conditions.ρτyz = 0
 
 
     (; ustar, L_MO, buoy_flux, ρτxz, ρτyz, shf, lhf, evaporation) =
@@ -400,11 +400,11 @@ function atmos_surface_conditions(
         # This drops the C3 component of ρ_flux_u, need to add ρ_flux_u₃
         ρ_flux_uₕ = surface_normal ⊗ C12(
             ρτxz * CT12(
-                CT1(unit_basis_vector_data(CT1, surface_local_geometry)),
+                CT1(unit_basis_vector_data(CT1, surface_local_geometry)) * 0,
                 surface_local_geometry,
             ) +
             ρτyz * CT12(
-                CT2(unit_basis_vector_data(CT2, surface_local_geometry)),
+                CT2(unit_basis_vector_data(CT2, surface_local_geometry)) * 0,
                 surface_local_geometry,
             ),
             surface_local_geometry,
