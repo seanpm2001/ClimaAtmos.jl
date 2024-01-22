@@ -7,6 +7,7 @@ if !(@isdefined config)
 end
 simulation = CA.get_simulation(config)
 (; integrator) = simulation
+
 sol_res = CA.solve_atmos!(simulation)
 
 (; atmos, params) = integrator.p
@@ -148,6 +149,9 @@ if config.parsed_args["check_conservation"]
         energy_surface_change = -p.net_energy_flux_sfc[][]
     end
     energy_radiation_input = -p.net_energy_flux_toa[][]
+
+    @info (energy_atmos_change + energy_surface_change) / energy_total - energy_radiation_input / energy_total
+
     @test (energy_atmos_change + energy_surface_change) / energy_total ≈
           energy_radiation_input / energy_total atol = 5 * sqrt(eps(FT))
 

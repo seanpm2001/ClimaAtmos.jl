@@ -376,8 +376,8 @@ function atmos_surface_conditions(
     atmos,
     params,
 )
-    surface_conditions.lhf .= 0
-    surface_conditions.evaporation .= 0
+    # surface_conditions.lhf .*= 0
+    # surface_conditions.evaporation .*= 0
 
     (; ustar, L_MO, buoy_flux, ρτxz, ρτyz, shf, lhf, evaporation) =
         surface_conditions
@@ -385,10 +385,10 @@ function atmos_surface_conditions(
     thermo_params = CAP.thermodynamics_params(params)
 
     surface_normal = C3(unit_basis_vector_data(C3, surface_local_geometry))
-    energy_flux = (; ρ_flux_h_tot = (shf + lhf) * surface_normal)
+    energy_flux = (; ρ_flux_h_tot = (shf + lhf * 0 ) * surface_normal)
     moisture_flux =
         atmos.moisture_model isa DryModel ? (;) :
-        (; ρ_flux_q_tot = evaporation * surface_normal)
+        (; ρ_flux_q_tot = evaporation * surface_normal * 0)
     return (;
         ts,
         ustar,
