@@ -376,8 +376,11 @@ function atmos_surface_conditions(
     atmos,
     params,
 )
-    surface_conditions.lhf .= 0
-    surface_conditions.evaporation .= 0
+    # surface_conditions.lhf .= 0
+    # surface_conditions.evaporation .= 0
+    surface_conditions.ρτxz .= 0
+    surface_conditions.ρτyz .= 0
+
 
     (; ustar, L_MO, buoy_flux, ρτxz, ρτyz, shf, lhf, evaporation) =
         surface_conditions
