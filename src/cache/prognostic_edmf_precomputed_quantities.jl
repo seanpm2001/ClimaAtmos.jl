@@ -95,7 +95,7 @@ function set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ�
             p.precomputed.sfc_conditions
         buoyancy_flux_val = Fields.field_values(buoyancy_flux)
         ρ_flux_h_tot_val = Fields.field_values(ρ_flux_h_tot)
-        ρ_flux_q_tot_val = Fields.field_values(ρ_flux_q_tot)
+        ρ_flux_q_tot_val = Fields.field_values(ρ_flux_q_tot) .* 0
         ustar_val = Fields.field_values(ustar)
         obukhov_length_val = Fields.field_values(obukhov_length)
         sfc_local_geometry_val = Fields.field_values(
