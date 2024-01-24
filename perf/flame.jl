@@ -37,18 +37,18 @@ ProfileCanvas.html_file(joinpath(output_dir, "flame.html"), results)
 #####
 
 allocs_limit = Dict()
-allocs_limit["flame_perf_target"] = 152_672
-allocs_limit["flame_perf_target_tracers"] = 184_928
+allocs_limit["flame_perf_target"] = 201560
+allocs_limit["flame_perf_target_tracers"] = 234032
 allocs_limit["flame_perf_target_edmfx"] = 7_005_552
 allocs_limit["flame_perf_diagnostics"] = 26_645_600
-allocs_limit["flame_perf_target_diagnostic_edmfx"] = 1_323_136
+allocs_limit["flame_perf_target_diagnostic_edmfx"] = 1_415_848
 allocs_limit["flame_sphere_baroclinic_wave_rhoe_equilmoist_expvdiff"] =
     4_018_252_656
+allocs_limit["flame_perf_target_frierson"] = 8_030_551_088
 allocs_limit["flame_perf_target_threaded"] = 1_276_864
 allocs_limit["flame_perf_target_callbacks"] = 386_584
-allocs_limit["flame_perf_gw"] = 3_240_593_184
-allocs_limit["flame_perf_target_prognostic_edmfx_aquaplanet"] = 1_274_208
-
+allocs_limit["flame_perf_gw"] = 3_268_961_856
+allocs_limit["flame_perf_target_prognostic_edmfx_aquaplanet"] = 1_330_400
 # Ideally, we would like to track all the allocations, but this becomes too
 # expensive there is too many of them. Here, we set the default sample rate to
 # 1, but lower it to a smaller value when we expect the job to produce lots of
@@ -60,6 +60,15 @@ max_allocs_for_full_sampling = 10e6
 # max_allocs_for_full_sampling, which leads to a sampling rate of 1
 expected_allocs = get(allocs_limit, job_id, max_allocs_for_full_sampling)
 sampling_rate = expected_allocs <= max_allocs_for_full_sampling ? 1 : 0.01
+
+# Some jobs are problematic (the ones with Krylov mostly)
+# https://github.com/pfitzseb/ProfileCanvas.jl/issues/34
+if job_id in (
+    "flame_sphere_baroclinic_wave_rhoe_equilmoist_expvdiff",
+    "flame_perf_target_frierson",
+)
+    sampling_rate = 0.001
+end
 
 # use new allocation profiler
 @info "collecting allocations with sampling rate $sampling_rate"

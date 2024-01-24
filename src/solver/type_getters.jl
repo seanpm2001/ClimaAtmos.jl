@@ -1,6 +1,5 @@
 using Dates: DateTime, @dateformat_str
 using Dierckx
-using ImageFiltering
 using Interpolations
 import NCDatasets
 import ClimaCore: InputOutput, Meshes, Spaces, Quadratures
@@ -17,6 +16,7 @@ function get_atmos(config::AtmosConfig, params)
     FT = eltype(config)
     moisture_model = get_moisture_model(parsed_args)
     precip_model = get_precipitation_model(parsed_args)
+    cloud_model = get_cloud_model(parsed_args)
     radiation_mode = get_radiation_mode(parsed_args, FT)
     forcing_type = get_forcing_type(parsed_args)
 
@@ -58,6 +58,7 @@ function get_atmos(config::AtmosConfig, params)
         edmfx_sgs_diffusive_flux,
         edmfx_nh_pressure,
         precip_model,
+        cloud_model,
         forcing_type,
         turbconv_model = get_turbconv_model(FT, parsed_args, turbconv_params),
         non_orographic_gravity_wave = get_non_orographic_gravity_wave_model(
@@ -92,7 +93,6 @@ function get_numerics(parsed_args)
     energy_upwinding = Val(Symbol(parsed_args["energy_upwinding"]))
     tracer_upwinding = Val(Symbol(parsed_args["tracer_upwinding"]))
     precip_upwinding = Val(Symbol(parsed_args["precip_upwinding"]))
-    density_upwinding = Val(Symbol(parsed_args["density_upwinding"]))
     edmfx_upwinding = Val(Symbol(parsed_args["edmfx_upwinding"]))
     edmfx_sgsflux_upwinding =
         Val(Symbol(parsed_args["edmfx_sgsflux_upwinding"]))
@@ -104,7 +104,6 @@ function get_numerics(parsed_args)
         energy_upwinding,
         tracer_upwinding,
         precip_upwinding,
-        density_upwinding,
         edmfx_upwinding,
         edmfx_sgsflux_upwinding,
         limiter,
@@ -143,7 +142,7 @@ function get_spaces(parsed_args, params, comms_ctx)
             lat = Array(data["latitude"])
             # Apply Smoothing
             smooth_degree = Int(parsed_args["smoothing_order"])
-            esmth = imfilter(zlevels, Kernel.gaussian(smooth_degree))
+            esmth = CA.gaussian_smooth(zlevels, smooth_degree)
             linear_interpolation(
                 (lon, lat),
                 esmth,
@@ -379,12 +378,9 @@ function jac_kwargs(ode_algo, Y, atmos, parsed_args)
     if is_implicit(ode_algo)
         A = ImplicitEquationJacobian(
             Y,
-            atmos,
-            atmos.diff_mode == Implicit() ? UseDiffusionDerivative() :
-            IgnoreDiffusionDerivative(),
-            IgnoreEnthalpyDerivative(),
-            use_transform(ode_algo),
-            parsed_args["approximate_linear_solve_iters"],
+            atmos;
+            approximate_solve_iters = parsed_args["approximate_linear_solve_iters"],
+            transform_flag = use_transform(ode_algo),
         )
         if use_transform(ode_algo)
             return (; jac_prototype = A, Wfact_t = Wfact!)
@@ -465,6 +461,14 @@ function get_callbacks(parsed_args, sim_info, atmos, params, comms_ctx)
             ),
         )
     end
+    callbacks = (
+        callbacks...,
+        call_every_n_steps(
+            (integrator) -> maybe_graceful_exit(integrator);
+            skip_first = true,
+        ),
+    )
+
     dt_save_state_to_disk =
         time_to_seconds(parsed_args["dt_save_state_to_disk"])
     if !(dt_save_state_to_disk == Inf)
@@ -552,7 +556,7 @@ function get_sim_info(config::AtmosConfig)
     return sim
 end
 
-function get_diagnostics(parsed_args, atmos_model, hypsography)
+function get_diagnostics(parsed_args, atmos_model, spaces)
 
     # We either get the diagnostics section in the YAML file, or we return an empty list
     # (which will result in an empty list being created by the map below)
@@ -577,8 +581,9 @@ function get_diagnostics(parsed_args, atmos_model, hypsography)
 
     hdf5_writer = CAD.HDF5Writer()
     netcdf_writer = CAD.NetCDFWriter(;
-        hypsography,
+        spaces,
         interpolate_z_over_msl = parsed_args["netcdf_interpolate_z_over_msl"],
+        disable_vertical_interpolation = parsed_args["netcdf_output_at_levels"],
     )
     writers = (hdf5_writer, netcdf_writer)
 
@@ -591,61 +596,76 @@ function get_diagnostics(parsed_args, atmos_model, hypsography)
         "netcdf" => netcdf_writer,
     )
 
-    diagnostics = map(yaml_diagnostics) do yaml_diag
-        # Return "nothing" if "reduction_time" is not in the YAML block
-        #
-        # We also normalize everything to lowercase, so that can accept "max" but
-        # also "Max"
-        reduction_time_yaml =
-            lowercase(get(yaml_diag, "reduction_time", "nothing"))
-
-        if !haskey(ALLOWED_REDUCTIONS, reduction_time_yaml)
-            error("reduction $reduction_time_yaml not implemented")
-        else
-            reduction_time_func, pre_output_hook! =
-                ALLOWED_REDUCTIONS[reduction_time_yaml]
-        end
-
-        writer_ext = lowercase(get(yaml_diag, "writer", "nothing"))
-
-        if !haskey(ALLOWED_WRITERS, writer_ext)
-            error("writer $writer_ext not implemented")
-        else
-            writer = ALLOWED_WRITERS[writer_ext]
-        end
-
+    diagnostics_ragged = map(yaml_diagnostics) do yaml_diag
+        short_names = yaml_diag["short_name"]
         output_name = get(yaml_diag, "output_name", nothing)
 
-        haskey(yaml_diag, "period") ||
-            error("period keyword required for diagnostics")
+        if short_names isa Vector
+            isnothing(output_name) || error(
+                "Diagnostics: cannot have multiple short_names while specifying output_name",
+            )
+        else
+            short_names = [short_names]
+        end
 
-        period_seconds = time_to_seconds(yaml_diag["period"])
+        ret_value = map(short_names) do short_name
+            # Return "nothing" if "reduction_time" is not in the YAML block
+            #
+            # We also normalize everything to lowercase, so that can accept "max" but
+            # also "Max"
+            reduction_time_yaml =
+                lowercase(get(yaml_diag, "reduction_time", "nothing"))
 
-        if isnothing(output_name)
-            output_name = CAD.descriptive_short_name(
-                CAD.get_diagnostic_variable(yaml_diag["short_name"]),
-                period_seconds,
-                reduction_time_func,
-                pre_output_hook!,
+            if !haskey(ALLOWED_REDUCTIONS, reduction_time_yaml)
+                error("reduction $reduction_time_yaml not implemented")
+            else
+                reduction_time_func, pre_output_hook! =
+                    ALLOWED_REDUCTIONS[reduction_time_yaml]
+            end
+
+            writer_ext = lowercase(get(yaml_diag, "writer", "nothing"))
+
+            if !haskey(ALLOWED_WRITERS, writer_ext)
+                error("writer $writer_ext not implemented")
+            else
+                writer = ALLOWED_WRITERS[writer_ext]
+            end
+
+            haskey(yaml_diag, "period") ||
+                error("period keyword required for diagnostics")
+
+            period_seconds = time_to_seconds(yaml_diag["period"])
+
+            if isnothing(output_name)
+                output_short_name = CAD.descriptive_short_name(
+                    CAD.get_diagnostic_variable(short_name),
+                    period_seconds,
+                    reduction_time_func,
+                    pre_output_hook!,
+                )
+            end
+
+            if isnothing(reduction_time_func)
+                compute_every = period_seconds
+            else
+                compute_every = :timestep
+            end
+
+            return CAD.ScheduledDiagnosticTime(
+                variable = CAD.get_diagnostic_variable(short_name),
+                output_every = period_seconds,
+                compute_every = compute_every,
+                reduction_time_func = reduction_time_func,
+                pre_output_hook! = pre_output_hook!,
+                output_writer = writer,
+                output_short_name = output_short_name,
             )
         end
-
-        if isnothing(reduction_time_func)
-            compute_every = period_seconds
-        else
-            compute_every = :timestep
-        end
-
-        return CAD.ScheduledDiagnosticTime(
-            variable = CAD.get_diagnostic_variable(yaml_diag["short_name"]),
-            output_every = period_seconds,
-            compute_every = compute_every,
-            reduction_time_func = reduction_time_func,
-            pre_output_hook! = pre_output_hook!,
-            output_writer = writer,
-            output_short_name = output_name,
-        )
+        return ret_value
     end
+
+    # Flatten the array of arrays of diagnostics
+    diagnostics = vcat(diagnostics_ragged...)
 
     if parsed_args["output_default_diagnostics"]
         return [
@@ -744,10 +764,20 @@ end
 
 function get_simulation(config::AtmosConfig)
     params = create_parameter_set(config)
-
     atmos = get_atmos(config, params)
-    numerics = get_numerics(config.parsed_args)
+
     sim_info = get_sim_info(config)
+    if sim_info.restart
+        s = @timed_str begin
+            (Y, t_start) = get_state_restart(config.comms_ctx)
+            spaces = get_spaces_restart(Y)
+            @warn "Progress estimates do not support restarted simulations"
+        end
+        @info "Allocating Y: $s"
+    else
+        spaces = get_spaces(config.parsed_args, params, config.comms_ctx)
+    end
+
     if config.parsed_args["log_params"]
         filepath = joinpath(sim_info.output_dir, "$(job_id)_parameters.toml")
         CP.log_parameter_information(config.toml_dict, filepath)
@@ -755,13 +785,8 @@ function get_simulation(config::AtmosConfig)
     initial_condition = get_initial_condition(config.parsed_args)
     surface_setup = get_surface_setup(config.parsed_args)
 
-    s = @timed_str begin
-        if sim_info.restart
-            (Y, t_start) = get_state_restart(config.comms_ctx)
-            spaces = get_spaces_restart(Y)
-            @warn "Progress estimates do not support restarted simulations"
-        else
-            spaces = get_spaces(config.parsed_args, params, config.comms_ctx)
+    if !sim_info.restart
+        s = @timed_str begin
             Y = ICs.atmos_state(
                 initial_condition(params),
                 atmos,
@@ -770,19 +795,11 @@ function get_simulation(config::AtmosConfig)
             )
             t_start = Spaces.undertype(axes(Y.c))(0)
         end
+        @info "Allocating Y: $s"
     end
-    @info "Allocating Y: $s"
 
     s = @timed_str begin
-        p = build_cache(
-            Y,
-            atmos,
-            params,
-            surface_setup,
-            sim_info.dt,
-            sim_info.t_end,
-            sim_info.start_date,
-        )
+        p = build_cache(Y, atmos, params, surface_setup, sim_info)
     end
     @info "Allocating cache (p): $s"
 
@@ -809,13 +826,22 @@ function get_simulation(config::AtmosConfig)
 
     # Initialize diagnostics
     s = @timed_str begin
-        diagnostics, writers = get_diagnostics(
-            config.parsed_args,
-            atmos,
-            spaces.center_space.hypsography,
-        )
+        diagnostics, writers =
+            get_diagnostics(config.parsed_args, atmos, spaces)
     end
     @info "initializing diagnostics: $s"
+
+    length(diagnostics) > 0 && @info "Computing diagnostics:"
+
+    for writer in writers
+        writer_str = nameof(typeof(writer))
+        diags_with_writer =
+            filter((x) -> getproperty(x, :output_writer) == writer, diagnostics)
+        diags_outputs = [
+            getproperty(diag, :output_short_name) for diag in diags_with_writer
+        ]
+        @info "$writer_str: $diags_outputs"
+    end
 
     # First, we convert all the ScheduledDiagnosticTime into ScheduledDiagnosticIteration,
     # ensuring that there is consistency in the timestep and the periods and translating
@@ -829,7 +855,6 @@ function get_simulation(config::AtmosConfig)
     diagnostic_accumulators = Dict()
     diagnostic_counters = Dict()
 
-    # NOTE: The diagnostics_callbacks are not called at the initial timestep
     s = @timed_str begin
         diagnostics_functions = CAD.get_callbacks_from_diagnostics(
             diagnostics_iterations,

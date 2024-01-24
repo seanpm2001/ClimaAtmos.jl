@@ -214,7 +214,7 @@ function default_diagnostics(
     ::T;
     output_writer,
 ) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
-    moist_diagnostics = ["hur", "hus", "clw", "cli", "hussfc", "evspsbl"]
+    moist_diagnostics = ["hur", "hus", "cl", "clw", "cli", "hussfc", "evspsbl"]
 
     return [daily_averages(moist_diagnostics...; output_writer)...]
 end
@@ -232,9 +232,9 @@ end
 # Radiation mode #
 ##################
 function default_diagnostics(::RRTMGPI.AbstractRRTMGPMode; output_writer)
-    allsky_diagnostics = ["rsd", "rsu", "rld", "rlu"]
+    rad_diagnostics = ["rsd", "rsu", "rld", "rlu"]
 
-    return [daily_averages(allsky_diagnostics...; output_writer)...]
+    return [daily_averages(rad_diagnostics...; output_writer)...]
 end
 
 
@@ -242,9 +242,10 @@ function default_diagnostics(
     ::RRTMGPI.AllSkyRadiationWithClearSkyDiagnostics;
     output_writer,
 )
-    clear_diagnostics = ["rsdcs", "rsucs", "rldcs", "rlucs"]
+    rad_diagnostics =
+        ["rsd", "rsu", "rld", "rlu", "rsdcs", "rsucs", "rldcs", "rlucs"]
 
-    return [daily_averages(clear_diagnostics...; output_writer)...]
+    return [daily_averages(rad_diagnostics...; output_writer)...]
 end
 
 ##################
@@ -263,6 +264,7 @@ function default_diagnostics(::PrognosticEDMFX; output_writer)
         "wa",
         "hur",
         "hus",
+        "cl",
         "clw",
         "cli",
         "hussfc",
@@ -345,6 +347,7 @@ function default_diagnostics(::DiagnosticEDMFX; output_writer)
         "wa",
         "hur",
         "hus",
+        "cl",
         "clw",
         "cli",
         "hussfc",

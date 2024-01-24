@@ -36,30 +36,31 @@ end
 
 function get_hyperdiffusion_model(parsed_args, ::Type{FT}) where {FT}
     hyperdiff_name = parsed_args["hyperdiff"]
-    κ₄_vorticity = FT(parsed_args["kappa_4_vorticity"])
-    κ₄_tracer = FT(parsed_args["kappa_4_tracer"])
-    divergence_damping_factor = FT(parsed_args["divergence_damping_factor"])
-    return if hyperdiff_name in ("ClimaHyperdiffusion", "true", true)
-        ClimaHyperdiffusion(;
-            κ₄_vorticity,
-            κ₄_tracer,
+    if hyperdiff_name in ("ClimaHyperdiffusion", "true", true)
+        ν₄_vorticity_coeff =
+            FT(parsed_args["vorticity_hyperdiffusion_coefficient"])
+        ν₄_scalar_coeff = FT(parsed_args["scalar_hyperdiffusion_coefficient"])
+        divergence_damping_factor = FT(parsed_args["divergence_damping_factor"])
+        return ClimaHyperdiffusion(;
+            ν₄_vorticity_coeff,
+            ν₄_scalar_coeff,
             divergence_damping_factor,
         )
     elseif hyperdiff_name in ("CAM_SE",)
         # To match hyperviscosity coefficients in:
         #    https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2017MS001257
         #    for equation A18 and A19
-        Ne = parsed_args["h_elem"]
-        κ₄_vorticity = FT(0.15 * (30 / Ne * 1.1 * 10^5)^3) # ν_vort
-        κ₄_tracer = FT(0.75 * (30 / Ne * 1.1 * 10^5)^3) # ν_q
+        # Need to scale by (1.1e5 / (sqrt(4 * pi / 6) * 6.371e6 / (3*30)) )^3  ≈ 1.238
+        ν₄_vorticity_coeff = FT(0.150 * 1.238)
+        ν₄_scalar_coeff = FT(0.751 * 1.238)
         divergence_damping_factor = FT(5)
-        ClimaHyperdiffusion(;
-            κ₄_vorticity,
-            κ₄_tracer,
+        return ClimaHyperdiffusion(;
+            ν₄_vorticity_coeff,
+            ν₄_scalar_coeff,
             divergence_damping_factor,
         )
     elseif hyperdiff_name in ("none", "false", false)
-        nothing
+        return nothing
     else
         error("Uncaught hyperdiffusion model type.")
     end
@@ -76,6 +77,8 @@ function get_vertical_diffusion_model(
         nothing
     elseif vert_diff_name in ("true", true, "VerticalDiffusion")
         VerticalDiffusion{diffuse_momentum, FT}(; C_E = params.C_E)
+    elseif vert_diff_name in ("FriersonDiffusion",)
+        FriersonDiffusion{diffuse_momentum, FT}()
     else
         error("Uncaught diffusion model `$vert_diff_name`.")
     end
@@ -236,6 +239,17 @@ function get_precipitation_model(parsed_args)
         Microphysics1Moment()
     else
         error("Invalid precip_model $(precip_model)")
+    end
+end
+
+function get_cloud_model(parsed_args)
+    cloud_model = parsed_args["cloud_model"]
+    return if cloud_model == "grid_scale"
+        GridScaleCloud()
+    elseif cloud_model == "quadrature"
+        QuadratureCloud()
+    else
+        error("Invalid cloud_model $(cloud_model)")
     end
 end
 

@@ -1,7 +1,16 @@
 import CairoMakie
+import CairoMakie.Makie
 import ClimaAnalysis
 import ClimaAnalysis: Visualize as viz
 import ClimaAnalysis: SimDir, slice_time, slice
+import ClimaAnalysis.Utils: kwargs as ca_kwargs
+
+import ClimaCoreSpectra: power_spectrum_2d
+
+using Poppler_jll: pdfunite
+import Base.Filesystem
+
+const days = 86400
 
 # Return the last common directory across several files
 function common_dirname(files::Vector{T}) where {T <: AbstractString}
@@ -17,62 +26,6 @@ function common_dirname(files::Vector{T}) where {T <: AbstractString}
     return joinpath(split_files[1][1:last_common_dir]...)
 end
 
-# Based off https://github.com/scheidan/PDFmerger.jl/blob/main/src/PDFmerger.jl
-# Licensed under MIT license
-import Base.Filesystem
-using Poppler_jll: pdfunite, pdfinfo, pdfseparate
-function merge_pdfs(
-    files::Vector{T},
-    destination::AbstractString = joinpath(common_dirname(files), "merged.pdf");
-    cleanup::Bool = false,
-) where {T <: AbstractString}
-    # Filter files to be only files that exist
-    files = filter(Filesystem.isfile, files)
-
-    if destination in files
-        # rename existing file
-        Filesystem.mv(destination, destination * "_x_")
-        files[files .== destination] .= destination * "_x_"
-    end
-
-    # Merge large number of files iteratively, because there
-    # is a (OS dependent) limit how many files 'pdfunit' can handle at once.
-    # See: https://gitlab.freedesktop.org/poppler/poppler/-/issues/334
-    filemax = 200
-
-    k = 1
-    for files_part in Base.Iterators.partition(files, filemax)
-        if k == 1
-            outfile_tmp2 = "_temp_destination_$k"
-
-            pdfunite() do unite
-                run(`$unite $files_part $outfile_tmp2`)
-            end
-        else
-            outfile_tmp1 = "_temp_destination_$(k-1)"
-            outfile_tmp2 = "_temp_destination_$k"
-
-            pdfunite() do unite
-                run(`$unite $outfile_tmp1 $files_part $outfile_tmp2`)
-            end
-        end
-        k += 1
-    end
-
-    # rename last file
-    Filesystem.mv("_temp_destination_$(k-1)", destination, force = true)
-
-    # remove temp files
-    Filesystem.rm(destination * "_x_", force = true)
-    Filesystem.rm.("_temp_destination_$(i)" for i in 1:(k - 2); force = true)
-    if cleanup
-        Filesystem.rm.(files, force = true)
-    end
-
-    destination
-end
-
-
 function make_plots(sim, simulation_path)
     @warn "No plot found for $sim"
 end
@@ -84,10 +37,27 @@ const LAST_SNAP = LARGE_NUM
 const FIRST_SNAP = -LARGE_NUM
 const BOTTOM_LVL = -LARGE_NUM
 const TOP_LVL = LARGE_NUM
+const H_EARTH = 7000
 # Shorthand for logscale on y axis and to move the dimension to the y axis on line plots
 # (because they are columns)
-const YLOGSCALE =
-    Dict(:axis => ClimaAnalysis.Utils.kwargs(yscale = log10, dim_on_y = true))
+Plvl(y) = -H_EARTH * log(y)
+Makie.inverse_transform(::typeof(Plvl)) = (y) -> exp(-y / H_EARTH)
+Makie.defaultlimits(::typeof(Plvl)) = (0.0000001, 1)
+Makie.defined_interval(::typeof(Plvl)) = Makie.OpenInterval(0.0, Inf)
+function Makie.get_tickvalues(yticks::Int, yscale::typeof(Plvl), ymin, ymax)
+    exp_func = Makie.inverse_transform(yscale)
+    exp_z_min, exp_z_max = exp_func(ymin), exp_func(ymax)
+    return Plvl.(range(exp_z_min, exp_z_max, yticks))
+end
+
+YLOGSCALE = Dict(
+    :axis => ca_kwargs(
+        dim_on_y = true,
+        yscale = Plvl,
+        yticks = 7,
+        ytickformat = "{:.3e}",
+    ),
+)
 
 function make_plots_generic(
     output_path,
@@ -132,12 +102,79 @@ function make_plots_generic(
         end
     end
 
-    merge_pdfs(
-        summary_files,
-        joinpath(output_path, "$output_name.pdf"),
-        cleanup = true,
-    )
+    output_file = joinpath(output_path, "$(output_name).pdf")
 
+    pdfunite() do unite
+        run(Cmd([unite, summary_files..., output_file]))
+    end
+
+    # Cleanup
+    Filesystem.rm.(summary_files, force = true)
+end
+
+"""
+    make_spectra_generic
+
+Use ClimaCoreSpectra to compute and plot spectra for the given `vars`.
+
+Extra arguments are passed to `ClimaAnalysis.slice`
+
+"""
+function make_spectra_generic(
+    output_path,
+    vars,
+    args...;
+    slicing_kwargs = ca_kwargs(),
+    output_name = "spectra",
+    kwargs...,
+)
+    sliced_vars = [slice(var; slicing_kwargs...) for var in vars]
+
+    any([length(var.dims) != 2 for var in sliced_vars]) && error("Only 2D spectra are supported")
+
+    # Prepare ClimaAnalysis.OutputVar
+    spectra =
+        map(sliced_vars) do var
+            # power_spectrum_2d seems to work only when the two dimensions have precisely one
+            # twice as many points as the other
+            dim1, dim2 = var.index2dim[1:2]
+
+            length(var.dims[dim1]) == 2 * length(var.dims[dim2]) ||
+                error("Cannot take a this spectrum")
+
+            FT = eltype(var.data)
+            mass_weight = ones(FT, 1)
+            spectrum_data, wave_numbers, spherical, mesh_info =
+                power_spectrum_2d(FT, var.data, mass_weight)
+
+            # From ClimaCoreSpectra/examples
+            X = collect(0:1:(mesh_info.num_fourier))
+            Y = collect(0:1:(mesh_info.num_spherical))
+            Z = spectrum_data[:, :, 1]
+
+            dims = Dict("num_fourier" => X, "num_spherical" => Y)
+            dim_attributes = Dict(
+                "num_fourier" => Dict("units" => ""),
+                "num_spherical" => Dict("units" => ""),
+            )
+
+            attributes = Dict(
+                "short_name" => "log fft_" * var.attributes["short_name"],
+                "long_name" => "Spectrum of " * var.attributes["long_name"],
+                "units" => "",
+            )
+            path = nothing
+
+            return ClimaAnalysis.OutputVar(
+                attributes,
+                dims,
+                dim_attributes,
+                log.(Z),
+                path,
+            )
+        end |> collect
+
+    make_plots_generic(output_path, spectra, args...; output_name, kwargs...)
 end
 
 ColumnPlots = Union{
@@ -180,47 +217,48 @@ end
 function make_plots(::Val{:single_column_precipitation_test}, simulation_path)
     simdir = SimDir(simulation_path)
     short_names = ["hus", "clw", "cli", "husra", "hussn", "ta"]
-    hus, clw, cli, husra, hussn, ta = [
+    vars = [
         slice(get(simdir; short_name), x = 0.0, y = 0.0) for
         short_name in short_names
     ]
 
-    z_units = hus.dim_attributes["z"]["units"]
-    z = hus.dims["z"]
-
-    hus_units = hus.attributes["units"]
-    clw_units = clw.attributes["units"]
-    cli_units = cli.attributes["units"]
-    husra_units = husra.attributes["units"]
-    hussn_units = hussn.attributes["units"]
-    ta_units = ta.attributes["units"]
-
+    # We first prepare the axes with all the nice labels with ClimaAnalysis, then we use
+    # CairoMakie to add the additional lines.
     fig = CairoMakie.Figure(resolution = (1200, 600))
-    ax1 = CairoMakie.Axis(
-        fig[1, 1],
-        ylabel = "z [$z_units]",
-        xlabel = "hus [$hus_units]",
-    )
-    ax4 = CairoMakie.Axis(
-        fig[2, 1],
-        ylabel = "z [$z_units]",
-        xlabel = "ta [$ta_units]",
-    )
-    ax2 = CairoMakie.Axis(fig[1, 2], xlabel = "q_liq [$clw_units]")
-    ax3 = CairoMakie.Axis(fig[1, 3], xlabel = "q_ice [$cli_units]")
-    ax5 = CairoMakie.Axis(fig[2, 2], xlabel = "q_rai [$husra_units]")
-    ax6 = CairoMakie.Axis(fig[2, 3], xlabel = "q_sno [$hussn_units]")
 
-    col = Dict(0 => :navy, 500 => :blue2, 1000 => :royalblue, 1500 => :skyblue1)
+    p_loc = [1, 1]
+
+    axes = map(vars) do var
+        viz.plot!(
+            fig,
+            var;
+            time = 0.0,
+            p_loc,
+            more_kwargs = Dict(
+                :plot => ca_kwargs(color = :navy),
+                :axis => ca_kwargs(dim_on_y = true, title = ""),
+            ),
+        )
+
+        # Make a grid of plots
+        p_loc[2] += 1
+        p_loc[2] > 3 && (p_loc[1] += 1; p_loc[2] = 1)
+        return CairoMakie.current_axis()
+    end
+
+    col = Dict(500 => :blue2, 1000 => :royalblue, 1500 => :skyblue1)
 
     for (time, color) in col
-        CairoMakie.lines!(ax1, slice(hus; time).data, z, color = color)
-        CairoMakie.lines!(ax2, slice(clw; time).data, z, color = color)
-        CairoMakie.lines!(ax3, slice(cli; time).data, z, color = color)
-        CairoMakie.lines!(ax4, slice(ta; time).data, z, color = color)
-        CairoMakie.lines!(ax5, slice(husra; time).data, z, color = color)
-        CairoMakie.lines!(ax6, slice(hussn; time).data, z, color = color)
+        for (i, var) in enumerate(vars)
+            CairoMakie.lines!(
+                axes[i],
+                slice(var; time).data,
+                var.dims["z"],
+                color = color,
+            )
+        end
     end
+
     file_path = joinpath(simulation_path, "summary.pdf")
     CairoMakie.save(file_path, fig)
 end
@@ -277,17 +315,35 @@ function make_plots(
     )
 end
 
-DryBaroWavePlots = Union{
-    Val{:sphere_baroclinic_wave_rhoe},
-    Val{:sphere_baroclinic_wave_rhoe_topography_dcmip_rs},
-    Val{:longrun_bw_rhoe_highres},
-}
+DryBaroWavePlots = Union{Val{:sphere_baroclinic_wave_rhoe}}
 
 function make_plots(::DryBaroWavePlots, simulation_path)
     simdir = SimDir(simulation_path)
     short_names = ["pfull", "va", "wa", "rv"]
     vars = [get(simdir; short_name) for short_name in short_names]
-    make_plots_generic(simulation_path, vars, z = 3000, time = LAST_SNAP)
+    make_plots_generic(simulation_path, vars, z = 1500, time = LAST_SNAP)
+end
+
+function make_plots(
+    ::Val{:sphere_baroclinic_wave_rhoe_topography_dcmip_rs},
+    simulation_path,
+)
+    simdir = SimDir(simulation_path)
+    short_names = ["pfull", "va", "wa", "rv"]
+    vars = [get(simdir; short_name) for short_name in short_names]
+    make_plots_generic(
+        simulation_path,
+        vars,
+        z_reference = 1500,
+        time = LAST_SNAP,
+    )
+end
+
+function make_plots(::Val{:longrun_bw_rhoe_highres}, simulation_path)
+    simdir = SimDir(simulation_path)
+    short_names = ["pfull", "va", "wa", "rv"]
+    vars = [get(simdir; short_name) for short_name in short_names]
+    make_plots_generic(simulation_path, vars, z = 1500, time = 10days)
 end
 
 function make_plots(
@@ -297,33 +353,46 @@ function make_plots(
     simdir = SimDir(simulation_path)
     short_names = ["pfull", "va", "wa", "rv", "hus"]
     vars = [get(simdir; short_name) for short_name in short_names]
-    make_plots_generic(simulation_path, vars, z = 3000, time = LAST_SNAP)
+    make_plots_generic(simulation_path, vars, z = 1500, time = LAST_SNAP)
 end
 
-MoistBaroWavePlots = Union{
-    Val{:sphere_baroclinic_wave_rhoe_equilmoist_expvdiff},
-    Val{:sphere_baroclinic_wave_rhoe_equilmoist_impvdiff},
+function make_plots(
+    ::Val{:sphere_baroclinic_wave_rhoe_equilmoist_expvdiff},
+    simulation_path,
+)
+    simdir = SimDir(simulation_path)
+    short_names = ["ta", "hus"]
+    vars = [
+        get(simdir; short_name) |> ClimaAnalysis.average_lon for
+        short_name in short_names
+    ]
+    make_plots_generic(
+        simulation_path,
+        vars,
+        time = LAST_SNAP,
+        more_kwargs = YLOGSCALE,
+    )
+end
+
+LongMoistBaroWavePlots = Union{
+    Val{:longrun_bw_rhoe_equil_highres},
     Val{:longrun_zalesak_tracer_energy_bw_rhoe_equil_highres},
     Val{:longrun_ssp_bw_rhoe_equil_highres},
     Val{:longrun_bw_rhoe_equil_highres_topography_earth},
-    Val{:longrun_bw_rhoe_equil_highres},
 }
 
-function make_plots(::MoistBaroWavePlots, simulation_path)
+function make_plots(::LongMoistBaroWavePlots, simulation_path)
     simdir = SimDir(simulation_path)
-
-    var1 = get(simdir; short_name = "ta")
-
-    var1sliced = slice(var1, z = BOTTOM_LVL)
-    var2 = get(simdir; short_name = "hus") |> ClimaAnalysis.average_lon
-
-    make_plots_generic(simulation_path, [var1sliced, var2], time = LAST_SNAP)
+    short_names = ["pfull", "va", "wa", "rv", "hus"]
+    vars = [get(simdir; short_name) for short_name in short_names]
+    make_plots_generic(simulation_path, vars, z = 1500, time = 10days)
 end
 
 DryHeldSuarezPlots = Union{
     Val{:sphere_held_suarez_rhoe_hightop},
     Val{:longrun_sphere_hydrostatic_balance_rhoe},
-    Val{:longrun_hs_rhoe_dry_nz63_55km_rs35km},
+    Val{:longrun_hs_rhoe_dry_55km_nz63},
+    Val{:sphere_held_suarez_rhoe_topography_dcmip},
 }
 
 function make_plots(::DryHeldSuarezPlots, simulation_path)
@@ -342,8 +411,10 @@ function make_plots(::DryHeldSuarezPlots, simulation_path)
 end
 
 MoistHeldSuarezPlots = Union{
+    Val{:sphere_baroclinic_wave_rhoe_equilmoist_impvdiff},
     Val{:sphere_held_suarez_rhoe_equilmoist_hightop_sponge},
     Val{:sphere_held_suarez_rhoe_equilmoist_topography_dcmip},
+    Val{:longrun_hs_rhoe_equil_55km_nz63_0M},
     Val{:longrun_hs_rhoe_equil_highres_topography_earth},
 }
 
@@ -374,56 +445,13 @@ function make_plots(::MoistHeldSuarezPlots, simulation_path)
 end
 
 function make_plots(
-    ::Val{:sphere_held_suarez_rhoe_topography_dcmip},
+    ::Val{:sphere_aquaplanet_rhoe_equilmoist_allsky_gw_raw_zonallyasymmetric},
     simulation_path,
 )
     simdir = SimDir(simulation_path)
 
-    short_names_3D, reduction, period = ["ua", "ta"], "average", "1d"
-    short_names_sfc = ["hfes"]
-    vars_3D = [
-        get(simdir; short_name, reduction, period) |> ClimaAnalysis.average_lon for short_name in short_names_3D
-    ]
-    vars_sfc = [
-        get(simdir; short_name, reduction, period) for
-        short_name in short_names_sfc
-    ]
-    make_plots_generic(
-        simulation_path,
-        vars_3D,
-        time = LAST_SNAP,
-        more_kwargs = YLOGSCALE,
-    )
-    make_plots_generic(
-        simulation_path,
-        vars_sfc,
-        time = LAST_SNAP,
-        output_name = "summary_sfc",
-    )
-end
-
-AquaplanetPlots = Union{
-    Val{:sphere_aquaplanet_rhoe_equilmoist_allsky_gw_res},
-    Val{:sphere_aquaplanet_rhoe_equilmoist_allsky_gw_raw_zonallyasymmetric},
-    Val{:longrun_aquaplanet_rhoe_equil_gray_55km_nz63_0M},
-    Val{
-        :longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky_tvinsolation,
-    },
-    Val{
-        :longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky_tvinsolation_earth,
-    },
-    Val{:longrun_aquaplanet_rhoe_equil_highres_clearsky_ft32_earth},
-    Val{:longrun_aquaplanet_rhoe_equil_highres_allsky_ft32},
-    Val{:longrun_aquaplanet_dyamond},
-    Val{:longrun_aquaplanet_amip},
-    Val{:longrun_hs_rhoe_equilmoist_nz63_0M_55km_rs35km},
-}
-
-function make_plots(::AquaplanetPlots, simulation_path)
-    simdir = SimDir(simulation_path)
-
     reduction = "average"
-    period = "12.0h"
+    period = "12h"
     short_names_3D = ["ua", "ta", "hus", "rsd", "rsu", "rld", "rlu"]
     short_names_sfc = ["hfes", "evspsbl"]
     vars_3D = [
@@ -447,10 +475,23 @@ function make_plots(::AquaplanetPlots, simulation_path)
     )
 end
 
-function make_plots(
-    ::Val{:mpi_sphere_aquaplanet_rhoe_equilmoist_clearsky},
-    simulation_path,
-)
+AquaplanetPlots = Union{
+    Val{:sphere_aquaplanet_rhoe_equilmoist_allsky_gw_res},
+    Val{:mpi_sphere_aquaplanet_rhoe_equilmoist_clearsky},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_gray_0M},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_0M},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_diagedmf_diffonly_0M},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_diagedmf_0M},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_allsky_diagedmf_0M},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_tvinsol_0M_slabocean},
+    Val{:longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_tvinsol_0M_earth},
+    Val{:longrun_aquaplanet_rhoe_equil_highres_allsky_ft32},
+    Val{:longrun_aquaplanet_rhoe_equil_clearsky_tvinsol_0M_slabocean},
+    Val{:longrun_aquaplanet_dyamond},
+    Val{:longrun_aquaplanet_amip},
+}
+
+function make_plots(::AquaplanetPlots, simulation_path)
     simdir = SimDir(simulation_path)
 
     reduction = "average"
@@ -478,6 +519,7 @@ function make_plots(
     )
 end
 
+
 EDMFBoxPlots = Union{
     Val{:diagnostic_edmfx_gabls_box},
     Val{:diagnostic_edmfx_bomex_box},
@@ -486,7 +528,6 @@ EDMFBoxPlots = Union{
     Val{:diagnostic_edmfx_rico_box},
     Val{:diagnostic_edmfx_trmm_box},
     Val{:diagnostic_edmfx_trmm_stretched_box},
-    Val{:diagnostic_edmfx_aquaplanet_tke},
     Val{:diagnostic_edmfx_dycoms_rf01_explicit_box},
     Val{:prognostic_edmfx_adv_test_box},
     Val{:prognostic_edmfx_gabls_box},
@@ -497,7 +538,6 @@ EDMFBoxPlots = Union{
     Val{:prognostic_edmfx_rico_column},
     Val{:prognostic_edmfx_trmm_column},
 }
-
 
 function make_plots(::EDMFBoxPlots, simulation_path)
     simdir = SimDir(simulation_path)
@@ -525,7 +565,7 @@ function make_plots(::EDMFSpherePlots, simulation_path)
 
     short_names = ["ua", "wa", "thetaa", "taup", "haup", "waup", "tke", "arup"]
     reduction = "average"
-    period = "10m"
+    period = "1h"
     vars = [
         get(simdir; short_name, reduction, period) for short_name in short_names
     ]

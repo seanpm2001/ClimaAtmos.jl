@@ -1,4 +1,3 @@
-FLOAT_TYPE: "Float32"
 dt_save_state_to_disk: "10days"
 dt: "40secs"
 t_end: "200days"
@@ -10,13 +9,13 @@ z_max: 55000.0
 rayleigh_sponge: true
 topography: "Earth"
 topo_smoothing: true
-kappa_4_vorticity: 4.0e16
-kappa_4_tracer: 4.0e16
+vorticity_hyperdiffusion_coefficient: 4.0
+scalar_hyperdiffusion_coefficient: 4.0
 moist: "equil"
 precip_model: "0M"
 surface_setup: "DefaultMoninObukhov"
 vert_diff: "true"
 rad: "clearsky"
 dt_rad: "6hours"
-job_id: "longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky_earth"
-toml: [toml/longrun_aquaplanet_rhoe_equilmoist_nz63_0M_55km_rs35km_clearsky_earth.toml]
+job_id: "longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_0M_earth"
+toml: [toml/longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_0M_earth.toml]

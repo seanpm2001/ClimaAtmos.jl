@@ -30,12 +30,12 @@ z_elem:
 z_max:
   help: "Model top height. Default: 30km"
   value: 30000.0
-kappa_4_vorticity:
-  help: "Hyperdiffusion parameter for vorticity"
-  value: 2.0e17
-kappa_4_tracer:
-  help: "Hyperdiffusion parameter for tracer"
-  value: 2.0e17
+vorticity_hyperdiffusion_coefficient:
+  help: "Hyperdiffusion coefficient for vorticity (m s-1)"
+  value: 1.5
+scalar_hyperdiffusion_coefficient:
+  help: "Hyperdiffusion coefficient for scalar (m s-1)"
+  value: 1.5
 # Topography
 topography:
   help: "Define the surface elevation profile [`NoWarp`,`Earth`,`DCMIP200`,`Agnesi`]"
@@ -99,8 +99,6 @@ idealized_insolation:
 dt_cloud_fraction:
   help: "Time between calling cloud fraction update"
   value: "3hours"
-
-
 config:
   help: "Spatial configuration [`sphere` (default), `column`, `box`, `plane`]"
   value: "sphere"
@@ -123,9 +121,6 @@ reference_job_id:
   help: |-
     Identifier of job to use as the "reference" solution in the quicklook plot; the current job's results get compared to the results of the quicklook job on the main branch
   value: ~
-post_process:
-  help: "Post process [`true` (default), `false`]"
-  value: true
 vert_diff:
   help: "Vertical diffusion [`false` (default), `VerticalDiffusion`, `true` (defaults to `VerticalDiffusion`)]"
   value: "false"
@@ -174,15 +169,15 @@ perturb_initstate:
 discrete_hydrostatic_balance:
   help: "Set the initial state to discrete hydrostatic balance"
   value: false
-trunc_stack_traces:
-  help: "Set to `true` to truncate printing of ClimaCore `Field`s"
-  value: true
 apply_limiter:
   help: "Apply a horizontal limiter to every tracer [`false` (default), `true`]"
   value: false
 precip_model:
   help: "Precipitation model [`nothing` (default), `0M`]"
   value: ~
+cloud_model:
+  help: "Cloud model [`grid_scale`, `quadrature` (default)]"
+  value: "quadrature"
 perf_mode:
   help: "A flag for analyzing performance [`PerfStandard` (default), `PerfExperimental`]"
   value: "PerfStandard"
@@ -195,9 +190,6 @@ viscous_sponge:
 job_id:
   help: "Uniquely identifying string for a particular job"
   value: ~
-density_upwinding:
-  help: "Density upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
-  value: none
 tracer_upwinding:
   help: "Tracer upwinding mode [`none` (default), `first_order` , `third_order`, `boris_book`, `zalesak`]"
   value: none
@@ -264,6 +256,9 @@ output_default_diagnostics:
 netcdf_interpolate_z_over_msl:
   help: "Interpolate diagnostics in the NetCDF files in such a way that `z` is the elevation from the sea level (as opposed to the elevation from the surface)"
   value: false
+netcdf_output_at_levels:
+  help: "Do not perform any vertical interpolation in the output NetCDF files. Instead, interpolate horizontally and output the level. This is incompatible with netcdf_interpolate_z_over_msl when topography is present."
+  value: false
 warn_allocations_diagnostics:
-  help: "When true, a dry-run for all the diagnostics is perform to check whether the functions allocate additional memory (which reduces performances)"
+  help: "When true, a dry-run for all the diagnostics is performed to check whether the functions allocate additional memory (which reduces performances)"
   value: false

@@ -1,7 +1,7 @@
 agents:
   queue: clima
   slurm_mem: 8G
-  modules: julia/1.9.4 cuda/julia-pref openmpi/4.1.5-mpitrampoline nsight-systems/2023.4.1
+  modules: julia/1.10.0 cuda/julia-pref openmpi/4.1.5-mpitrampoline nsight-systems/2023.4.1
 
 env:
   JULIA_CUDA_MEMORY_POOL: none
@@ -42,7 +42,7 @@ steps:
   - group: "Targeted resolution AMIP long runs"
     steps:
 
-      - label: ":computer: baroclinic wave (ρe_tot) high resolution"
+      - label: ":computer: dry baroclinic wave"
         command:
           - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
         artifact_paths: "$$JOB_NAME/*"
@@ -53,7 +53,7 @@ steps:
         env:
           JOB_NAME: "longrun_bw_rhoe_highres"
 
-      - label: ":computer: no lim ARS baroclinic wave (ρe_tot) equilmoist high resolution"
+      - label: ":computer: baroclinic wave equilmoist"
         command:
           - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
         artifact_paths: "$$JOB_NAME/*"
@@ -64,7 +64,7 @@ steps:
         env:
           JOB_NAME: "longrun_bw_rhoe_equil_highres"
 
-      - label: ":computer: held-suarez, dry, high-topped (55km), high-sponge (35km), helem_16 np_3"
+      - label: ":computer: dry held-suarez"
         command:
           - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
         artifact_paths: "$$JOB_NAME/*"
@@ -73,9 +73,9 @@ steps:
           slurm_cpus_per_task: 4
           slurm_time: 24:00:00
         env:
-          JOB_NAME: "longrun_hs_rhoe_dry_nz63_55km_rs35km"
+          JOB_NAME: "longrun_hs_rhoe_dry_55km_nz63"
 
-      - label: ":computer: held-suarez, equilmoist, high-topped (55km), high-sponge (35km), helem_16 np_3"
+      - label: ":computer: held-suarez, equilmoist"
         command:
           - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
         artifact_paths: "$$JOB_NAME/*"
@@ -84,4 +84,37 @@ steps:
           slurm_cpus_per_task: 4
           slurm_time: 24:00:00
         env:
-          JOB_NAME: "longrun_hs_rhoe_equilmoist_nz63_0M_55km_rs35km"
+          JOB_NAME: "longrun_hs_rhoe_equil_55km_nz63_0M"
+
+      - label: ":computer: aquaplanet equilmoist clearsky radiation + 0M microphysics"
+        command:
+          - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
+        artifact_paths: "$$JOB_NAME/*"
+        agents:
+          slurm_gpus: 1
+          slurm_cpus_per_task: 4
+          slurm_time: 24:00:00
+        env:
+          JOB_NAME: "longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_0M"
+
+      - label: ":computer: aquaplanet equilmoist clearsky radiation + diagnostic edmf + 0M microphysics"
+        command:
+          - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
+        artifact_paths: "$$JOB_NAME/*"
+        agents:
+          slurm_gpus: 1
+          slurm_cpus_per_task: 4
+          slurm_time: 24:00:00
+        env:
+          JOB_NAME: "longrun_aquaplanet_rhoe_equil_55km_nz63_clearsky_diagedmf_0M"
+      
+      - label: ":computer: aquaplanet equilmoist allsky radiation + diagnostic edmf + 0M microphysics"
+        command:
+          - srun julia --project=examples examples/hybrid/driver.jl --config_file $CONFIG_PATH/$$JOB_NAME.yml
+        artifact_paths: "$$JOB_NAME/*"
+        agents:
+          slurm_gpus: 1
+          slurm_cpus_per_task: 4
+          slurm_time: 24:00:00
+        env:
+          JOB_NAME: "longrun_aquaplanet_rhoe_equil_55km_nz63_allsky_diagedmf_0M"

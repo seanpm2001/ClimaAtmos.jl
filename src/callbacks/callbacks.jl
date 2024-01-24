@@ -38,7 +38,7 @@ end
 function cloud_fraction_model_callback!(integrator)
     Y = integrator.u
     p = integrator.p
-    set_cloud_fraction!(Y, p, p.atmos.moisture_model)
+    set_cloud_fraction!(Y, p, p.atmos.moisture_model, p.atmos.cloud_model)
 end
 
 NVTX.@annotate function rrtmgp_model_callback!(integrator)
@@ -46,7 +46,7 @@ NVTX.@annotate function rrtmgp_model_callback!(integrator)
     p = integrator.p
     t = integrator.t
 
-    (; ᶜts, sfc_conditions) = p.precomputed
+    (; ᶜts, ᶜcloud_fraction, sfc_conditions) = p.precomputed
     (; params) = p
     (; idealized_insolation, idealized_h2o, idealized_clouds) = p.radiation
     (; insolation_tuple, ᶠradiation_flux, radiation_model) = p.radiation
@@ -164,12 +164,19 @@ NVTX.@annotate function rrtmgp_model_callback!(integrator)
             radiation_model.center_cloud_fraction,
             axes(Y.c),
         )
-        # multiply by 1000 to convert from kg/m^2 to g/m^2
+        # RRTMGP needs lwp and iwp in g/m^2
+        kg_to_g_factor = 1000
         @. ᶜlwp =
-            1000 * Y.c.ρ * TD.liquid_specific_humidity(thermo_params, ᶜts) * ᶜΔz
+            kg_to_g_factor *
+            Y.c.ρ *
+            TD.liquid_specific_humidity(thermo_params, ᶜts) *
+            ᶜΔz / max(ᶜcloud_fraction, eps(FT))
         @. ᶜiwp =
-            1000 * Y.c.ρ * TD.ice_specific_humidity(thermo_params, ᶜts) * ᶜΔz
-        @. ᶜfrac = ifelse(TD.has_condensate(thermo_params, ᶜts), 1, 0 * ᶜΔz)
+            kg_to_g_factor *
+            Y.c.ρ *
+            TD.ice_specific_humidity(thermo_params, ᶜts) *
+            ᶜΔz / max(ᶜcloud_fraction, eps(FT))
+        @. ᶜfrac = ᶜcloud_fraction
     end
 
     RRTMGPI.update_fluxes!(radiation_model)
@@ -300,4 +307,39 @@ function gc_func(integrator)
         "# full_sweep" = num_post.full_sweep,
     )
     return nothing
+end
+
+"""
+    maybe_graceful_exit(integrator)
+
+This callback is called after every timestep
+to allow users to gracefully exit a running
+simulation. To do so, users can navigate to
+and open `{output_dir}/graceful_exit.dat`, change
+the file contents from 0 to 1, and the running
+simulation will gracefully exit with the integrator.
+
+!!! note
+    This may not be reliable for MPI jobs.
+"""
+function maybe_graceful_exit(integrator)
+    output_dir = integrator.p.output_dir
+    file = joinpath(output_dir, "graceful_exit.dat")
+    if isfile(file)
+        open(file, "r") do io
+            while !eof(io)
+                try
+                    code = parse(Int, read(io, Char))
+                    return code != 0
+                catch
+                    open(io -> print(io, 0), file, "w")
+                    return false
+                end
+            end
+            return false
+        end
+    else
+        ispath(output_dir) || mkpath(output_dir)
+        open(io -> print(io, 0), file, "w")
+    end
 end

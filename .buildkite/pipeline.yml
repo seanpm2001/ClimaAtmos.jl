@@ -1,7 +1,7 @@
 agents:
   queue: central
   slurm_mem: 8G
-  modules: julia/1.9.4 cuda/12.2 ucx/1.14.1_cuda-12.2 openmpi/4.1.5_cuda-12.2 nsight-systems/2023.3.1
+  modules: julia/1.10.0 cuda/12.2 ucx/1.14.1_cuda-12.2 openmpi/4.1.5_cuda-12.2 nsight-systems/2023.3.1
 
 env:
   JULIA_LOAD_PATH: "${JULIA_LOAD_PATH}:${BUILDKITE_BUILD_CHECKOUT_PATH}/.buildkite"
@@ -27,9 +27,6 @@ steps:
     key: "init_cpu_env"
     command:
       - "echo $$JULIA_DEPOT_PATH"
-
-      - echo "--- Remove MPIPreferences"
-      - "rm -f ${JULIA_DEPOT_PATH}/environments/v1.9/LocalPreferences.toml"
 
       - echo "--- Instantiate project"
       - "julia --project -e 'using Pkg; Pkg.instantiate(;verbose=true)'"
@@ -212,9 +209,19 @@ steps:
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/sphere_baroclinic_wave_rhoe_equilmoist.yml
+
+          julia --color=yes --project=examples regression_tests/test_mse.jl
+          --job_id sphere_baroclinic_wave_rhoe_equilmoist
+          --out_dir sphere_baroclinic_wave_rhoe_equilmoist
         artifact_paths: "sphere_baroclinic_wave_rhoe_equilmoist/*"
         agents:
           slurm_constraint: icelake|cascadelake|skylake|epyc
+
+      - label: ":computer: no lim ARS baroclinic wave (ρe) equilmoist with cloud diagnostics"
+        command: >
+          julia --color=yes --project=examples examples/hybrid/driver.jl
+          --config_file $CONFIG_PATH/sphere_baroclinic_wave_rhoe_equilmoist_cldiag.yml
+        artifact_paths: "sphere_baroclinic_wave_rhoe_equilmoist_cldiag/*"
 
       - label: ":computer: no lim ARS baroclinic wave (ρe) equilmoist explicit vertdiff"
         command: >
@@ -498,9 +505,14 @@ steps:
         command: >
           julia --color=yes --project=examples examples/hybrid/driver.jl
           --config_file $CONFIG_PATH/diagnostic_edmfx_aquaplanet.yml
+
+          julia --color=yes --project=examples regression_tests/test_mse.jl
+          --job_id diagnostic_edmfx_aquaplanet
+          --out_dir diagnostic_edmfx_aquaplanet
         artifact_paths: "diagnostic_edmfx_aquaplanet/*"
         agents:
           slurm_mem: 20GB
+          slurm_constraint: icelake|cascadelake|skylake|epyc
 
   - group: "Prognostic EDMFX"
     steps:
@@ -587,6 +599,7 @@ steps:
           --config_file $PERF_CONFIG_PATH/gpu_baroclinic_wave_rhoe.yml
         artifact_paths: "gpu_implicit_barowave_ref/*"
         agents:
+          slurm_mem: 16G
           slurm_gpus: 1
 
       - label: "GPU: compare BW with CPU"
@@ -660,8 +673,8 @@ steps:
         command:
           - >
             julia --color=yes --project=examples examples/hybrid/driver.jl
-            --config_file $GPU_CONFIG_PATH/central_gpu_hs_rhoe_equilmoist_nz63_0M_55km_rs35km.yml
-        artifact_paths: "central_gpu_hs_rhoe_equilmoist_nz63_0M_55km_rs35km/*"
+            --config_file $GPU_CONFIG_PATH/central_gpu_hs_rhoe_equil_55km_nz63_0M.yml
+        artifact_paths: "central_gpu_hs_rhoe_equil_55km_nz63_0M/*"
         agents:
           slurm_gpus: 1
           slurm_mem: 16G
@@ -715,6 +728,7 @@ steps:
           --config_file $PERF_CONFIG_PATH/gpu_implicit_barowave_moist.yml
         artifact_paths: "gpu_implicit_barowave_moist/*"
         agents:
+          slurm_mem: 16G
           slurm_gpus: 1
 
       - label: "Perf: CPU implicit baro wave"
@@ -773,7 +787,7 @@ steps:
           $PERF_CONFIG_PATH/flame_perf_target_prognostic_edmfx_aquaplanet.yml
         artifact_paths: "flame_perf_target_prognostic_edmfx_aquaplanet/*"
         agents:
-          slurm_mem: 24GB
+          slurm_mem: 32GB
 
       - label: ":fire: Flame graph: perf target (barowave jfnk)"
         command: >
@@ -782,6 +796,14 @@ steps:
         artifact_paths: "flame_sphere_baroclinic_wave_rhoe_equilmoist_expvdiff/*"
         agents:
           slurm_mem: 40GB
+      
+      - label: ":fire: Flame graph: perf target (frierson diffusion)"
+        command: >
+          julia --color=yes --project=perf perf/flame.jl
+          $PERF_CONFIG_PATH/flame_perf_target_frierson.yml
+        artifact_paths: "flame_perf_target_frierson/*"
+        agents:
+          slurm_mem: 48GB
 
       - label: ":fire: Flame graph: perf target (Threaded)"
         command: >

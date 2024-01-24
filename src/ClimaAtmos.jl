@@ -1,6 +1,7 @@
 module ClimaAtmos
 
 using NVTX, Colors
+import Thermodynamics as TD
 
 include(joinpath("parameters", "Parameters.jl"))
 import .Parameters as CAP
@@ -83,6 +84,7 @@ include(joinpath("prognostic_equations", "edmfx_entr_detr.jl"))
 include(joinpath("prognostic_equations", "edmfx_tke.jl"))
 include(joinpath("prognostic_equations", "edmfx_sgs_flux.jl"))
 include(joinpath("prognostic_equations", "edmfx_boundary_condition.jl"))
+include(joinpath("prognostic_equations", "edmfx_precipitation.jl"))
 include(
     joinpath("parameterized_tendencies", "microphysics", "precipitation.jl"),
 )
