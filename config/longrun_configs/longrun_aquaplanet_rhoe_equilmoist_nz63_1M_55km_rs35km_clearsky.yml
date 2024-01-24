@@ -18,7 +18,7 @@ vert_diff: "true"
 rad: "clearsky"
 dt_rad: "6hours"
 job_id: "longrun_aquaplanet_rhoe_equilmoist_nz63_1M_55km_rs35km_clearsky"
-toml: [toml/longrun_aquaplanet_rhoe_equil_gray_55km_nz63_0M.toml]
+toml: [toml/longrun_aquaplanet_rhoe_equilmoist_nz63_1M_55km_rs35km_clearsky.toml]
 output_default_diagnostics: false
 diagnostics:
   - short_name: cl

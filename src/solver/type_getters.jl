@@ -848,7 +848,7 @@ function get_simulation(config::AtmosConfig)
 
     function orchestrate_diagnostics(integrator)
         for d in diagnostics_functions
-            if d.cbf.n > 0 && integrator.step % d.cbf.n == 0 && integrator.t > 60*60*7
+            if d.cbf.n > 0 && integrator.step % d.cbf.n == 0 && integrator.t > 60*60*6
                 d.f!(integrator)
             end
         end
