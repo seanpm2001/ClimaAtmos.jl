@@ -121,7 +121,7 @@ function precomputed_quantities(Y, atmos)
     end
     precipitation_quantities =
         atmos.precip_model isa Microphysics1Moment ?
-        (; ᶜwᵣ = similar(Y.c, FT), ᶜwₛ = similar(Y.c, FT)) : (;)
+        (; ᶜwᵣ = similar(Y.c, FT), ᶜwₛ = similar(Y.c, FT), ᶜq_liq = similar(Y.c, FT), ᶜq_ice = similar(Y.c, FT)) : (;)
     return (;
         gs_quantities...,
         advective_sgs_quantities...,

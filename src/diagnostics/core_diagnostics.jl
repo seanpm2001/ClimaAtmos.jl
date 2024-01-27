@@ -324,16 +324,23 @@ function compute_clw!(
     time,
     moisture_model::T,
 ) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
-    thermo_params = CAP.thermodynamics_params(cache.params)
+
     if isnothing(out)
-        return TD.liquid_specific_humidity.(
-            thermo_params,
-            cache.precomputed.ᶜts,
-        )
+        return cache.precomputed.ᶜq_liq
     else
-        out .=
-            TD.liquid_specific_humidity.(thermo_params, cache.precomputed.ᶜts)
+        out .= cache.precomputed.ᶜq_liq
     end
+
+    #thermo_params = CAP.thermodynamics_params(cache.params)
+    #if isnothing(out)
+    #    return TD.liquid_specific_humidity.(
+    #        thermo_params,
+    #        cache.precomputed.ᶜts,
+    #    )
+    #else
+    #    out .=
+    #        TD.liquid_specific_humidity.(thermo_params, cache.precomputed.ᶜts)
+    #end
 end
 
 add_diagnostic_variable!(
@@ -364,12 +371,19 @@ function compute_cli!(
     time,
     moisture_model::T,
 ) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
-    thermo_params = CAP.thermodynamics_params(cache.params)
+
     if isnothing(out)
-        return TD.ice_specific_humidity.(thermo_params, cache.precomputed.ᶜts)
+        return cache.precomputed.ᶜq_ice
     else
-        out .= TD.ice_specific_humidity.(thermo_params, cache.precomputed.ᶜts)
+        out .= cache.precomputed.ᶜq_ice
     end
+
+    #thermo_params = CAP.thermodynamics_params(cache.params)
+    #if isnothing(out)
+    #    return TD.ice_specific_humidity.(thermo_params, cache.precomputed.ᶜts)
+    #else
+    #    out .= TD.ice_specific_humidity.(thermo_params, cache.precomputed.ᶜts)
+    #end
 end
 
 add_diagnostic_variable!(

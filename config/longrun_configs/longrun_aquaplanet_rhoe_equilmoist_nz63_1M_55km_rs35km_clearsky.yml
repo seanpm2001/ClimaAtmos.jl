@@ -1,7 +1,7 @@
 FLOAT_TYPE: "Float32"
 dt_save_to_disk: "10days"
 dt: "120secs"
-t_end: "8hours"
+t_end: "5days"
 h_elem: 16
 z_elem: 63
 dz_bottom: 30.0
@@ -22,20 +22,20 @@ toml: [toml/longrun_aquaplanet_rhoe_equilmoist_nz63_1M_55km_rs35km_clearsky.toml
 output_default_diagnostics: false
 diagnostics:
   - short_name: cl
-    period: 120secs
+    period: 2hours
   - short_name: cli
-    period: 120secs
+    period: 2hours
   - short_name: clw
-    period: 120secs
+    period: 2hours
   - short_name: husra
-    period: 120secs
+    period: 2hours
   - short_name: hussn
-    period: 120secs
+    period: 2hours
   - short_name: ta
-    period: 120secs
+    period: 2hours
   - short_name: hus
-    period: 120secs
+    period: 2hours
   - short_name: hur
-    period: 120secs
+    period: 2hours
   - short_name: lmix
-    period: 120secs
+    period: 2hours
