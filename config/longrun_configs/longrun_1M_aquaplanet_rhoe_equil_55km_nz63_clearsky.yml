@@ -1,5 +1,5 @@
 dt: "120secs"
-t_end: "10days"  # 300 days
+t_end: "2days"  # 300 days
 h_elem: 16
 z_elem: 63
 dz_bottom: 30.0
@@ -19,21 +19,5 @@ job_id: "longrun_1M"
 toml: [toml/longrun_1M.toml]
 output_default_diagnostics: false
 diagnostics:
-  - short_name: cl
-    period: 2hours
-  - short_name: cli
-    period: 2hours
-  - short_name: clw
-    period: 2hours
-  - short_name: husra
-    period: 2hours
-  - short_name: hussn
-    period: 2hours
-  - short_name: ta
-    period: 2hours
-  - short_name: hus
-    period: 2hours
-  - short_name: hur
-    period: 2hours
-  - short_name: lmix
-    period: 2hours
+  - short_name: [cl, cli, clw, husra, hussn, ta, hus, hur, lmix]
+    period: 1hours
