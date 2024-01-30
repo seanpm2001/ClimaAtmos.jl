@@ -166,16 +166,18 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
 
         ᶠu³ₚ = p.scratch.ᶠtemp_CT3
         ᶠlg = Fields.local_geometry_field(Y.f)
+        ᶜqₚ = p.scratch.ᶜtemp_scalar
 
         @. ᶠu³ₚ[colidx] =
             ᶠinterp(-p.precomputed.ᶜwᵣ[colidx]) *
             CT3(unit_basis_vector_data(CT3, ᶠlg[colidx]))
+        @. ᶜqₚ[colidx] = Y.c.ρq_rai[colidx] / Y.c.ρ[colidx]
         vertical_transport!(
             Yₜ.c.ρq_rai[colidx],
             ᶜJ[colidx],
             Y.c.ρ[colidx],
             ᶠu³ₚ[colidx],
-            ᶜspecific.q_rai[colidx],
+            ᶜqₚ[colidx],
             dt,
             precip_upwinding,
             ᶜprecipdivᵥ,
@@ -184,12 +186,13 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
         @. ᶠu³ₚ[colidx] =
             ᶠinterp(-p.precomputed.ᶜwₛ[colidx]) *
             CT3(unit_basis_vector_data(CT3, ᶠlg[colidx]))
+        @. ᶜqₚ[colidx] = Y.c.ρq_sno[colidx] / Y.c.ρ[colidx]
         vertical_transport!(
             Yₜ.c.ρq_sno[colidx],
             ᶜJ[colidx],
             Y.c.ρ[colidx],
             ᶠu³ₚ[colidx],
-            ᶜspecific.q_sno[colidx],
+            ᶜqₚ[colidx],
             dt,
             precip_upwinding,
             ᶜprecipdivᵥ,
