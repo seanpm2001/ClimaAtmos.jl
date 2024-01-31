@@ -18,8 +18,8 @@ function set_precipitation_precomputed_quantities!(Y, p, t)
 
     # compute the precipitation terminal velocity [m/s]
     @. ᶜwᵣ =
-        CM1.terminal_velocity(cmp.pr, cmp.tv.rain, Y.c.ρ, Y.c.ρq_rai / Y.c.ρ)
+    CM1.terminal_velocity(cmp.pr, cmp.tv.rain, Y.c.ρ, abs(Y.c.ρq_rai / Y.c.ρ))
     @. ᶜwₛ =
-        CM1.terminal_velocity(cmp.ps, cmp.tv.snow, Y.c.ρ, Y.c.ρq_sno / Y.c.ρ)
+    CM1.terminal_velocity(cmp.ps, cmp.tv.snow, Y.c.ρ, abs(Y.c.ρq_sno / Y.c.ρ))
     return nothing
 end
