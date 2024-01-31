@@ -1,4 +1,4 @@
-dt: "120secs"
+dt: "60secs"
 t_end: "2days"  # 300 days
 h_elem: 16
 z_elem: 63

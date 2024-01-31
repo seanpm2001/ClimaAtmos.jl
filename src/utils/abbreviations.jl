@@ -28,7 +28,7 @@ const ᶜadvdivᵥ = Operators.DivergenceF2C(
 ) # Tracers do not have advective fluxes through the top and bottom cell faces
 const ᶜprecipdivᵥ = Operators.DivergenceF2C(
     top = Operators.SetValue(CT3(0)),
-    #bottom = Operators.SetDivergence(0),
+    bottom = Operators.SetDivergence(0),
 ) # Precipitation has no flux at the top, but it has free outflow at the bottom
 const ᶜgradᵥ = Operators.GradientF2C()
 
