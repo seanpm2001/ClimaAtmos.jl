@@ -28,7 +28,7 @@ const ᶜadvdivᵥ = Operators.DivergenceF2C(
 ) # Tracers do not have advective fluxes through the top and bottom cell faces
 const ᶜprecipdivᵥ = Operators.DivergenceF2C(
     top = Operators.SetValue(CT3(0)),
-    bottom = Operators.SetDivergence(0),
+    #bottom = Operators.SetDivergence(0),
 ) # Precipitation has no flux at the top, but it has free outflow at the bottom
 const ᶜgradᵥ = Operators.GradientF2C()
 
@@ -60,6 +60,9 @@ const ᶠcurlᵥ = Operators.CurlC2F(
     top = Operators.SetCurl(CT12(0, 0)),
 )
 
+const ᶠupwind_precip = Operators.UpwindBiasedProductC2F(
+    bottom = Operators.Extrapolate(),
+)
 const ᶠupwind1 = Operators.UpwindBiasedProductC2F()
 const ᶠupwind3 = Operators.Upwind3rdOrderBiasedProductC2F(
     bottom = Operators.ThirdOrderOneSided(),
@@ -83,6 +86,8 @@ const ᶠwinterp_matrix = MatrixFields.operator_matrix(ᶠwinterp)
 const ᶠgradᵥ_matrix = MatrixFields.operator_matrix(ᶠgradᵥ)
 const ᶠupwind1_matrix = MatrixFields.operator_matrix(ᶠupwind1)
 const ᶠupwind3_matrix = MatrixFields.operator_matrix(ᶠupwind3)
+const ᶠupwind_precip_matrix = MatrixFields.operator_matrix(ᶠupwind_precip)
+
 
 # Helper functions to extract components of vectors
 u_component(u::Geometry.LocalVector) = u.u

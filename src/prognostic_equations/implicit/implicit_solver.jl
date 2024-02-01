@@ -126,6 +126,7 @@ function ImplicitEquationJacobian(
     CTh = CTh_vector_type(axes(Y.c))
 
     TridiagonalRow = TridiagonalMatrixRow{FT}
+    PentadiagonalRow = PentadiagonalMatrixRow{FT}
     BidiagonalRow_C3 = BidiagonalMatrixRow{C3{FT}}
     TridiagonalRow_ACTh = TridiagonalMatrixRow{Adjoint{FT, CTh{FT}}}
     BidiagonalRow_ACT3 = BidiagonalMatrixRow{Adjoint{FT, CT3{FT}}}
@@ -189,7 +190,7 @@ function ImplicitEquationJacobian(
                 diffused_scalar_names,
             )...,
             MatrixFields.unrolled_map(
-                name -> (name, name) => similar(Y.c, TridiagonalRow),
+                name -> (name, name) => name in (@name(c.ρq_rai), @name(c.ρq_sno)) ?  similar(Y.c, PentadiagonalRow) : similar(Y.c, TridiagonalRow),
                 diffused_scalar_names,
             )...,
             (
@@ -626,13 +627,13 @@ function update_implicit_equation_jacobian!(A, Y, p, dtγ, colidx)
             ᶜwₚ = MatrixFields.get_field(p, wₚ_name)
             ᶠlg = Fields.local_geometry_field(Y.f)
 
-            is_third_order = upwinding == Val(:third_order)
+            is_third_order = false #upwinding == Val(:third_order)
             UpwindMatrixRowType =
                 is_third_order ? QuaddiagonalMatrixRow : BidiagonalMatrixRow
-            ᶠupwind_matrix = is_third_order ? ᶠupwind3_matrix : ᶠupwind1_matrix
+            ᶠupwind_matrix = ᶠupwind_precip_matrix #is_third_order ? ᶠupwind3_matrix : ᶠupwind1_matrix
             ᶠset_upwind_matrix_bcs = Operators.SetBoundaryOperator(;
                 top = Operators.SetValue(zero(UpwindMatrixRowType{CT3{FT}})),
-                bottom = Operators.SetValue(zero(UpwindMatrixRowType{CT3{FT}})),
+                #bottom = Operators.SetValue(zero(UpwindMatrixRowType{CT3{FT}})),
             ) # Need to wrap ᶠupwind_matrix in this for well-defined boundaries.
 
             @. ∂ᶜρqₚ_err_∂ᶜρqₚ[colidx] +=

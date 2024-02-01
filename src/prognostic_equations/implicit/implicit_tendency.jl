@@ -56,6 +56,22 @@ vertical_transport!(
     upwinding::Val,
 ) = vertical_transport!(coeff, ᶜρχₜ, ᶜJ, ᶜρ, ᶠu³, ᶜχ, dt, upwinding, ᶜadvdivᵥ)
 
+
+vertical_transport!(
+    coeff,
+    ᶜρχₜ,
+    ᶜJ,
+    ᶜρ,
+    ᶠu³,
+    ᶜχ,
+    dt,
+    ::Val{:first_order_precip},
+    ᶜdivᵥ,
+) = @. ᶜρχₜ += -coeff * (ᶜdivᵥ(ᶠwinterp(ᶜJ, ᶜρ) * ᶠupwind_precip(ᶠu³, ᶜχ)))
+
+
+
+
 vertical_transport!(coeff, ᶜρχₜ, ᶜJ, ᶜρ, ᶠu³, ᶜχ, dt, ::Val{:none}, ᶜdivᵥ) =
     @. ᶜρχₜ += -coeff * (ᶜdivᵥ(ᶠwinterp(ᶜJ, ᶜρ) * ᶠu³ * ᶠinterp(ᶜχ)))
 vertical_transport!(
@@ -128,7 +144,7 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
     # use CD2 for implicit, upwinding correction goes in explicit part
     energy_upwinding = Val(:none)
     tracer_upwinding = Val(:none)
-    (; precip_upwinding) = p.atmos.numerics # precipitation is always upwinded (rain always falls)
+    precip_upwinding = Val(:first_order_precip) #p.atmos.numerics # precipitation is always upwinded (rain always falls)
 
     @. Yₜ.c.ρ[colidx] -=
         ᶜdivᵥ(ᶠwinterp(ᶜJ[colidx], Y.c.ρ[colidx]) * ᶠu³[colidx])
