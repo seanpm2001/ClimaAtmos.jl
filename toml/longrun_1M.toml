@@ -6,10 +6,10 @@ type = "float"
 value = 0.0
 type = "float"
 
-[rain_autoconversion_timescale]
-value = 360
-type = "float"
+#[rain_autoconversion_timescale]
+#value = 360
+#type = "float"
 
-[snow_autoconversion_timescale]
-value = 360
-type = "float"
+#[snow_autoconversion_timescale]
+#value = 360
+#type = "float"
