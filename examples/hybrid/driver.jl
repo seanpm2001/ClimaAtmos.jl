@@ -68,8 +68,9 @@ if CA.is_distributed(config.comms_ctx)
         Y = sol.u[1]
         center_space = axes(Y.c)
         horz_space = Spaces.horizontal_space(center_space)
-        horz_topology = horz_space.topology
-        Nq = Quadratures.degrees_of_freedom(horz_space.quadrature_style)
+        horz_topology = Spaces.topology(horz_space)
+        quadrature_style = Spaces.quadrature_style(horz_space)
+        Nq = Quadratures.degrees_of_freedom(quadrature_style)
         nlocalelems = Topologies.nlocalelems(horz_topology)
         ncols_per_process = nlocalelems * Nq * Nq
         scaling_file =
@@ -226,6 +227,11 @@ if ClimaComms.iamroot(config.comms_ctx)
     @info "Plotting done"
 
     @info "Creating tarballs"
+    # These NC files are used by our reproducibility tests,
+    # and need to be found later when comparing against the
+    # main branch. If "nc_files.tar" is renamed, then please
+    # search for "nc_files.tar" globally and rename it in the
+    # reproducibility test folder.
     Tar.create(
         f -> endswith(f, ".nc"),
         simulation.output_dir,
