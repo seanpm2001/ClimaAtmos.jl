@@ -162,37 +162,24 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
         # Advection of precipitation with the mean flow
         # is done with other tracers above.
         # Here we add the advection with precipitation terminal velocity
-        # using first order upwind and free outflow bottom boundary condition
+        # using downward biasing and free outflow bottom boundary condition
 
-        ᶠu³ₚ = p.scratch.ᶠtemp_CT3
         ᶠlg = Fields.local_geometry_field(Y.f)
-
-        @. ᶠu³ₚ[colidx] =
-            ᶠinterp(-p.precomputed.ᶜwᵣ[colidx]) *
-            CT3(unit_basis_vector_data(CT3, ᶠlg[colidx]))
-        vertical_transport!(
-            Yₜ.c.ρq_rai[colidx],
-            ᶜJ[colidx],
-            Y.c.ρ[colidx],
-            ᶠu³ₚ[colidx],
-            ᶜspecific.q_rai[colidx],
-            dt,
-            precip_upwinding,
-            ᶜprecipdivᵥ,
+        @. Yₜ.c.ρq_rai[colidx] -= ᶜprecipdivᵥ(
+            CT3(unit_basis_vector_data(CT3, ᶠlg[colidx])) *
+            ᶠwinterp(ᶜJ[colidx], Y.c.ρ[colidx]) *
+            ᶠright_bias(
+                -p.precomputed.ᶜwᵣ[colidx] *
+                ᶜspecific.q_rai[colidx]
+            )
         )
-
-        @. ᶠu³ₚ[colidx] =
-            ᶠinterp(-p.precomputed.ᶜwₛ[colidx]) *
-            CT3(unit_basis_vector_data(CT3, ᶠlg[colidx]))
-        vertical_transport!(
-            Yₜ.c.ρq_sno[colidx],
-            ᶜJ[colidx],
-            Y.c.ρ[colidx],
-            ᶠu³ₚ[colidx],
-            ᶜspecific.q_sno[colidx],
-            dt,
-            precip_upwinding,
-            ᶜprecipdivᵥ,
+        @. Yₜ.c.ρq_sno[colidx] -= ᶜprecipdivᵥ(
+            CT3(unit_basis_vector_data(CT3, ᶠlg[colidx])) *
+            ᶠwinterp(ᶜJ[colidx], Y.c.ρ[colidx]) *
+            ᶠright_bias(
+                -p.precomputed.ᶜwₛ[colidx] *
+                ᶜspecific.q_sno[colidx]
+            )
         )
     end
 

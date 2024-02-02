@@ -28,7 +28,6 @@ const ᶜadvdivᵥ = Operators.DivergenceF2C(
 ) # Tracers do not have advective fluxes through the top and bottom cell faces
 const ᶜprecipdivᵥ = Operators.DivergenceF2C(
     top = Operators.SetValue(CT3(0)),
-    bottom = Operators.SetDivergence(0),
 ) # Precipitation has no flux at the top, but it has free outflow at the bottom
 const ᶜgradᵥ = Operators.GradientF2C()
 
@@ -42,6 +41,7 @@ const ᶠwinterp = Operators.WeightedInterpolateC2F(
     bottom = Operators.Extrapolate(),
     top = Operators.Extrapolate(),
 )
+const ᶠright_bias = Operators.RightBiasedC2F() # for free outflow in ᶜprecipdivᵥ
 
 # TODO: Replace these boundary conditions with NaN's, since they are
 # meaningless and we only need to specify them in order to be able to
@@ -80,6 +80,7 @@ const ᶜadvdivᵥ_matrix = MatrixFields.operator_matrix(ᶜadvdivᵥ)
 const ᶜprecipdivᵥ_matrix = MatrixFields.operator_matrix(ᶜprecipdivᵥ)
 const ᶠinterp_matrix = MatrixFields.operator_matrix(ᶠinterp)
 const ᶠwinterp_matrix = MatrixFields.operator_matrix(ᶠwinterp)
+const ᶠright_bias_matrix = MatrixFields.operator_matrix(ᶠright_bias)
 const ᶠgradᵥ_matrix = MatrixFields.operator_matrix(ᶠgradᵥ)
 const ᶠupwind1_matrix = MatrixFields.operator_matrix(ᶠupwind1)
 const ᶠupwind3_matrix = MatrixFields.operator_matrix(ᶠupwind3)
