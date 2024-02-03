@@ -1,5 +1,5 @@
 dt: "120secs"
-t_end: "2days"  # 300 days
+t_end: "10days"  # 300 days
 h_elem: 16
 z_elem: 63
 dz_bottom: 30.0
@@ -20,4 +20,4 @@ toml: [toml/longrun_1M.toml]
 output_default_diagnostics: false
 diagnostics:
   - short_name: [cl, cli, clw, husra, hussn, ta, hus, hur, lmix]
-    period: 1hours
+    period: 1days
