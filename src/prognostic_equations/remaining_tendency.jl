@@ -35,6 +35,15 @@ NVTX.@annotate function additional_tendency!(Yₜ, Y, p, t)
         large_scale_advection_tendency!(Yₜ, Y, p, t, colidx, p.atmos.ls_adv)
 
         if p.atmos.diff_mode == Explicit()
+            edmfx_sgs_vertical_advection_tendency!(
+                Yₜ,
+                Y,
+                p,
+                t,
+                colidx,
+                p.atmos.turbconv_model,
+            )
+            edmfx_nh_pressure_tendency!(Yₜ, Y, p, t, colidx, p.atmos.turbconv_model)
             vertical_diffusion_boundary_layer_tendency!(
                 Yₜ,
                 Y,
@@ -42,6 +51,14 @@ NVTX.@annotate function additional_tendency!(Yₜ, Y, p, t)
                 t,
                 colidx,
                 p.atmos.vert_diff,
+            )
+            edmfx_sgs_mass_flux_tendency!(
+                Yₜ,
+                Y,
+                p,
+                t,
+                colidx,
+                p.atmos.turbconv_model,
             )
             edmfx_sgs_diffusive_flux_tendency!(
                 Yₜ,
@@ -54,24 +71,24 @@ NVTX.@annotate function additional_tendency!(Yₜ, Y, p, t)
         end
 
         radiation_tendency!(Yₜ, Y, p, t, colidx, p.atmos.radiation_mode)
-        edmfx_sgs_vertical_advection_tendency!(
-            Yₜ,
-            Y,
-            p,
-            t,
-            colidx,
-            p.atmos.turbconv_model,
-        )
+        # edmfx_sgs_vertical_advection_tendency!(
+        #     Yₜ,
+        #     Y,
+        #     p,
+        #     t,
+        #     colidx,
+        #     p.atmos.turbconv_model,
+        # )
         edmfx_entr_detr_tendency!(Yₜ, Y, p, t, colidx, p.atmos.turbconv_model)
-        edmfx_sgs_mass_flux_tendency!(
-            Yₜ,
-            Y,
-            p,
-            t,
-            colidx,
-            p.atmos.turbconv_model,
-        )
-        edmfx_nh_pressure_tendency!(Yₜ, Y, p, t, colidx, p.atmos.turbconv_model)
+        # edmfx_sgs_mass_flux_tendency!(
+        #     Yₜ,
+        #     Y,
+        #     p,
+        #     t,
+        #     colidx,
+        #     p.atmos.turbconv_model,
+        # )
+        # edmfx_nh_pressure_tendency!(Yₜ, Y, p, t, colidx, p.atmos.turbconv_model)
         edmfx_velocity_relaxation_tendency!(
             Yₜ,
             Y,

@@ -90,7 +90,7 @@ function ᶠupdraft_nh_pressure(
 
         # We also used to have advection term here: α_a * w_up * div_w_up
         return α_b * ᶠbuoyʲ +
-               α_d * (ᶠu3ʲ - ᶠu3⁰) * CC.Geometry._norm(ᶠu3ʲ - ᶠu3⁰, ᶠlg) /
+               α_d * (ᶠu3ʲ) * CC.Geometry._norm(ᶠu3ʲ, ᶠlg) /
                plume_scale_height
     end
 end
@@ -120,16 +120,17 @@ function edmfx_nh_pressure_tendency!(
     for j in 1:n
 
         # look for updraft top
-        updraft_top = FT(0)
-        for level in 1:Spaces.nlevels(axes(ᶜz))
-            if draft_area(
-                Spaces.level(Y.c.sgsʲs.:($j).ρa[colidx], level)[],
-                Spaces.level(ᶜρʲs.:($j)[colidx], level)[],
-            ) > a_min
-                updraft_top = Spaces.level(ᶜz[colidx], level)[]
-            end
-        end
-        updraft_top = updraft_top - z_sfc[colidx][]
+        # updraft_top = FT(0)
+        # for level in 1:Spaces.nlevels(axes(ᶜz))
+        #     if draft_area(
+        #         Spaces.level(Y.c.sgsʲs.:($j).ρa[colidx], level)[],
+        #         Spaces.level(ᶜρʲs.:($j)[colidx], level)[],
+        #     ) > a_min
+        #         updraft_top = Spaces.level(ᶜz[colidx], level)[]
+        #     end
+        # end
+        # updraft_top = updraft_top - z_sfc[colidx][]
+        updraft_top = 2000
 
         @. ᶠnh_pressure₃ʲs.:($$j)[colidx] = ᶠupdraft_nh_pressure(
             params,
