@@ -115,6 +115,8 @@ moisture_variables(ls, ::NonEquilMoistModel) = (;
              TD.liquid_specific_humidity(ls.thermo_params, ls.thermo_state),
     ρq_ice = ls.ρ * TD.ice_specific_humidity(ls.thermo_params, ls.thermo_state),
 )
+# TODO: need to create a new version of moisture variables as well... or maybe make it all rain?
+# Use EquilMoistModel, but only as a diagnostic (replace with Cloudy)
 
 # TODO: Remove perf_mode. Currently, adding tracers hurts performance.
 precip_variables(ls, ::NoPrecipitation, ::PerfStandard) = (;)
@@ -122,7 +124,14 @@ precip_variables(ls, ::Microphysics0Moment, ::PerfStandard) = (;)
 precip_variables(ls, ::Microphysics1Moment, ::PerfStandard) = (;
     ρq_rai = ls.ρ * ls.precip_state.q_rai,
     ρq_sno = ls.ρ * ls.precip_state.q_sno,
-) # TODO Microphysics NMoment
+) # TODO Microphysics NMoment: map over N and generate variables w.r.t. N 
+precip_variables(ls, ::MicrophysicsNMoment, ::PerfStandard) = (;
+    mom0_clo = ls.M0c,
+    mom1_clo = ls.M1c,
+    mom0_rai = ls.M0r,
+    mom1_rai = ls.M1r,
+    mom2_rai = ls.M2r
+)
 precip_variables(ls, _, ::PerfExperimental) =
     (; ρq_rai = zero(eltype(ls)), ρq_sno = zero(eltype(ls)))
 

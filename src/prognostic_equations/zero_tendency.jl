@@ -34,3 +34,5 @@ function zero_tendency!(
     end
     return nothing
 end
+
+# TODO Nmoment: use this to only zero-out the advective tendencies such that we only test the thermo tendencies AND/OR set the velocity to zero in the column setup

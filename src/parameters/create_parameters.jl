@@ -74,7 +74,7 @@ function create_parameter_set(config::AtmosConfig)
     microphysics_params =
         if precip_model == nothing || precip_model == "nothing"
             nothing
-        elseif precip_model == "0M"
+        elseif precip_model == "0M" # TODO NMoment -- if we need any parameters, will need to create a struct and get them here
             CM.Parameters.Parameters0M(toml_dict)
         elseif precip_model == "1M"
             (;

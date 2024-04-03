@@ -113,3 +113,17 @@ struct PrecipState1M{FT} <: PrecipState{FT}
 end
 PrecipState1M(; q_rai = 0, q_sno = 0) =
     PrecipState1M{typeof(q_rai)}(q_rai, q_sno)
+
+    # TODO NMoment
+"""
+    PrecipStateNM(; M0c, M1c, M0r, M1r, M2r)
+
+Stores the partial moments for the flexible `precip_model`.
+If no values are provided, they are set to zero.
+"""
+struct PrecipStateNM{FT} <: PrecipState{FT}
+    q_rai::FT
+    q_sno::FT
+end
+PrecipState1M(; M0c = 0, M1c = 0, M0r = 0, M1r = 0, M2r = 0) =
+    PrecipStateNM{typeof(M0c)}(M0c, M1c, M0r, M1r, M2r)
