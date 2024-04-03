@@ -178,6 +178,8 @@ function default_diagnostics(::Microphysics1Moment, t_end; output_writer)
     return [average_func(precip_diagnostics...; output_writer)...]
 end
 
+#TODO Microphysics NMoment
+
 ##################
 # Radiation mode #
 ##################

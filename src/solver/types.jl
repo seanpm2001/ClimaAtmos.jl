@@ -11,6 +11,7 @@ abstract type AbstractPrecipitationModel end
 struct NoPrecipitation <: AbstractPrecipitationModel end
 struct Microphysics0Moment <: AbstractPrecipitationModel end
 struct Microphysics1Moment <: AbstractPrecipitationModel end
+struct MicrophysicsNMoment <: AbstractPrecipitationModel end
 
 abstract type AbstractCloudModel end
 struct GridScaleCloud <: AbstractCloudModel end

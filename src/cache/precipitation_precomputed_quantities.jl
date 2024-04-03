@@ -10,7 +10,7 @@ Updates the precipitation terminal velocity stored in `p`
 for the 1-moment microphysics scheme
 """
 function set_precipitation_precomputed_quantities!(Y, p, t)
-    @assert (p.atmos.precip_model isa Microphysics1Moment)
+    @assert (p.atmos.precip_model isa Microphysics1Moment) # TODO Nmoment
 
     (; ᶜwᵣ, ᶜwₛ) = p.precomputed
 

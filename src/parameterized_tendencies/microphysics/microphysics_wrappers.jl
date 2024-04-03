@@ -2,6 +2,7 @@
 
 import Thermodynamics as TD
 import CloudMicrophysics.Microphysics0M as CM0
+import CloudMicrophysics.MicrophysicsFlexible as CMF
 
 # define some aliases and functions to make the code more readable
 const Iₗ = TD.internal_energy_liquid
@@ -273,3 +274,5 @@ function compute_precipitation_sinks!(
     @. Seₜᵖ -= Sᵖ * (Iᵢ(thp, ts) + Φ)
     #! format: on
 end
+
+# TODO: Sources and sinks for NMoment

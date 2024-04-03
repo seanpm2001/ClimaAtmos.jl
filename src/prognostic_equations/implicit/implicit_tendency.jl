@@ -185,6 +185,8 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t, colidx)
         )
     end
 
+    # TODO: if precip_model isa MicrophysicsNMoment
+
     @. Yₜ.f.u₃[colidx] +=
         -(
             ᶠgradᵥ(ᶜp[colidx] - ᶜp_ref[colidx]) +

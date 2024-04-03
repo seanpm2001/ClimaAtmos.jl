@@ -593,7 +593,7 @@ function compute_husra!(
     state,
     cache,
     time,
-    precip_model::Microphysics1Moment,
+    precip_model::Microphysics1Moment, # TODO Nmoment
 )
     if isnothing(out)
         return state.c.ρq_rai ./ state.c.ρ
@@ -624,7 +624,7 @@ function compute_hussn!(
     state,
     cache,
     time,
-    precip_model::Microphysics1Moment,
+    precip_model::Microphysics1Moment, #TODO NMoment
 )
     if isnothing(out)
         return state.c.ρq_sno ./ state.c.ρ

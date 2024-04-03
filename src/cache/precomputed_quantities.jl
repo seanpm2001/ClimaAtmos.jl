@@ -129,7 +129,7 @@ function precomputed_quantities(Y, atmos)
         (;)
     end
     precipitation_quantities =
-        atmos.precip_model isa Microphysics1Moment ?
+        atmos.precip_model isa Microphysics1Moment ? # TODO Nmoment
         (; ᶜwᵣ = similar(Y.c, FT), ᶜwₛ = similar(Y.c, FT)) : (;)
     return (;
         gs_quantities...,
@@ -587,7 +587,7 @@ NVTX.@annotate function set_precomputed_quantities!(Y, p, t)
         )
     end
 
-    if precip_model isa Microphysics1Moment
+    if precip_model isa Microphysics1Moment # TODO Nmoment
         set_precipitation_precomputed_quantities!(Y, p, t)
     end
 
