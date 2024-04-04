@@ -122,8 +122,11 @@ Stores the partial moments for the flexible `precip_model`.
 If no values are provided, they are set to zero.
 """
 struct PrecipStateNM{FT} <: PrecipState{FT}
-    q_rai::FT
-    q_sno::FT
+    M0c::FT
+    M1c::FT
+    M0r::FT
+    M1r::FT
+    M2r::FT
 end
-PrecipState1M(; M0c = 0, M1c = 0, M0r = 0, M1r = 0, M2r = 0) =
+PrecipStateNM(; M0c = 0, M1c = 0, M0r = 0, M1r = 0, M2r = 0) =
     PrecipStateNM{typeof(M0c)}(M0c, M1c, M0r, M1r, M2r)

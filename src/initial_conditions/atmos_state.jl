@@ -130,7 +130,7 @@ precip_variables(ls, ::MicrophysicsNMoment, ::PerfStandard) = (;
     mom1_clo = ls.M1c,
     mom0_rai = ls.M0r,
     mom1_rai = ls.M1r,
-    mom2_rai = ls.M2r
+    mom2_rai = ls.M2r,
 )
 precip_variables(ls, _, ::PerfExperimental) =
     (; ρq_rai = zero(eltype(ls)), ρq_sno = zero(eltype(ls)))
