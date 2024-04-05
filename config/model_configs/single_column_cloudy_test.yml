@@ -1,8 +1,8 @@
 config: "column"
 initial_condition: "PrecipitatingColumn"
 surface_setup: "DefaultMoninObukhov"
-z_elem: 2
-z_max: 100.0
+z_elem: 5
+z_max: 250.0
 z_stretch: false
 dt: "10secs"
 t_end: "10secs"
