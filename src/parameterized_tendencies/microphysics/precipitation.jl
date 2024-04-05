@@ -274,94 +274,89 @@ end
 ##### TODO N-Moment without sgs scheme
 #####
 
-# function precipitation_cache(Y, precip_model::MicrophysicsNMoment)
-#     FT = Spaces.undertype(axes(Y.c))
-#     return (;
-#         ᶜSqₜᵖ = similar(Y.c, FT),
-#         ᶜSqᵣᵖ = similar(Y.c, FT),
-#         ᶜSqₛᵖ = similar(Y.c, FT),
-#         ᶜSeₜᵖ = similar(Y.c, FT),
-#     )
-# end
+function precipitation_cache(Y, precip_model::MicrophysicsNMoment)
+    FT = Spaces.undertype(axes(Y.c))
+    return (;
+        ᶜSqₜᵖ = similar(Y.c, FT),
+        Smc0 = similar(Y.c, FT),
+        Smc1 = similar(Y.c, FT),
+        Smr0 = similar(Y.c, FT),
+        Smr1 = similar(Y.c, FT),
+        Smr2 = similar(Y.c, FT),
+        ᶜSeₜᵖ = similar(Y.c, FT),
+        cloudy_cls = similar(Y.c, CMF.CLSetup{FT})
+    )
+end
 
-# function compute_precipitation_cache!(Y, p, colidx, ::Microphysics1Moment, _)
-#     FT = Spaces.undertype(axes(Y.c))
-#     (; dt) = p
-#     (; ᶜts) = p.precomputed
-#     (; ᶜΦ) = p.core
-#     (; ᶜSqₜᵖ, ᶜSqᵣᵖ, ᶜSqₛᵖ, ᶜSeₜᵖ) = p.precipitation
-#     ᶜSᵖ = p.scratch.ᶜtemp_scalar
-#     ᶜSᵖ_snow = p.scratch.ᶜtemp_scalar_2
+function compute_precipitation_cache!(Y, p, colidx, ::MicrophysicsNMoment, _)
+    FT = Spaces.undertype(axes(Y.c))
+    (; dt) = p
+    (; ᶜts) = p.precomputed
+    (; ᶜΦ) = p.core
+    (; ᶜSqₜᵖ, Smc0, Smc1, Smr0, Smr1, Smr2, ᶜSeₜᵖ, cloudy_info) = p.precipitation
+    ᶜSᵖ = p.scratch.temp_data
 
-#     # get thermodynamics and 1-moment microphysics params
-#     (; params) = p
-#     cmp = CAP.microphysics_params(params)
-#     thp = CAP.thermodynamics_params(params)
+    # get thermodynamics and N-moment microphysics params
+    (; params) = p
+    cmp = CAP.microphysics_params(params)
+    thp = CAP.thermodynamics_params(params)
 
-#     # zero out the helper source terms
-#     @. ᶜSqₜᵖ[colidx] = FT(0)
-#     @. ᶜSqᵣᵖ[colidx] = FT(0)
-#     @. ᶜSqₛᵖ[colidx] = FT(0)
-#     @. ᶜSeₜᵖ[colidx] = FT(0)
+    # zero out the helper source terms
+    @. ᶜSqₜᵖ[colidx] = FT(0)
+    @. Smc0[colidx] = FT(0)
+    @. Smc1[colidx] = FT(0)
+    @. Smr0[colidx] = FT(0)
+    @. Smr1[colidx] = FT(0)
+    @. Smr2[colidx] = FT(0)
+    @. ᶜSeₜᵖ[colidx] = FT(0)
 
-#     # compute precipitation source terms
-#     # TODO - need version of this for EDMF SGS
-#     compute_precipitation_sources!(
-#         ᶜSᵖ[colidx],
-#         ᶜSᵖ_snow[colidx],
-#         ᶜSqₜᵖ[colidx],
-#         ᶜSqᵣᵖ[colidx],
-#         ᶜSqₛᵖ[colidx],
-#         ᶜSeₜᵖ[colidx],
-#         Y.c.ρ[colidx],
-#         Y.c.ρq_rai[colidx],
-#         Y.c.ρq_sno[colidx],
-#         ᶜts[colidx],
-#         ᶜΦ[colidx],
-#         dt,
-#         cmp,
-#         thp,
-#     )
+    # compute precipitation source terms
+    compute_Nmoment_tendencies!(
+        ᶜSᵖ[colidx],
+        Smc0[colidx],
+        Smc1[colidx],
+        Smr0[colidx],
+        Smr1[colidx],
+        Smr2[colidx],
+        ᶜSeₜᵖ[colidx],
+        cloudy_info[colidx],
+        Y.c.ρ[colidx],
+        Y.c.mom0_clo[colidx],
+        Y.c.mom1_clo[colidx],
+        Y.c.mom0_rai[colidx],
+        Y.c.mom1_rai[colidx],
+        Y.c.mom2_rai[colidx],
+        ᶜts[colidx],
+        ᶜΦ[colidx],
+        dt,
+        cmp,
+        thp,
+    )
+end
 
-#     # compute precipitation sinks
-#     # (For now only done on the grid mean)
-#     compute_precipitation_sinks!(
-#         ᶜSᵖ[colidx],
-#         ᶜSqₜᵖ[colidx],
-#         ᶜSqᵣᵖ[colidx],
-#         ᶜSqₛᵖ[colidx],
-#         ᶜSeₜᵖ[colidx],
-#         Y.c.ρ[colidx],
-#         Y.c.ρq_rai[colidx],
-#         Y.c.ρq_sno[colidx],
-#         ᶜts[colidx],
-#         ᶜΦ[colidx],
-#         dt,
-#         cmp,
-#         thp,
-#     )
-# end
+function precipitation_tendency!(
+    Yₜ,
+    Y,
+    p,
+    t,
+    colidx,
+    precip_model::MicrophysicsNMoment,
+)
+    (; turbconv_model) = p.atmos
+    compute_precipitation_cache!(Y, p, colidx, precip_model, turbconv_model)
 
-# function precipitation_tendency!(
-#     Yₜ,
-#     Y,
-#     p,
-#     t,
-#     colidx,
-#     precip_model::Microphysics1Moment,
-# )
-#     (; turbconv_model) = p.atmos
-#     compute_precipitation_cache!(Y, p, colidx, precip_model, turbconv_model)
+    (; ᶜSqₜᵖ, Smc0, Smc1, Smr0, Smr1, Smr2, ᶜSeₜᵖ) = p.precipitation
 
-#     (; ᶜSqₜᵖ, ᶜSqᵣᵖ, ᶜSqₛᵖ, ᶜSeₜᵖ) = p.precipitation
+    # Update grid mean tendencies
+    @. Yₜ.c.ρ[colidx] += Y.c.ρ[colidx] * ᶜSqₜᵖ[colidx]
+    @. Yₜ.c.ρq_tot[colidx] += Y.c.ρ[colidx] * ᶜSqₜᵖ[colidx]
+    @. Yₜ.c.ρe_tot[colidx] += Y.c.ρ[colidx] * ᶜSeₜᵖ[colidx]
+    @. Yₜ.c.mom0_clo[colidx] += Smc0[colidx]
+    @. Yₜ.c.mom1_clo[colidx] += Smc1[colidx]
+    @. Yₜ.c.mom0_rai[colidx] += Smr0[colidx]
+    @. Yₜ.c.mom1_rai[colidx] += Smr1[colidx]
+    @. Yₜ.c.mom2_rai[colidx] += Smr2[colidx]
 
-#     # Update grid mean tendencies
-#     @. Yₜ.c.ρ[colidx] += Y.c.ρ[colidx] * ᶜSqₜᵖ[colidx]
-#     @. Yₜ.c.ρq_tot[colidx] += Y.c.ρ[colidx] * ᶜSqₜᵖ[colidx]
-#     @. Yₜ.c.ρe_tot[colidx] += Y.c.ρ[colidx] * ᶜSeₜᵖ[colidx]
-#     @. Yₜ.c.ρq_rai[colidx] += Y.c.ρ[colidx] * ᶜSqᵣᵖ[colidx]
-#     @. Yₜ.c.ρq_sno[colidx] += Y.c.ρ[colidx] * ᶜSqₛᵖ[colidx]
-
-#     return nothing
-# end
+    return nothing
+end
 

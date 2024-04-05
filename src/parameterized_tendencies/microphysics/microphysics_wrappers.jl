@@ -1,5 +1,4 @@
 # A set of wrappers for using CloudMicrophysics.jl functions inside EDMFX loops
-
 import Thermodynamics as TD
 import CloudMicrophysics.Microphysics0M as CM0
 import CloudMicrophysics.MicrophysicsFlexible as CMF
@@ -11,6 +10,7 @@ const Lf = TD.latent_heat_fusion
 const Tₐ = TD.air_temperature
 const PP = TD.PhasePartition
 const qᵥ = TD.vapor_specific_humidity
+const SS = TD.supersaturation
 qₗ(thp, ts) = TD.PhasePartition(thp, ts).liq
 qᵢ(thp, ts) = TD.PhasePartition(thp, ts).ice
 
@@ -276,3 +276,77 @@ function compute_precipitation_sinks!(
 end
 
 # TODO: Sources and sinks for NMoment
+"""
+    compute_Nmoment_tendencies!(Sᵖ, Sqₜᵖ, Sqᵣᵖ, Sqₛᵖ, Seₜᵖ, ρ, ρqᵣ, ρqₛ, ts, Φ, dt, mp, thp)
+
+ - Sᵖ - a temporary containter to help compute precipitation source terms
+ - Sqₜᵖ, Smc0, Smc1, Smr0, Smr1, Smr2, Seₜᵖ - cached storage for moment source terms
+ - cloudy_info - cached storage for cloudy data
+ - ρ - air density
+ - ρqᵣ, ρqₛ - precipitation (rain and snow) densities
+ - ts - thermodynamic state (see td package for details)
+ - Φ - geopotential
+ - dt - model time step
+ - thp, cmp - structs with thermodynamic and microphysics parameters
+
+Returns the moment tendency terms and q sources from the N-moment scheme.
+The specific humidity source terms are defined as defined as Δmᵢ / (m_dry + m_tot)
+where i stands for total, rain or snow.
+Also returns the total energy source term due to the microphysics processes.
+"""
+function compute_Nmoment_tendencies!( # TODO: replace with generalized CLSetup structure instead
+    Sᵖ,
+    Sqₜᵖ,
+    Smc0,
+    Smc1,
+    Smr0,
+    Smr1,
+    Smr2,
+    Seₜᵖ,
+    cloudy_info,
+    ρ,
+    M0c,
+    M1c,
+    M0r,
+    M1r,
+    M2r,
+    ts,
+    Φ,
+    dt,
+    mp,
+    thp,
+)
+#### NOTES ####
+# S is defined as (dmj/dt) / sum(mj), i.e. source terms to the specific humidities in kg / kg
+# mc1 and mr2 are defined as the mass of water per volume, in kg / m^3
+# qt = mc1 * ρ
+# ρe has units J / m^3, so e has units J / kg (working fluid)
+###############
+    FT = eltype(Sqₜᵖ)
+
+    # Update CLSetup
+    @. cloudy_info.mom = FT.([M0c, M1c, M0r, M1r, M2r])
+
+    # condensation / evaporation: q_vap <-> (q_cloud, q_rain)
+    @. Sᵖ = CMF.condensation(cloudy_info, mp.aps, thp, Tₐ(thp, ts), SS(ts, Liquid()))
+    @. Smc0 = Sᵖ[1]
+    @. Smc1 = Sᵖ[2]
+    @. Smr0 = Sᵖ[3]
+    @. Smr1 = Sᵖ[4]
+    @. Smr2 = Sᵖ[5]
+    # TODO: make these tendencies more general
+    @. Sqₜᵖ -= Sᵖ[4] / ρ    
+    @. Seₜᵖ -= Sᵖ[4] / ρ * (Iₗ(thp, ts) + Φ)
+
+    # coalescence: q_cloud <-> q_rain
+    @. Sᵖ = CMF.coalescence(cloudy_info)
+    @. Smc0 += Sᵖ[1]
+    @. Smc1 += Sᵖ[2]
+    @. Smr0 += Sᵖ[3]
+    @. Smr1 += Sᵖ[4]
+    @. Smr2 += Sᵖ[5]
+    # TODO: make these tendencies more general
+    @. Sqₜᵖ += Sᵖ[2] / ρ
+    @. Seₜᵖ += Sᵖ[2] / ρ * (Iₗ(thp, ts) + Φ)
+
+end

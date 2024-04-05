@@ -126,11 +126,11 @@ precip_variables(ls, ::Microphysics1Moment, ::PerfStandard) = (;
     ρq_sno = ls.ρ * ls.precip_state.q_sno,
 ) # TODO Microphysics NMoment: map over N and generate variables w.r.t. N 
 precip_variables(ls, ::MicrophysicsNMoment, ::PerfStandard) = (;
-    mom0_clo = ls.M0c,
-    mom1_clo = ls.M1c,
-    mom0_rai = ls.M0r,
-    mom1_rai = ls.M1r,
-    mom2_rai = ls.M2r,
+    mom0_clo = ls.precip_state.M0c,
+    mom1_clo = ls.precip_state.M1c,
+    mom0_rai = ls.precip_state.M0r,
+    mom1_rai = ls.precip_state.M1r,
+    mom2_rai = ls.precip_state.M2r,
 )
 precip_variables(ls, _, ::PerfExperimental) =
     (; ρq_rai = zero(eltype(ls)), ρq_sno = zero(eltype(ls)))
