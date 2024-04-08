@@ -342,6 +342,7 @@ function get_initial_condition(parsed_args)
         "RisingThermalBubbleProfile",
         "ScharProfile",
         "PrecipitatingColumn",
+        "PrecipitatingColumnNM",
     ]
         return getproperty(ICs, Symbol(parsed_args["initial_condition"]))()
     else

@@ -981,6 +981,7 @@ end
 A 1-dimensional precipitating column test
 """
 struct PrecipitatingColumn <: InitialCondition end
+struct PrecipitatingColumnNM <: InitialCondition end
 
 prescribed_prof(::Type{FT}, z_mid, z_max, val) where {FT} =
     z -> z < z_max ? FT(val) * exp(-(z - FT(z_mid))^2 / 2 / FT(1e3)^2) : FT(0)
@@ -1013,6 +1014,50 @@ function (initial_condition::PrecipitatingColumn)(params)
             velocity = Geometry.UVVector(u(z), v(z)),
             turbconv_state = nothing,
             precip_state = PrecipState1M(; q_rai = qᵣ(z), q_sno = qₛ(z)),
+        )
+    end
+    return local_state
+end
+
+function (initial_condition::PrecipitatingColumnNM)(params)
+    FT = eltype(params)
+    thermo_params = CAP.thermodynamics_params(params)
+    p_0 = FT(101300.0)
+    # Rain: N = 1 / cm^3 = 1e-6 / m^3; k=1, θ = 1e-2 g = 1e-5 kg 
+    # Cloud: N = 100 / cm^3 = 1e-4 / m^3; θ = 1e-4 g = 1e-7 kg
+    mom0r = prescribed_prof(FT, 2000, 5000, 1e-6)
+    mom1r = prescribed_prof(FT, 2000, 5000, 1e-11)
+    mom2r = prescribed_prof(FT, 2000, 5000, 2e-16)
+    mom0c = prescribed_prof(FT, 4000, 5500, 1e-4)
+    mom1c = prescribed_prof(FT, 4000, 5500, 1e-11)
+    qₗ = mom1c
+    qᵢ = prescribed_prof(FT, 6000, 9000, 1e-10)
+    θ = APL.Rico_θ_liq_ice(FT)
+    q_tot = APL.Rico_q_tot(FT)
+    u = prescribed_prof(FT, 0, Inf, 0)
+    v = prescribed_prof(FT, 0, Inf, 0)
+    p = hydrostatic_pressure_profile(; thermo_params, p_0, θ, q_tot)
+    function local_state(local_geometry)
+        (; z) = local_geometry.coordinates
+        ts = TD.PhaseNonEquil_pθq(
+            thermo_params,
+            p(z),
+            θ(z),
+            TD.PhasePartition(q_tot(z), qₗ(z), qᵢ(z)),
+        )
+        return LocalState(;
+            params,
+            geometry = local_geometry,
+            thermo_state = ts,
+            velocity = Geometry.UVVector(u(z), v(z)),
+            turbconv_state = nothing,
+            precip_state = PrecipStateNM(; 
+                M0c = mom0c(z),
+                M1c = mom1c(z),
+                M0r = mom0r(z),
+                M1r = mom1r(z),
+                M2r = mom2r(z),
+            ),
         )
     end
     return local_state

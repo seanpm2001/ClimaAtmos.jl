@@ -1,5 +1,5 @@
 config: "column"
-initial_condition: "PrecipitatingColumn"
+initial_condition: "PrecipitatingColumnNM"
 surface_setup: "DefaultMoninObukhov"
 z_elem: 5
 z_max: 250.0
@@ -9,7 +9,7 @@ t_end: "10secs"
 dt_save_state_to_disk: "10secs"
 dt_cloud_fraction: "10secs"
 moist: "nonequil"
-precip_model: "1M"
+precip_model: "NM"
 vert_diff: "FriersonDiffusion"
 implicit_diffusion: true
 approximate_linear_solve_iters: 2

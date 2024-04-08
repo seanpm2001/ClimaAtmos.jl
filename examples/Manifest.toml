@@ -307,8 +307,8 @@ weakdeps = ["CairoMakie"]
     CairoMakieExt = "CairoMakie"
 
 [[deps.ClimaAtmos]]
-deps = ["Adapt", "ArgParse", "ArtifactWrappers", "Artifacts", "AtmosphericProfilesLibrary", "ClimaComms", "ClimaCore", "ClimaParams", "ClimaTimeSteppers", "CloudMicrophysics", "Colors", "Dates", "Dierckx", "DiffEqBase", "DiffEqCallbacks", "DocStringExtensions", "FastGaussQuadrature", "Insolation", "Interpolations", "IntervalSets", "Krylov", "LinearAlgebra", "Logging", "NCDatasets", "NVTX", "Pkg", "Printf", "RRTMGP", "Random", "RootSolvers", "SciMLBase", "StaticArrays", "Statistics", "StatsBase", "SurfaceFluxes", "Thermodynamics", "YAML"]
-git-tree-sha1 = "4960972c563c63850c0c730939a0ec38281ac5c1"
+deps = ["Adapt", "ArgParse", "ArtifactWrappers", "Artifacts", "AtmosphericProfilesLibrary", "ClimaComms", "ClimaCore", "ClimaParams", "ClimaTimeSteppers", "ClimaUtilities", "CloudMicrophysics", "Cloudy", "Colors", "Dates", "Dierckx", "DiffEqBase", "DiffEqCallbacks", "DocStringExtensions", "FastGaussQuadrature", "Insolation", "Interpolations", "IntervalSets", "Krylov", "LinearAlgebra", "Logging", "NCDatasets", "NVTX", "NumericalIntegration", "Pkg", "Printf", "RRTMGP", "Random", "RootSolvers", "SciMLBase", "StaticArrays", "Statistics", "StatsBase", "SurfaceFluxes", "Thermodynamics", "YAML"]
+path = ".."
 uuid = "b2c96348-7fb7-4fe0-8da9-78d88439e717"
 version = "0.22.1"
 
@@ -413,9 +413,11 @@ version = "0.18.0"
 
 [[deps.Cloudy]]
 deps = ["DocStringExtensions", "LinearAlgebra", "Logging", "NumericalIntegration", "Optim", "QuadGK", "SpecialFunctions", "TerminalLoggers"]
-git-tree-sha1 = "e53a005b9be310371c3e8e5414c1433d7f2a2288"
+git-tree-sha1 = "13cd5e078959306598e52ac06c4eef648467c9fd"
+repo-rev = "ej/new_cluster_ci"
+repo-url = "../../Cloudy.jl"
 uuid = "9e3b23bb-e7cc-4b94-886c-65de2234ba87"
-version = "0.4.0"
+version = "0.4.1"
 
 [[deps.CodeTracking]]
 deps = ["InteractiveUtils", "UUIDs"]

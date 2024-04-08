@@ -161,6 +161,11 @@ function ImplicitEquationJacobian(
         @name(c.ρq_ice),
         @name(c.ρq_rai),
         @name(c.ρq_sno),
+        @name(c.mom0_clo),
+        @name(c.mom1_clo),
+        @name(c.mom0_rai),
+        @name(c.mom1_rai),
+        @name(c.mom2_rai)
     )
     available_tracer_names = MatrixFields.unrolled_filter(is_in_Y, tracer_names)
 
