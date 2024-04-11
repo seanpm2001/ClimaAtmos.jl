@@ -986,6 +986,11 @@ struct PrecipitatingColumnNM <: InitialCondition end
 prescribed_prof(::Type{FT}, z_mid, z_max, val) where {FT} =
     z -> z < z_max ? FT(val) * exp(-(z - FT(z_mid))^2 / 2 / FT(1e3)^2) : FT(0)
 
+function prescribed_prof(z_mid, z_max, val)
+    FT = eltype(val)
+    return @. z -> z < z_max ? val * exp(-(z - FT(z_mid))^2 / 2 / FT(1e3)^2) : ntuple(_ -> FT(0), length(val))
+end
+
 function (initial_condition::PrecipitatingColumn)(params)
     FT = eltype(params)
     thermo_params = CAP.thermodynamics_params(params)
@@ -1023,15 +1028,13 @@ function (initial_condition::PrecipitatingColumnNM)(params)
     FT = eltype(params)
     thermo_params = CAP.thermodynamics_params(params)
     p_0 = FT(101300.0)
+    N = 5
     # Rain: N = 1 / cm^3 = 1e-6 / m^3; k=1, θ = 1e-2 g = 1e-5 kg 
     # Cloud: N = 100 / cm^3 = 1e-4 / m^3; θ = 1e-4 g = 1e-7 kg
-    mom0r = prescribed_prof(FT, 2000, 5000, 1e-6)
-    mom1r = prescribed_prof(FT, 2000, 5000, 1e-11)
-    mom2r = prescribed_prof(FT, 2000, 5000, 2e-16)
-    mom0c = prescribed_prof(FT, 4000, 5500, 1e-4)
-    mom1c = prescribed_prof(FT, 4000, 5500, 1e-11)
-    qₗ = mom1c
-    qᵢ = prescribed_prof(FT, 6000, 9000, 1e-10)
+    mom = prescribed_prof(2000, 5000, (FT(1e-4), FT(1e-11), FT(1e-6), FT(1e-11), FT(2e-16)))
+    qₗ = prescribed_prof(FT, 2000, 5000, FT(1e-11))
+    ρqᵣ= prescribed_prof(FT, 2000, 5000, FT(1e-11))
+    qᵢ = prescribed_prof(FT, 6000, 9000, FT(1e-10))
     θ = APL.Rico_θ_liq_ice(FT)
     q_tot = APL.Rico_q_tot(FT)
     u = prescribed_prof(FT, 0, Inf, 0)
@@ -1051,13 +1054,10 @@ function (initial_condition::PrecipitatingColumnNM)(params)
             thermo_state = ts,
             velocity = Geometry.UVVector(u(z), v(z)),
             turbconv_state = nothing,
-            precip_state = PrecipStateNM(; 
-                M0c = mom0c(z),
-                M1c = mom1c(z),
-                M0r = mom0r(z),
-                M1r = mom1r(z),
-                M2r = mom2r(z),
-            ),
+            precip_state = PrecipStateNM(;
+                moments = mom(z),
+                ρq_rai = ρqᵣ(z)
+            )
         )
     end
     return local_state

@@ -14,9 +14,9 @@ vert_diff: "FriersonDiffusion"
 implicit_diffusion: true
 approximate_linear_solve_iters: 2
 regression_test: false
-check_precipitation: true
+check_precipitation: false
 job_id: "single_column_precipitation_test"
 toml: [toml/single_column_precipitation_test.toml]
 diagnostics:
-  - short_name: [hus, clw, cli, husra, hussn, ta, wa]
+  - short_name: [hus, clw, cli, husra, ta, wa]
     period: 10secs

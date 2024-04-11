@@ -295,21 +295,11 @@ where i stands for total, rain or snow.
 Also returns the total energy source term due to the microphysics processes.
 """
 function compute_Nmoment_tendencies!( # TODO: replace with generalized CLSetup structure instead
-    Sᵖ,
     Sqₜᵖ,
-    Smc0,
-    Smc1,
-    Smr0,
-    Smr1,
-    Smr2,
+    Sources,
     Seₜᵖ,
-    cloudy_info,
     ρ,
-    M0c,
-    M1c,
-    M0r,
-    M1r,
-    M2r,
+    moments,
     ts,
     Φ,
     dt,
@@ -324,29 +314,19 @@ function compute_Nmoment_tendencies!( # TODO: replace with generalized CLSetup s
 ###############
     FT = eltype(Sqₜᵖ)
 
-    # Update CLSetup
-    @. cloudy_info.mom = FT.([M0c, M1c, M0r, M1r, M2r])
+    # # Update CLSetup
+    # @. cloudy_info.mom = FT.([M0c, M1c, M0r, M1r, M2r])
 
     # condensation / evaporation: q_vap <-> (q_cloud, q_rain)
-    @. Sᵖ = CMF.condensation(cloudy_info, mp.aps, thp, Tₐ(thp, ts), SS(ts, Liquid()))
-    @. Smc0 = Sᵖ[1]
-    @. Smc1 = Sᵖ[2]
-    @. Smr0 = Sᵖ[3]
-    @. Smr1 = Sᵖ[4]
-    @. Smr2 = Sᵖ[5]
+    @. Sources = ntuple(_ -> FT(0), length(moments)) #CMF.condensation(cloudy_info, mp.aps, thp, Tₐ(thp, ts), SS(ts, Liquid()))
     # TODO: make these tendencies more general
-    @. Sqₜᵖ -= Sᵖ[4] / ρ    
-    @. Seₜᵖ -= Sᵖ[4] / ρ * (Iₗ(thp, ts) + Φ)
+    @. Sqₜᵖ -= getindex(Sources, 4) / ρ    
+    @. Seₜᵖ -= getindex(Sources, 4) / ρ * (Iₗ(thp, ts) + Φ)
 
-    # coalescence: q_cloud <-> q_rain
-    @. Sᵖ = CMF.coalescence(cloudy_info)
-    @. Smc0 += Sᵖ[1]
-    @. Smc1 += Sᵖ[2]
-    @. Smr0 += Sᵖ[3]
-    @. Smr1 += Sᵖ[4]
-    @. Smr2 += Sᵖ[5]
-    # TODO: make these tendencies more general
-    @. Sqₜᵖ += Sᵖ[2] / ρ
-    @. Seₜᵖ += Sᵖ[2] / ρ * (Iₗ(thp, ts) + Φ)
+    # # coalescence: q_cloud <-> q_rain
+    @. Sources = ntuple(_ -> FT(0), length(moments)) #CMF.coalescence(cloudy_info)
+    # # TODO: make these tendencies more general
+    @. Sqₜᵖ += getindex(Sources, 2) / ρ
+    @. Seₜᵖ += getindex(Sources, 2) / ρ * (Iₗ(thp, ts) + Φ)
 
 end

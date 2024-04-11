@@ -161,11 +161,7 @@ function ImplicitEquationJacobian(
         @name(c.ρq_ice),
         @name(c.ρq_rai),
         @name(c.ρq_sno),
-        @name(c.mom0_clo),
-        @name(c.mom1_clo),
-        @name(c.mom0_rai),
-        @name(c.mom1_rai),
-        @name(c.mom2_rai)
+        @name(c.moments),
     )
     available_tracer_names = MatrixFields.unrolled_filter(is_in_Y, tracer_names)
 
@@ -408,8 +404,13 @@ NVTX.@annotate function Wfact!(A, Y, p, dtγ, t)
         p.precomputed.ᶜts,
         p.precomputed.ᶜp,
         (
-            p.atmos.precip_model isa Microphysics1Moment ? # TODO Nmoment
-            (; p.precomputed.ᶜwᵣ, p.precomputed.ᶜwₛ) : (;)
+            if p.atmos.precip_model isa Microphysics1Moment
+                (; p.precomputed.ᶜwᵣ, p.precomputed.ᶜwₛ)
+            elseif p.atmos.precip_model isa MicrophysicsNMoment
+                (; p.precomputed.ᶜwᵣ)
+            else
+                (;)
+            end
         )...,
         p.precomputed.ᶜh_tot,
         (

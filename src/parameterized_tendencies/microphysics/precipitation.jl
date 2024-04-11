@@ -278,13 +278,8 @@ function precipitation_cache(Y, precip_model::MicrophysicsNMoment)
     FT = Spaces.undertype(axes(Y.c))
     return (;
         ᶜSqₜᵖ = similar(Y.c, FT),
-        Smc0 = similar(Y.c, FT),
-        Smc1 = similar(Y.c, FT),
-        Smr0 = similar(Y.c, FT),
-        Smr1 = similar(Y.c, FT),
-        Smr2 = similar(Y.c, FT),
+        ᶜSources = similar(Y.c, eltype(Y.c.moments)),
         ᶜSeₜᵖ = similar(Y.c, FT),
-        cloudy_cls = similar(Y.c, CMF.CLSetup{FT})
     )
 end
 
@@ -293,8 +288,7 @@ function compute_precipitation_cache!(Y, p, colidx, ::MicrophysicsNMoment, _)
     (; dt) = p
     (; ᶜts) = p.precomputed
     (; ᶜΦ) = p.core
-    (; ᶜSqₜᵖ, Smc0, Smc1, Smr0, Smr1, Smr2, ᶜSeₜᵖ, cloudy_info) = p.precipitation
-    ᶜSᵖ = p.scratch.temp_data
+    (; ᶜSqₜᵖ, ᶜSources, ᶜSeₜᵖ) = p.precipitation
 
     # get thermodynamics and N-moment microphysics params
     (; params) = p
@@ -303,29 +297,16 @@ function compute_precipitation_cache!(Y, p, colidx, ::MicrophysicsNMoment, _)
 
     # zero out the helper source terms
     @. ᶜSqₜᵖ[colidx] = FT(0)
-    @. Smc0[colidx] = FT(0)
-    @. Smc1[colidx] = FT(0)
-    @. Smr0[colidx] = FT(0)
-    @. Smr1[colidx] = FT(0)
-    @. Smr2[colidx] = FT(0)
+    @. ᶜSources[colidx] = ntuple(_ -> FT(0), length(Y.c.moments[colidx]))
     @. ᶜSeₜᵖ[colidx] = FT(0)
 
     # compute precipitation source terms
     compute_Nmoment_tendencies!(
-        ᶜSᵖ[colidx],
-        Smc0[colidx],
-        Smc1[colidx],
-        Smr0[colidx],
-        Smr1[colidx],
-        Smr2[colidx],
+        ᶜSqₜᵖ[colidx],
+        ᶜSources[colidx],
         ᶜSeₜᵖ[colidx],
-        cloudy_info[colidx],
         Y.c.ρ[colidx],
-        Y.c.mom0_clo[colidx],
-        Y.c.mom1_clo[colidx],
-        Y.c.mom0_rai[colidx],
-        Y.c.mom1_rai[colidx],
-        Y.c.mom2_rai[colidx],
+        Y.c.moments[colidx],
         ᶜts[colidx],
         ᶜΦ[colidx],
         dt,
@@ -345,17 +326,13 @@ function precipitation_tendency!(
     (; turbconv_model) = p.atmos
     compute_precipitation_cache!(Y, p, colidx, precip_model, turbconv_model)
 
-    (; ᶜSqₜᵖ, Smc0, Smc1, Smr0, Smr1, Smr2, ᶜSeₜᵖ) = p.precipitation
+    (; ᶜSqₜᵖ, ᶜSources, ᶜSeₜᵖ) = p.precipitation
 
     # Update grid mean tendencies
     @. Yₜ.c.ρ[colidx] += Y.c.ρ[colidx] * ᶜSqₜᵖ[colidx]
     @. Yₜ.c.ρq_tot[colidx] += Y.c.ρ[colidx] * ᶜSqₜᵖ[colidx]
     @. Yₜ.c.ρe_tot[colidx] += Y.c.ρ[colidx] * ᶜSeₜᵖ[colidx]
-    @. Yₜ.c.mom0_clo[colidx] += Smc0[colidx]
-    @. Yₜ.c.mom1_clo[colidx] += Smc1[colidx]
-    @. Yₜ.c.mom0_rai[colidx] += Smr0[colidx]
-    @. Yₜ.c.mom1_rai[colidx] += Smr1[colidx]
-    @. Yₜ.c.mom2_rai[colidx] += Smr2[colidx]
+    @. Yₜ.c.moments[colidx] += ᶜSources[colidx]
 
     return nothing
 end

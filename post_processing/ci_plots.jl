@@ -503,6 +503,63 @@ function make_plots(
 end
 
 function make_plots(
+    ::Val{:single_column_cloudy_test},
+    output_paths::Vector{<:AbstractString},
+)
+
+    simdirs = SimDir.(output_paths)
+
+    # TODO: Move this plotting code into the same framework as the other ones
+    simdir = simdirs[1]
+
+    short_names = ["hus", "clw", "cli", "husra", "ta"]
+    vars = [
+        slice(get(simdir; short_name), x = 0.0, y = 0.0) for
+        short_name in short_names
+    ]
+
+    # We first prepare the axes with all the nice labels with ClimaAnalysis, then we use
+    # CairoMakie to add the additional lines.
+    fig = CairoMakie.Figure(; size = (1200, 600))
+
+    p_loc = [1, 1]
+
+    axes = map(vars) do var
+        viz.plot!(
+            fig,
+            var;
+            time = 0.0,
+            p_loc,
+            more_kwargs = Dict(
+                :plot => ca_kwargs(color = :navy),
+                :axis => ca_kwargs(dim_on_y = true, title = ""),
+            ),
+        )
+
+        # Make a grid of plots
+        p_loc[2] += 1
+        p_loc[2] > 3 && (p_loc[1] += 1; p_loc[2] = 1)
+        return CairoMakie.current_axis()
+    end
+
+    col = Dict(500 => :blue2, 1000 => :royalblue, 1500 => :skyblue1)
+
+    for (time, color) in col
+        for (i, var) in enumerate(vars)
+            CairoMakie.lines!(
+                axes[i],
+                slice(var; time).data,
+                var.dims["z"],
+                color = color,
+            )
+        end
+    end
+
+    file_path = joinpath(output_paths[1], "summary.pdf")
+    CairoMakie.save(file_path, fig)
+end
+
+function make_plots(
     ::Val{:box_density_current_test},
     output_paths::Vector{<:AbstractString},
 )
