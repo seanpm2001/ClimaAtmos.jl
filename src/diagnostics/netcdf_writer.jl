@@ -322,14 +322,17 @@ function add_space_coordinates_maybe!(
 
     if Spaces.grid(space).hypsography isa Grids.Flat
         if disable_vertical_interpolation
-            zpts = Array(
-                parent(
-                    space.grid.vertical_grid.center_local_geometry.coordinates,
-                ),
-            )
             name = "z"
-            add_dimension!(nc, name, zpts, units = "m", axis = "Z")
-            vdims_names = ["name"]
+            z_dimension_exists = dimension_exists(nc, name, (num_points_vertic,))
+            if !z_dimension_exists
+                zpts = vec(Array(
+                    parent(
+                        space.grid.vertical_grid.center_local_geometry.coordinates,
+                    )),
+                )
+                add_dimension!(nc, name, zpts, units = "m", axis = "Z")
+                vdims_names = [name]
+            end
         else
         vdims_names =
             add_space_coordinates_maybe!(nc, vertical_space, num_points_vertic)
