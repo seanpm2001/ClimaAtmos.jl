@@ -1,12 +1,10 @@
 dt_save_state_to_disk: "2days"
 initial_condition: "DryBaroclinicWave"
 dt: "400secs"
-t_end: "1days"
+t_end: "1hours"
 job_id: "sphere_baroclinic_wave_rhoe"
 netcdf_output_at_levels: true
+output_default_diagnostics: false
 diagnostics:
-  - short_name: [pfull, wa, va, rv]
-    period: 1days
-  - short_name: [pfull, wa, va, rv]
-    period: 1days
-    writer: h5
+  - short_name: [pfull]
+    period: 1hours
