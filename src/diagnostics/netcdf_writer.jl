@@ -328,10 +328,17 @@ function add_space_coordinates_maybe!(
                 ),
             )
             name = "z"
-            add_dimension!(nc, name, zpts[:, 1], units = "m", axis = "Z")
+            if !dimension_exists(nc, name, (num_points_vertic,))
+                zpts = Array(
+                    parent(
+                        space.grid.vertical_grid.center_local_geometry.coordinates,
+                    ),
+                )
+                add_dimension!(nc, name, zpts[:, 1], units="m", axis="Z")
+            end
             vdims_names = [name]
         else
-        vdims_names =
+            vdims_names =
             add_space_coordinates_maybe!(nc, vertical_space, num_points_vertic)
         end
     else
@@ -345,7 +352,7 @@ function add_space_coordinates_maybe!(
             depending_on_dimensions = hdims_names,
         )
     end
-
+    @show (hdims_names..., vdims_names...)
     return (hdims_names..., vdims_names...)
 end
 
