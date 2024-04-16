@@ -320,39 +320,42 @@ function add_space_coordinates_maybe!(
         Spaces.staggering(space),
     )
 
-    if Spaces.grid(space).hypsography isa Grids.Flat
-        if disable_vertical_interpolation
+    no_topography = Spaces.grid(space).hypsography isa Grids.Flat
+
+    if disable_vertical_interpolation
+        zpts = Array(
+            parent(space.grid.vertical_grid.center_local_geometry.coordinates),
+        )
+        name = no_topography ? "z" : "z_reference"
+        if !dimension_exists(nc, name, (num_points_vertic,))
             zpts = Array(
                 parent(
                     space.grid.vertical_grid.center_local_geometry.coordinates,
                 ),
             )
-            name = "z"
-            if !dimension_exists(nc, name, (num_points_vertic,))
-                zpts = Array(
-                    parent(
-                        space.grid.vertical_grid.center_local_geometry.coordinates,
-                    ),
-                )
-                add_dimension!(nc, name, zpts[:, 1], units="m", axis="Z")
-            end
-            vdims_names = [name]
-        else
-            vdims_names =
-            add_space_coordinates_maybe!(nc, vertical_space, num_points_vertic)
+            add_dimension!(nc, name, zpts[:, 1], units = "m", axis = "Z")
         end
+        vdims_names = [name]
     else
-        disable_vertical_interpolation && error("Not implemented")
-        vdims_names = add_space_coordinates_maybe!(
-            nc,
-            vertical_space,
-            num_points_vertic,
-            interpolated_physical_z;
-            names = ("z_reference",),
-            depending_on_dimensions = hdims_names,
-        )
+        if no_topography
+            vdims_names = add_space_coordinates_maybe!(
+                nc,
+                vertical_space,
+                num_points_vertic,
+            )
+        else
+            disable_vertical_interpolation && error("Not implemented")
+            vdims_names = add_space_coordinates_maybe!(
+                nc,
+                vertical_space,
+                num_points_vertic,
+                interpolated_physical_z;
+                names = ("z_reference",),
+                depending_on_dimensions = hdims_names,
+            )
+        end
     end
-    @show (hdims_names..., vdims_names...)
+
     return (hdims_names..., vdims_names...)
 end
 
