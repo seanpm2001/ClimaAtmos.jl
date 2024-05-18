@@ -1,0 +1,18 @@
+prior: prior_prognostic.toml
+# prior: prior_prognostic_entr_only.toml
+# prior: prior_diagnostic.toml
+ensemble_size: 100
+n_iterations: 3
+batch_size: 1
+model_config : model_config_prognostic.yml
+# model_config : model_config_diagnostic.yml
+output_dir : output/gcm_driven_scm
+y_var_names: [thetaa, hus, clw]
+# dims : 360 # 180  # num vertical levels x num variables
+# dims : 720 # 180  # num vertical levels x num variables
+dims : 570 # 180  # num vertical levels x num variables
+num_les_cases : 1
+y_t_start_sec : 475200.0 # 5.5 days (LES length = 6 days)
+y_t_end_sec : 518400.0 # 6.0 days
+g_t_start_sec : 216000.0 # 2.5 days(SCM length = 3 days)
+g_t_end_sec : 259200.0 # 3 days
