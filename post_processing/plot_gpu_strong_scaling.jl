@@ -25,13 +25,9 @@ original_results = get_jld2data(output_dir, job_id, t_int_days, "_ss_")
 
 comparison_results = get_jld2data(output_dir, "gpu_aquaplanet_dyamond_copy_ss", t_int_days, "_ss_")
 
-map(keys(original_results)) do k
-    original = getproperty(original_results, k)
-    comparison = getproperty(comparison_results, k)
-    difference = original - comparison
-    # percent_diff = abs(original - comparison) / ((original + comparison) / 2)
-    @info "$k" original comparison difference
-end
+percent_diff(x,y) = abs(x - y) / ((x + y) / 2)
+sypd_percentage_diff = percent_diff.(sypd_clima_atmos, comparison_results.sypd_clima_atmos)
+@show sypd_percentage_diff
 
 # scaling efficiency
 single_proc_time_clima_atmos = walltime_clima_atmos[1] * nprocs_clima_atmos[1]
