@@ -121,144 +121,144 @@ steps:
   #         slurm_exclusive:
 
   - group: "DYAMOND GPU strong scaling"
-  #   steps:
+    steps:
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling - 1 GPU"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_ss_1process
-  #         - >
-  #           srun --cpu-bind=threads --cpus-per-task=4
-  #           nsys profile --trace=nvtx,mpi,cuda,osrt --output=gpu_aquaplanet_dyamond_ss_1process/output_active/report
-  #           julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
-  #           --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_ss_1process.yml
-  #           --job_id gpu_aquaplanet_dyamond_ss_1process
-  #       artifact_paths: "gpu_aquaplanet_dyamond_ss_1process/output_active/*"
-  #       env:
-  #         CLIMACOMMS_DEVICE: "CUDA"
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_gpus_per_task: 1
-  #         slurm_cpus_per_task: 4
-  #         slurm_ntasks: 1
-  #         slurm_mem: 32G
-  #         slurm_time: 8:00:00
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling - 1 GPU"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_ss_1process
+          - >
+            srun --cpu-bind=threads --cpus-per-task=4
+            nsys profile --trace=nvtx,mpi,cuda,osrt --output=gpu_aquaplanet_dyamond_ss_1process/output_active/report
+            julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
+            --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_ss_1process.yml
+            --job_id gpu_aquaplanet_dyamond_ss_1process
+        artifact_paths: "gpu_aquaplanet_dyamond_ss_1process/output_active/*"
+        env:
+          CLIMACOMMS_DEVICE: "CUDA"
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_gpus_per_task: 1
+          slurm_cpus_per_task: 4
+          slurm_ntasks: 1
+          slurm_mem: 32G
+          slurm_time: 8:00:00
+          slurm_exclusive:
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling - 2 GPUs"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_ss_2process
-  #         - >
-  #           srun --cpu-bind=threads --cpus-per-task=4
-  #           julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
-  #           --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_ss_2process.yml
-  #           --job_id gpu_aquaplanet_dyamond_ss_2process
-  #       artifact_paths: "gpu_aquaplanet_dyamond_ss_2process/output_active/*"
-  #       env:
-  #         CLIMACOMMS_DEVICE: "CUDA"
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_gpus_per_task: 1
-  #         slurm_cpus_per_task: 4
-  #         slurm_ntasks: 2
-  #         slurm_mem: 32G
-  #         slurm_time: 8:00:00
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling - 2 GPUs"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_ss_2process
+          - >
+            srun --cpu-bind=threads --cpus-per-task=4
+            julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
+            --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_ss_2process.yml
+            --job_id gpu_aquaplanet_dyamond_ss_2process
+        artifact_paths: "gpu_aquaplanet_dyamond_ss_2process/output_active/*"
+        env:
+          CLIMACOMMS_DEVICE: "CUDA"
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_gpus_per_task: 1
+          slurm_cpus_per_task: 4
+          slurm_ntasks: 2
+          slurm_mem: 32G
+          slurm_time: 8:00:00
+          slurm_exclusive:
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling - 4 GPUs"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_ss_4process
-  #         - >
-  #           srun --cpu-bind=threads --cpus-per-task=4
-  #           julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
-  #           --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_ss_4process.yml
-  #           --job_id gpu_aquaplanet_dyamond_ss_4process
-  #       artifact_paths: "gpu_aquaplanet_dyamond_ss_4process/output_active/*"
-  #       env:
-  #         CLIMACOMMS_DEVICE: "CUDA"
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_gpus_per_task: 1
-  #         slurm_cpus_per_task: 4
-  #         slurm_ntasks: 4
-  #         slurm_mem: 32G
-  #         slurm_time: 8:00:00
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling - 4 GPUs"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_ss_4process
+          - >
+            srun --cpu-bind=threads --cpus-per-task=4
+            julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
+            --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_ss_4process.yml
+            --job_id gpu_aquaplanet_dyamond_ss_4process
+        artifact_paths: "gpu_aquaplanet_dyamond_ss_4process/output_active/*"
+        env:
+          CLIMACOMMS_DEVICE: "CUDA"
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_gpus_per_task: 1
+          slurm_cpus_per_task: 4
+          slurm_ntasks: 4
+          slurm_mem: 32G
+          slurm_time: 8:00:00
+          slurm_exclusive:
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling - 1 GPU copy"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_copy_ss_1process
-  #         - >
-  #           srun --cpu-bind=threads --cpus-per-task=4
-  #           nsys profile --trace=nvtx,mpi,cuda,osrt --output=gpu_aquaplanet_dyamond_copy_ss_1process/output_active/report
-  #           julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
-  #           --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_copy_ss_1process.yml
-  #           --job_id gpu_aquaplanet_dyamond_copy_ss_1process
-  #       artifact_paths: "gpu_aquaplanet_dyamond_copy_ss_1process/output_active/*"
-  #       env:
-  #         CLIMACOMMS_DEVICE: "CUDA"
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_gpus_per_task: 1
-  #         slurm_cpus_per_task: 4
-  #         slurm_ntasks: 1
-  #         slurm_mem: 32G
-  #         slurm_time: 8:00:00
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling - 1 GPU copy"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_copy_ss_1process
+          - >
+            srun --cpu-bind=threads --cpus-per-task=4
+            nsys profile --trace=nvtx,mpi,cuda,osrt --output=gpu_aquaplanet_dyamond_copy_ss_1process/output_active/report
+            julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
+            --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_copy_ss_1process.yml
+            --job_id gpu_aquaplanet_dyamond_copy_ss_1process
+        artifact_paths: "gpu_aquaplanet_dyamond_copy_ss_1process/output_active/*"
+        env:
+          CLIMACOMMS_DEVICE: "CUDA"
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_gpus_per_task: 1
+          slurm_cpus_per_task: 4
+          slurm_ntasks: 1
+          slurm_mem: 32G
+          slurm_time: 8:00:00
+          slurm_exclusive:
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling - 2 GPUs copy"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_copy_ss_2process
-  #         - >
-  #           srun --cpu-bind=threads --cpus-per-task=4
-  #           julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
-  #           --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_copy_ss_2process.yml
-  #           --job_id gpu_aquaplanet_dyamond_copy_ss_2process
-  #       artifact_paths: "gpu_aquaplanet_dyamond_copy_ss_2process/output_active/*"
-  #       env:
-  #         CLIMACOMMS_DEVICE: "CUDA"
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_gpus_per_task: 1
-  #         slurm_cpus_per_task: 4
-  #         slurm_ntasks: 2
-  #         slurm_mem: 32G
-  #         slurm_time: 8:00:00
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling - 2 GPUs copy"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_copy_ss_2process
+          - >
+            srun --cpu-bind=threads --cpus-per-task=4
+            julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
+            --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_copy_ss_2process.yml
+            --job_id gpu_aquaplanet_dyamond_copy_ss_2process
+        artifact_paths: "gpu_aquaplanet_dyamond_copy_ss_2process/output_active/*"
+        env:
+          CLIMACOMMS_DEVICE: "CUDA"
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_gpus_per_task: 1
+          slurm_cpus_per_task: 4
+          slurm_ntasks: 2
+          slurm_mem: 32G
+          slurm_time: 8:00:00
+          slurm_exclusive:
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling - 4 GPUs copy"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_copy_ss_4process
-  #         - >
-  #           srun --cpu-bind=threads --cpus-per-task=4
-  #           julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
-  #           --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_copy_ss_4process.yml
-  #           --job_id gpu_aquaplanet_dyamond_copy_ss_4process
-  #       artifact_paths: "gpu_aquaplanet_dyamond_copy_ss_4process/output_active/*"
-  #       env:
-  #         CLIMACOMMS_DEVICE: "CUDA"
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_gpus_per_task: 1
-  #         slurm_cpus_per_task: 4
-  #         slurm_ntasks: 4
-  #         slurm_mem: 32G
-  #         slurm_time: 8:00:00
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling - 4 GPUs copy"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_copy_ss_4process
+          - >
+            srun --cpu-bind=threads --cpus-per-task=4
+            julia --threads=3 --color=yes --project=examples examples/hybrid/driver.jl
+            --config_file ${GPU_CONFIG_PATH}gpu_aquaplanet_dyamond_copy_ss_4process.yml
+            --job_id gpu_aquaplanet_dyamond_copy_ss_4process
+        artifact_paths: "gpu_aquaplanet_dyamond_copy_ss_4process/output_active/*"
+        env:
+          CLIMACOMMS_DEVICE: "CUDA"
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_gpus_per_task: 1
+          slurm_cpus_per_task: 4
+          slurm_ntasks: 4
+          slurm_mem: 32G
+          slurm_time: 8:00:00
+          slurm_exclusive:
 
-  #     - wait
+      - wait
 
-  #     - label: "gpu_aquaplanet_dyamond - strong scaling plots"
-  #       command:
-  #         - mkdir -p gpu_aquaplanet_dyamond_ss
-  #         - >
-  #           julia --color=yes --project=examples post_processing/plot_gpu_strong_scaling.jl gpu_aquaplanet_dyamond_ss
-  #       artifact_paths: "gpu_aquaplanet_dyamond_ss/*"
-  #       env:
-  #         CLIMACOMMS_CONTEXT: "MPI"
-  #       agents:
-  #         slurm_cpus_per_task: 1
-  #         slurm_ntasks: 1
-  #         slurm_exclusive:
+      - label: "gpu_aquaplanet_dyamond - strong scaling plots"
+        command:
+          - mkdir -p gpu_aquaplanet_dyamond_ss
+          - >
+            julia --color=yes --project=examples post_processing/plot_gpu_strong_scaling.jl gpu_aquaplanet_dyamond_ss
+        artifact_paths: "gpu_aquaplanet_dyamond_ss/*"
+        env:
+          CLIMACOMMS_CONTEXT: "MPI"
+        agents:
+          slurm_cpus_per_task: 1
+          slurm_ntasks: 1
+          slurm_exclusive:
 
   # - group: "DYAMOND GPU weak scaling"
   #   steps:
