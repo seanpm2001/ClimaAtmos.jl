@@ -27,10 +27,10 @@ comparison_results = get_jld2data(output_dir, "gpu_aquaplanet_dyamond_copy_ss", 
 
 map(keys(original_results)) do k
     original = getproperty(original_results, k)
-    comparison = getproperty(c, k)
+    comparison = getproperty(comparison_results, k)
     difference = original - comparison
     percent_diff = abs(original - comparison) / ((original + comparison) / 2)
-    @info "Comparison" k original comparison difference percent_diff
+    @info "$k" original comparison difference percent_diff
 end
 
 # scaling efficiency
