@@ -14,13 +14,24 @@ nlevels = z_elem + 1
 t_int = string(t_int_days) * " days"
 
 # read ClimaAtmos scaling data
+original_results = get_jld2data(output_dir, job_id, t_int_days, "_ss_")
 (;
     nprocs_clima_atmos,
     ncols_per_process,
     walltime_clima_atmos,
     sypd_clima_atmos,
     gpu_hours_clima_atmos,
-) = get_jld2data(output_dir, job_id, t_int_days, "_ss_")
+) = original_results
+
+comparison_results = get_jld2data(output_dir, "gpu_aquaplanet_dyamond_copy_ss", t_int_days, "_ss_")
+
+map(keys(original_results)) do k
+    original = getproperty(original_results, k)
+    comparison = getproperty(c, k)
+    difference = original - comparison
+    percent_diff = abs(original - comparison) / ((original + comparison) / 2)
+    @info "Comparison" k original comparison difference percent_diff
+end
 
 # scaling efficiency
 single_proc_time_clima_atmos = walltime_clima_atmos[1] * nprocs_clima_atmos[1]
