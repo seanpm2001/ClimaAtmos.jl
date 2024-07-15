@@ -29,8 +29,8 @@ map(keys(original_results)) do k
     original = getproperty(original_results, k)
     comparison = getproperty(comparison_results, k)
     difference = original - comparison
-    percent_diff = abs(original - comparison) / ((original + comparison) / 2)
-    @info "$k" original comparison difference percent_diff
+    # percent_diff = abs(original - comparison) / ((original + comparison) / 2)
+    @info "$k" original comparison difference
 end
 
 # scaling efficiency
