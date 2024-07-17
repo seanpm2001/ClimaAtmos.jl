@@ -50,7 +50,7 @@ steps:
           slurm_time: 12:00:00
         env:
           CLIMACOMMS_DEVICE: "CUDA"
-          JOB_NAME: "longrun_moist_baroclinic_wave_ft64"
+          JOB_NAME: "longrun_moist_baroclinic_wave"
 
       - label: ":computer: held-suarez, equilmoist"
         command:
@@ -61,5 +61,5 @@ steps:
           slurm_time: 12:00:00
         env:
           CLIMACOMMS_DEVICE: "CUDA"
-          JOB_NAME: "longrun_moist_held_suarez_ft64"
+          JOB_NAME: "longrun_moist_held_suarez"
 
