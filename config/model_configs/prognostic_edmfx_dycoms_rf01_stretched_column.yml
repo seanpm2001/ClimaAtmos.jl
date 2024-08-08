@@ -24,7 +24,9 @@ z_max: 1500
 x_elem: 2
 y_elem: 2
 z_elem: 5
-z_stretch: false
+z_stretch: true
+dz_bottom: 30
+dz_top: 300
 dt: 10secs
 t_end: 4hours
 dt_save_state_to_disk: 10mins
