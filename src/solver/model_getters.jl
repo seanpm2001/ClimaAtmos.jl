@@ -1,12 +1,19 @@
 function get_moisture_model(parsed_args)
     moisture_name = parsed_args["moist"]
-    @assert moisture_name in ("dry", "equil", "nonequil")
-    return if moisture_name == "dry"
-        DryModel()
-    elseif moisture_name == "equil"
-        EquilMoistModel()
-    elseif moisture_name == "nonequil"
-        NonEquilMoistModel()
+    precip_model = parsed_args["precip_model"]
+    @assert moisture_name in ("dry", "equil", "nonequil", "cloudy")
+    return if precip_model = "Cloudy"
+        CloudyMoisture()
+    else
+        if moisture_name == "dry"
+            DryModel()
+        elseif moisture_name == "equil"
+            EquilMoistModel()
+        elseif moisture_name == "nonequil"
+            NonEquilMoistModel()
+        else
+            error("Invalid moisture type $(moisture_name) for precip_model $(precip_model)")
+        end
     end
 end
 
@@ -286,6 +293,8 @@ function get_precipitation_model(parsed_args)
         Microphysics0Moment()
     elseif precip_model == "1M"
         Microphysics1Moment()
+    elseif precip_model == "Cloudy"
+        MicrophysicsCloudy()
     else
         error("Invalid precip_model $(precip_model)")
     end
