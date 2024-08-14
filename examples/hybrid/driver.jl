@@ -17,6 +17,7 @@ if !(@isdefined config)
     config = CA.AtmosConfig(config_file; job_id)
 end
 simulation = CA.get_simulation(config)
+@info "output to: $(simulation.output_dir)"
 (; integrator) = simulation
 sol_res = CA.solve_atmos!(simulation)
 

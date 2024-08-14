@@ -4,6 +4,7 @@
 
 import CloudMicrophysics.Microphysics1M as CM1
 import CloudMicrophysics as CM
+import Cloudy as CL
 import Thermodynamics as TD
 import ClimaCore.Spaces as Spaces
 import ClimaCore.Operators as Operators
@@ -428,4 +429,85 @@ function precipitation_tendency!(
         @. Yₜ.c.ρq_rai += Y.c.sgsʲs.:($$j).ρa * ᶜSqᵣᵖʲs.:($$j)
         @. Yₜ.c.ρq_sno += Y.c.sgsʲs.:($$j).ρa * ᶜSqₛᵖʲs.:($$j)
     end
+end
+
+
+#####
+##### Cloudy without sgs scheme
+#####
+
+
+function precipitation_cache(Y, precip_model::MicrophysicsCloudy)
+    FT = Spaces.undertype(axes(Y.c))
+    return (;
+        Smom = similar(Y.c, eltype(Y.c.moments)),
+        Sρq_vap = similar(Y.c, FT),
+        tmp_cloudy = similar(Y.c, eltype(Y.c.moments)),
+        # TODO ᶜSeₜᵖ = similar(Y.c, FT),
+        # TODO surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
+        # TODO surface_snow_flux = zeros(axes(Fields.level(Y.f, half))),
+    )
+end
+
+function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
+    FT = Spaces.undertype(axes(Y.c))
+    (; dt) = p
+    (; ᶜts, pdists, weighted_vt) = p.precomputed
+    (; ᶜΦ) = p.core
+    (; Smom, Sρq_vap, tmp_cloudy) = p.precipitation
+
+    # get thermodynamics and microphysics params # TODO: cloudy params
+    (; params) = p
+    cmp = CAP.microphysics_precipitation_params(params)
+    thp = CAP.thermodynamics_params(params)
+    clp = CAP.cloudy_params(params)
+
+    # update the pdists and weighted_vt
+    @. pdists = get_updated_pdists(Y.c.moments, pdists, clp)
+    @. weighted_vt = get_weighted_vt(Y.c.moments, pdists, clp)
+
+    # update the "standard" 1-moment variables
+    @. tmp_cloudy = separate_liq_rai(FT, Y.c.moments, pdists, clp)
+    @. Y.c.ρq_liq = tmp_cloudy.:3
+    @. Y.c.ρq_rai = tmp_cloudy.:4
+    @. Y.c.ρq_tot = Y.c.ρq_vap + Y.c.ρq_liq
+
+    # zero the sources
+    @. Smom *= FT(0)
+    @. Sρq_vap *= FT(0)
+
+    # compute the source terms
+    @. Smom += get_coal_sources(clp, moments, pdists, dt)
+    @. tmp_cloudy = get_cond_evap_sources(thp, aps, clp, ρq_tot, ρq_liq, moments, pdists, T, ρ, dt)
+    @. Smom += tmp_cloudy
+    mass_ind = 2
+    for j in 1:length(pdists)
+        @. Sρq_vap -= tmp_cloudy.:($$mass_ind)
+        mass_ind += clp.NProgMoms[j]
+    end
+end
+
+function precipitation_tendency!(
+    Yₜ,
+    Y,
+    p,
+    t,
+    precip_model::MicrophysicsCloudy,
+    _,
+)
+    (; turbconv_model) = p.atmos
+    (; Smom, Sρq_vap,) = p.precipitation
+
+    # Populate the cache and precipitation surface fluxes
+    compute_precipitation_cache!(Y, p, precip_model, turbconv_model)
+    # TODO compute_precipitation_surface_fluxes!(Y, p, precip_model)
+    
+
+    # Update grid mean tendencies
+    @. Yₜ.c.ρ += Sρq_vap # TODO: doesn't account for additional condensate loading
+    @. Yₜ.c.ρq_vap += Sρq_vap
+    @. Yₜ.c.moments += Smom
+    # TODO: implement energy source
+
+    return nothing
 end

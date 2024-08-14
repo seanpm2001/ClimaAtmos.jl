@@ -2,7 +2,7 @@ function get_moisture_model(parsed_args)
     moisture_name = parsed_args["moist"]
     precip_model = parsed_args["precip_model"]
     @assert moisture_name in ("dry", "equil", "nonequil", "cloudy")
-    return if precip_model = "Cloudy"
+    return if precip_model == "Cloudy"
         CloudyMoisture()
     else
         if moisture_name == "dry"

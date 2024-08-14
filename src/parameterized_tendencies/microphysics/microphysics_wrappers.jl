@@ -373,3 +373,26 @@ function compute_precipitation_sinks!(
     @. Seₜᵖ -= Sᵖ * (Iᵢ(thp, ts) + Φ)
     #! format: on
 end
+
+
+# Cloudy wrappers:
+function get_updated_pdists!(moments, pdists, cloudy_params)
+    #TODO
+end
+
+function separate_liq_rai(moments, pdists, cloudy_params)
+    # TODO: only the ρq_liq, ρq_rai
+end
+
+function get_weighted_vt(moments, pdists, cloudy_params)
+    #TODO
+end
+
+function get_coal_sources(cloudy_params, moments, pdists, dt)
+    # TODO
+end
+
+function get_cond_evap_sources(thp, aps, clp, ρq_tot, ρq_liq, moments, pdists, T, ρ, dt)
+    # TODO
+end
+
