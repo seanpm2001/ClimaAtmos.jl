@@ -464,12 +464,12 @@ function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
 
     # update the pdists and weighted_vt
     @. pdists = get_updated_pdists(Y.c.moments, pdists, clp)
-    @. weighted_vt = get_weighted_vt(Y.c.moments, pdists, clp)
+    @. weighted_vt = get_weighted_vt(FT, Y.c.moments, pdists, clp)
 
     # update the "standard" 1-moment variables
     @. tmp_cloudy = separate_liq_rai(FT, Y.c.moments, pdists, clp)
-    @. Y.c.ρq_liq = tmp_cloudy.:3
-    @. Y.c.ρq_rai = tmp_cloudy.:4
+    @. Y.c.ρq_liq = tmp_cloudy.:1
+    @. Y.c.ρq_rai = tmp_cloudy.:2
     @. Y.c.ρq_tot = Y.c.ρq_vap + Y.c.ρq_liq
 
     # zero the sources
@@ -477,8 +477,8 @@ function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     @. Sρq_vap *= FT(0)
 
     # compute the source terms
-    @. Smom += get_coal_sources(clp, moments, pdists, dt)
-    @. tmp_cloudy = get_cond_evap_sources(thp, aps, clp, ρq_tot, ρq_liq, moments, pdists, T, ρ, dt)
+    @. Smom += get_coal_sources(moments, pdists, clp, dt)
+    @. tmp_cloudy = get_cond_evap_sources(thp, cmp, clp, ρq_tot, ρq_liq, moments, pdists, ᶜts, Y.c.ρ, dt)
     @. Smom += tmp_cloudy
     mass_ind = 2
     for j in 1:length(pdists)

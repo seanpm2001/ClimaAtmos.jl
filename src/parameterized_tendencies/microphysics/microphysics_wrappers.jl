@@ -374,25 +374,127 @@ function compute_precipitation_sinks!(
     #! format: on
 end
 
+"""
+    get_updated_pdists!(moments, old_pdists, cloudy_params)
 
-# Cloudy wrappers:
-function get_updated_pdists!(moments, pdists, cloudy_params)
-    #TODO
+ - moments - current distribution moments
+ - old_pdists - previous particledistributions
+ - cloudy_params - parameters for Cloudy specific stuff
+
+Returns a new tuple of pdists with updated parameters based on the current moments
+"""
+function get_updated_pdists(moments, old_pdists, cloudy_params)
+    mom_normed = moments ./ cloudy_params.mom_norms
+    mom_i = get_dists_moments(mom_normed, cloudy_params.NProgMoms)
+    ntuple(length(old_pdists)) do i
+        if old_pdists[i] isa CL.ParticleDistributions.GammaPrimitiveParticleDistribution
+            CL.ParticleDistributions.update_dist_from_moments(
+                old_pdists[i],
+                mom_i[i],
+                param_range = (; :k => (1.0, 10.0)),
+            )
+        elseif old_pdists[i] isa CL.ParticleDistributions.LognormalPrimitiveParticleDistribution
+            CL.ParticleDistributions.update_dist_from_moments(old_pdists[i], mom_i[i])
+        else # Exponential or monodisperse
+            CL.ParticleDistributions.update_dist_from_moments(old_pdists[i], mom_i[i][1:2])
+        end
+    end
 end
 
-function separate_liq_rai(moments, pdists, cloudy_params)
-    # TODO: only the ρq_liq, ρq_rai
+"""
+    separate_liq_rai(moments, pdists, cloudy_params)
+
+ - moments - current distribution moments
+ - pdists - current particledistributions
+ - cloudy_params - parameters for Cloudy specific stuff
+
+Returns a tuple of the same size as "moments", where the first two entries
+are the liquid and rain mass density corresponding to the current distributions,
+using the threshold size specific in cloudy_params
+"""
+function separate_liq_rai(FT, moments, pdists, cloudy_params)
+    tmp = CL.ParticleDistributions.get_standard_N_q(pdists, cloudy_params.size_threshold / cloudy_params.norms[2])
+    ntuple(length(moments)) do k
+        if k == 1
+            max(tmp.ρq_liq * cloudy_params.mom_norms[1], FT(0))
+        elseif k == 2
+            max(tmp.ρq_rai * cloudy_params.mom_norms[1], FT(0))
+        else
+            FT(0)
+        end
+    end
 end
 
-function get_weighted_vt(moments, pdists, cloudy_params)
-    #TODO
+"""
+   get_weighted_vt(moments, pdists, cloudy_params)
+
+ - moments - current distribution moments
+ - pdists - current particledistributions
+ - cloudy_params - parameters for Cloudy specific stuff
+
+Returns the moment-weighted terminal velocities corresponding to the input momnents,
+where the terminal velocity parameters are specific in cloudy_params
+"""
+function get_weighted_vt(FT, moments, pdists, cloudy_params)
+    sed_flux = CL.Sedimentation.get_sedimentation_flux(pdists, cloudy_params.vel)
+    ntuple(length(moments)) do i
+        ifelse(moments[i] > FT(0), -1 * sed_flux[i] * cloudy_params.mom_norms[i] / moments[i], FT(0))
+    end
 end
 
+"""
+   get_coal_sources(moments, pdists, cloudy_params, dt)
+
+ - moments - current distribution moments
+ - pdists - current particledistributions
+ - cloudy_params - parameters for Cloudy specific stuff
+ - dt - model time step, used for tendency limiters
+
+Returns the moment tendencies coming from coalescence processes, using the 
+coalescence dynamics info from cloudy_params
+"""
 function get_coal_sources(cloudy_params, moments, pdists, dt)
-    # TODO
+    dY_coal_tmp = CL.Coalescence.get_coal_ints(CL.EquationTypes.AnalyticalCoalStyle(), pdists, cloudy_params.coal_data)
+    ntuple(length(moments)) do j
+        ifelse(
+            dY_coal_tmp[j] >= 0,
+            dY_coal_tmp[j] * cloudy_params.mom_norms[j],
+            max(dY_coal_tmp[j] * cloudy_params.mom_norms[j], -moments[j] / dt),
+        )
+    end
 end
 
-function get_cond_evap_sources(thp, aps, clp, ρq_tot, ρq_liq, moments, pdists, T, ρ, dt)
-    # TODO
+
+"""
+   get_cond_evap_sources(FT, thp, mp, clp, ρq_tot, ρq_liq, moments, pdists, T, ρ, dt)
+
+ - thermo_params
+ - cmp - microphysics params, including the air properties
+ - cloudy_params
+ - ρq_tot 
+ - ρq_liq
+ - moments - current distribution moments
+ - pdists - current particledistributions
+ - ts - thermodynamic state
+ - dt - model time step, used for tendency limiters
+
+Returns the moment tendencies coming from coalescence processes, using the 
+coalescence dynamics info from cloudy_params
+"""
+function get_cond_evap_sources(FT, thermo_params, cmp, cloudy_params, ρq_tot, ρq_liq, moments, pdists, ts, ρ, dt)
+    q = TD.PhasePartition(q_tot, q_liq, FT(0))
+    T = Tₐ(thermo_params, ts)
+    ξ = CM.Common.G_func(cmp.aps, thermo_params, T, TD.Liquid())
+    ξ_normed = ξ / cloudy_params.norms[2]^(2 / 3)
+    s = TD.supersaturation(thermo_params, q, ρ, T, TD.Liquid())
+    dY_ce_tmp = CL.Condensation.get_cond_evap(pdists, s, ξ_normed) .* cloudy_params.mom_norms
+    ntuple(length(moments)) do j
+        if (j == cloudy_params.NProgMoms[1] + 1 && moments[j + 1] / moments[j] < 1e-11) ||
+           (j == 1 && moments[j + 1] / moments[j] < 1e-14)
+            -moments[j] / dt / 4
+        else
+            ifelse(dY_ce_tmp[j] >= 0, dY_ce_tmp[j], max(dY_ce_tmp[j], -moments[j] / dt))
+        end
+    end
 end
 
