@@ -165,7 +165,31 @@ or clarification that you can take care of while you are here.
 
 Here is an example of a docstring:
 
-TODO: add example
+#TODO: replace with simpler example
+```
+julia> import ClimaAtmos
+help?> ClimaAtmos.AtmosConfig()
+  AtmosConfig(
+      config_file::String = default_config_file;
+      job_id = config_id_from_config_file(config_file),
+      comms_ctx = nothing,
+  )
+  AtmosConfig(
+      config_files::Union{NTuple{<:Any, String} ,Vector{String}};
+      job_id = config_id_from_config_files(config_files),
+      comms_ctx = nothing,
+  )
+
+  Helper function for the AtmosConfig constructor. Reads a YAML file into a Dict and passes it to the AtmosConfig
+  constructor.
+```
+
+You can find the source code (including the docstring) for the function as follows:
+```
+julia> @functionloc ClimaAtmos.AtmosConfig()
+("/Users/MyUsername/ClimaAtmos.jl/src/solver/types.jl", 513)
+```
+To view, open the file above in the text editor of your choice and navigate to the given linenumber, in this case line 513.
 
 You can preview how the Documentation will look like after merging by building the documentation 
 locally. From the main directory of your local repository call
