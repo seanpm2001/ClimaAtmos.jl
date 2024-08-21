@@ -5,6 +5,7 @@ import SurfaceFluxes.UniversalFunctions as UF
 import Insolation.Parameters.InsolationParameters
 import Thermodynamics.Parameters.ThermodynamicsParameters
 import CloudMicrophysics as CM
+import Cloudy as CL
 
 function TurbulenceConvectionParameters(toml_dict::CP.AbstractTOMLDict)
     name_map = (;
@@ -51,6 +52,54 @@ function SurfaceTemperatureParameters(toml_dict::CP.AbstractTOMLDict)
     parameters = CP.get_parameter_values(toml_dict, name_map, "ClimaAtmos")
     FT = CP.float_type(toml_dict)
     CAP.SurfaceTemperatureParameters{FT}(; parameters...)
+end
+
+function CloudyParameters(FT, ND::Integer)
+    # TODO: use NM and ND...for now we will assume they're all exp 
+    pdists = ntuple(ND) do dist
+        CL.ParticleDistributions.ExponentialPrimitiveParticleDistribution(FT(0), FT(1))
+    end
+    NProgMoms = map(pdists) do dist
+        CL.ParticleDistributions.nparams(dist)
+    end
+    norms = (FT(1e6), FT(1e-9))
+    mom_norms = CL.get_moments_normalizing_factors(Int.(NProgMoms), norms)
+    # Define collision kernel function
+    # TODO: make polyfit use FT type test elements (in Cloudy.jl)
+    kernel_func = CL.KernelFunctions.LinearKernelFunction(FT(5e0)) # 5 m^3 / kg / s
+    # kernel_func = CL.KernelFunctions.LongKernelFunction(5.236e-10, 9.44e9, 5.78)
+
+    # Compute matrix of kernel tensors each approximating kernel func as polynomail serries
+    r = 1
+    matrix_of_kernels = ntuple(ND) do i
+        ntuple(ND) do j
+            if i == j == 1
+                CL.KernelTensors.CoalescenceTensor(kernel_func, r, FT(5e-10))
+            else
+                CL.KernelTensors.CoalescenceTensor(kernel_func, r, FT(1e-6), FT(5e-10))
+            end
+        end
+    end
+    # Define mass thresholds between water categories
+    size_threshold = FT(5e-10)
+    mass_thresholds = ntuple(ND) do k
+        if k < ND
+            size_threshold * 10^(k - ND/2)
+        else
+            Inf
+        end
+    end
+
+    # Define coalescence data required by Cloudy
+    coal_data = CL.Coalescence.CoalescenceData(matrix_of_kernels, NProgMoms, mass_thresholds, norms)
+
+    return (;
+        NProgMoms = NProgMoms,
+        norms = norms,
+        mom_norms = mom_norms,
+        coal_data = coal_data,
+        vel = ((FT(30), FT(1.0 / 6)),),
+    )
 end
 
 function create_parameter_set(config::AtmosConfig)
@@ -118,10 +167,27 @@ function create_parameter_set(config::AtmosConfig)
                     "ClimaAtmos",
                 ).prescribed_cloud_droplet_number_concentration,
             )
+        elseif precip_model == "Cloudy"
+            (;
+                aps = CM.Parameters.AirProperties(toml_dict),
+                Ndp = CP.get_parameter_values(
+                    toml_dict,
+                    "prescribed_cloud_droplet_number_concentration",
+                    "ClimaAtmos",
+                ).prescribed_cloud_droplet_number_concentration,
+            )
         else
             error("Invalid precip_model $(precip_model)")
         end
     MPP = typeof(microphysics_precipitation_params)
+    
+    cloudy_params =
+        if precip_model == "Cloudy"
+            CloudyParameters(FT, parsed_args["num_dist"])
+        else
+            nothing
+        end
+    CLP = typeof(cloudy_params)
 
     name_map = (;
         :f_plane_coriolis_frequency => :f_plane_coriolis_frequency,
@@ -149,13 +215,14 @@ function create_parameter_set(config::AtmosConfig)
         :optics_lookup_temperature_max => :optics_lookup_temperature_max,
     )
     parameters = CP.get_parameter_values(toml_dict, name_map, "ClimaAtmos")
-    return CAP.ClimaAtmosParameters{FT, TP, RP, IP, MPC, MPP, WP, SFP, TCP, STP}(;
+    return CAP.ClimaAtmosParameters{FT, TP, RP, IP, MPC, MPP, CLP, WP, SFP, TCP, STP}(;
         parameters...,
         thermodynamics_params,
         rrtmgp_params,
         insolation_params,
         microphysics_cloud_params,
         microphysics_precipitation_params,
+        cloudy_params,
         water_params,
         surface_fluxes_params,
         turbconv_params,

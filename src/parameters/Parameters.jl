@@ -62,6 +62,7 @@ Base.@kwdef struct ClimaAtmosParameters{
     IP,
     MPC,
     MPP,
+    CLP,
     WP,
     SFP,
     TCP,
@@ -72,6 +73,7 @@ Base.@kwdef struct ClimaAtmosParameters{
     insolation_params::IP
     microphysics_cloud_params::MPC
     microphysics_precipitation_params::MPP
+    cloudy_params::CLP
     water_params::WP
     surface_fluxes_params::SFP
     turbconv_params::TCP
