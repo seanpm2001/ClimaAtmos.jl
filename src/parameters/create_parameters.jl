@@ -86,7 +86,7 @@ function CloudyParameters(FT, ND::Integer)
         if k < ND
             size_threshold * 10^(k - ND/2)
         else
-            Inf
+            FT(Inf)
         end
     end
 

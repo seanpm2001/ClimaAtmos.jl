@@ -456,7 +456,7 @@ function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     (; ᶜΦ) = p.core
     (; Smom, Sρq_vap, tmp_cloudy) = p.precipitation
 
-    # get thermodynamics and microphysics params # TODO: cloudy params
+    # get thermodynamics and microphysics params
     (; params) = p
     cmp = CAP.microphysics_precipitation_params(params)
     thp = CAP.thermodynamics_params(params)

@@ -193,6 +193,9 @@ apply_limiter:
 precip_model:
   help: "Precipitation model [`nothing` (default), `0M`]"
   value: ~
+num_dist:
+  help: "Number of distributions to be used with Cloudy.jl"
+  value: 1
 cloud_model:
   help: "Cloud model [`grid_scale`, `quadrature` (default), `quadrature_sgs`]"
   value: "quadrature"
