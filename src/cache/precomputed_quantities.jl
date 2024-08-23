@@ -147,13 +147,21 @@ function precomputed_quantities(Y, atmos)
         (;)
     end
     precipitation_quantities =
-        atmos.precip_model isa Microphysics1Moment ?
-        (;
-            ᶜwᵣ = similar(Y.c, FT),
-            ᶜwₛ = similar(Y.c, FT),
-            ᶜqᵣ = similar(Y.c, FT),
-            ᶜqₛ = similar(Y.c, FT),
-        ) : (;)
+        if atmos.precip_model isa Microphysics1Moment
+            (;
+                ᶜwᵣ = similar(Y.c, FT),
+                ᶜwₛ = similar(Y.c, FT),
+                ᶜqᵣ = similar(Y.c, FT),
+                ᶜqₛ = similar(Y.c, FT),
+            ) 
+        elseif atmos.precip_model isa MicrophysicsCloudy
+            (;
+                pdists = similar(Y.c, eltype(Y.c.moments)),
+                weighted_vt = similar(Y.c, eltype(Y.c.moments)),
+            )
+        else 
+            (;)
+        end
     return (;
         gs_quantities...,
         sgs_quantities...,
@@ -503,9 +511,7 @@ NVTX.@annotate function set_precomputed_quantities!(Y, p, t)
     #     compute_gm_mixing_length!(ᶜmixing_length, Y, p)
     # end
 
-    if precip_model isa Microphysics1Moment
-        set_precipitation_precomputed_quantities!(Y, p, t)
-    end
+    set_precipitation_precomputed_quantities!(Y, p, t, precip_model)
 
     if turbconv_model isa PrognosticEDMFX
         set_prognostic_edmf_precomputed_quantities_draft_and_bc!(Y, p, ᶠuₕ³, t)

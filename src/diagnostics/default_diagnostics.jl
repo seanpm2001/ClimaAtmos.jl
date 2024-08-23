@@ -186,6 +186,19 @@ function default_diagnostics(
     return [average_func(precip_diagnostics...; output_writer, t_start)...]
 end
 
+function default_diagnostics(
+    ::MicrophysicsCloudy,
+    t_start,
+    t_end;
+    output_writer,
+)
+    precip_diagnostics = ["husra"]
+
+    average_func = frequency_averages(t_start, t_end)
+
+    return [average_func(precip_diagnostics...; output_writer, t_start)...]
+end
+
 ##################
 # Radiation mode #
 ##################

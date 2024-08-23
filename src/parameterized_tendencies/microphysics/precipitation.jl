@@ -462,10 +462,6 @@ function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     thp = CAP.thermodynamics_params(params)
     clp = CAP.cloudy_params(params)
 
-    # update the pdists and weighted_vt
-    @. pdists = get_updated_pdists(Y.c.moments, pdists, clp)
-    @. weighted_vt = get_weighted_vt(FT, Y.c.moments, pdists, clp)
-
     # update the "standard" 1-moment variables
     @. tmp_cloudy = separate_liq_rai(FT, Y.c.moments, pdists, clp)
     @. Y.c.ρq_liq = tmp_cloudy.:1
