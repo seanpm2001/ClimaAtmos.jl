@@ -21,6 +21,7 @@ import ..unit_basis_vector_data
 import ..DryModel
 import ..EquilMoistModel
 import ..NonEquilMoistModel
+import ..CloudyMoisture
 
 # precip_model
 import ..NoPrecipitation

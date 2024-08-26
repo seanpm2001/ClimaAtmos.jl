@@ -113,3 +113,16 @@ struct PrecipState1M{FT} <: PrecipState{FT}
 end
 PrecipState1M(; q_rai = 0, q_sno = 0) =
     PrecipState1M{typeof(q_rai)}(q_rai, q_sno)
+
+"""
+    PrecipStateCloudy(; q_rai, moments)
+
+Stores the values of `ρq_rai` and `ρq_sno` for the `precip_model`.
+If no values are provided, they are set to zero.
+"""
+struct PrecipStateCloudy{NM, FT} <: PrecipState{FT}
+    q_rai::FT
+    moments::NTuple{NM, FT}
+end
+PrecipStateCloudy(; q_rai = 0, moments = ntuple(_ -> 0, 5)) =
+    PrecipStateCloudy{length(moments), typeof(q_rai)}(q_rai, moments)

@@ -44,7 +44,7 @@ function set_precipitation_precomputed_quantities!(Y, p, t, precip_model::Microp
     return nothing
 end
 
-function set_precipitation_precomputed_quantities!(Y, p, t, precip_model::Cloudy)
+function set_precipitation_precomputed_quantities!(Y, p, t, precip_model::MicrophysicsCloudy)
     (; ᶜqᵣ, pdists, weighted_vt) = p.precomputed
 
     clp = CAP.cloudy_params(p.params)

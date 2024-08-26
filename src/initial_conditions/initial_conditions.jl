@@ -1105,22 +1105,55 @@ A 1-dimensional precipitating column test
 """
 struct PrecipitatingColumn <: InitialCondition end
 
-prescribed_prof(::Type{FT}, z_mid, z_max, val) where {FT} =
-    z -> z < z_max ? FT(val) * exp(-(z - FT(z_mid))^2 / 2 / FT(1e3)^2) : FT(0)
+prescribed_prof(z_mid, z_max, val::FT) where {FT} =
+    z -> z < z_max ? val * exp(-(z - z_mid)^2 / 2 / FT(1e3)^2) : FT(0)
+prescribed_prof(z, z_mid, z_max, val::NTuple{NM, FT}) where {NM, FT} =
+    z < z_max ? val .* exp(-(z - z_mid)^2 / 2 / FT(1e3)^2) : zero.(val)
 
 function (initial_condition::PrecipitatingColumn)(params)
     FT = eltype(params)
     thermo_params = CAP.thermodynamics_params(params)
     p_0 = FT(101300.0)
-    qᵣ = prescribed_prof(FT, 2000, 5000, 1e-6)
-    qₛ = prescribed_prof(FT, 5000, 8000, 2e-6)
-    qₗ = prescribed_prof(FT, 4000, 5500, 2e-5)
-    qᵢ = prescribed_prof(FT, 6000, 9000, 1e-5)
+    qᵣ = prescribed_prof(2000, 5000, FT(1e-6))
+    qₛ = prescribed_prof(5000, 8000, FT(2e-6))
+    qₗ = prescribed_prof(4000, 5500, FT(2e-5))
+    qᵢ = prescribed_prof(6000, 9000, FT(1e-5))
     θ = APL.Rico_θ_liq_ice(FT)
     q_tot = APL.Rico_q_tot(FT)
-    u = prescribed_prof(FT, 0, Inf, 0)
-    v = prescribed_prof(FT, 0, Inf, 0)
+    u = prescribed_prof(0, FT(Inf), FT(0))
+    v = prescribed_prof(0, FT(Inf), FT(0))
     p = hydrostatic_pressure_profile(; thermo_params, p_0, θ, q_tot)
+    moments = 
+        if !isnothing(params.cloudy_params)
+            clp = params.cloudy_params
+            # Partition into the first one or two distributions, regardless of how many
+            # Cloud: N = 100 / cm^3 = 1e8 / m^3; k = 1
+            mom_c = (FT(1e8), FT(2e-5), 2 * FT(2e-5) * FT(2e-5))
+            # Rain: N = 1 / cm^3 = 1e6 / m^3; k = 1
+            mom_r = (FT(1e6), FT(1e-6), 2 * FT(1e-6) * FT(1e-6))
+            cloud_mom = CL.rflatten(
+                ntuple(length(clp.NProgMoms)) do i
+                    ntuple(clp.NProgMoms[i]) do j
+                        i == 1 ? mom_c[j] : FT(0)
+                    end
+                end
+            )
+            rain_mom = CL.rflatten(
+                if length(clp.NProgMoms) == 1
+                    mom_r[1:clp.NProgMoms[1]]
+                else
+                    ntuple(length(clp.NProgMoms)) do i
+                        ntuple(clp.NProgMoms[i]) do j
+                            i == 2 ? mom_r[j] : FT(0)
+                        end
+                    end
+                end
+            )
+            # put it all together...
+            z -> prescribed_prof(z, 4000, 5500, cloud_mom) .+ prescribed_prof(z, 2000, 5000, rain_mom)
+        else
+            nothing
+        end
     function local_state(local_geometry)
         (; z) = local_geometry.coordinates
         ts = TD.PhaseNonEquil_pθq(
@@ -1129,13 +1162,19 @@ function (initial_condition::PrecipitatingColumn)(params)
             θ(z),
             TD.PhasePartition(q_tot(z), qₗ(z), qᵢ(z)),
         )
+        if isnothing(params.cloudy_params)
+            ps = PrecipState1M(; q_rai = qᵣ(z), q_sno = qₛ(z))
+        else
+            ps = PrecipStateCloudy(; q_rai = qᵣ(z), moments = moments(z))
+        end
+
         return LocalState(;
             params,
             geometry = local_geometry,
             thermo_state = ts,
             velocity = Geometry.UVVector(u(z), v(z)),
             turbconv_state = nothing,
-            precip_state = PrecipState1M(; q_rai = qᵣ(z), q_sno = qₛ(z)),
+            precip_state = ps,
         )
     end
     return local_state

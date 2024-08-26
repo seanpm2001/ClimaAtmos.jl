@@ -116,11 +116,22 @@ moisture_variables(ls, ::NonEquilMoistModel) = (;
     ρq_ice = ls.ρ * TD.ice_specific_humidity(ls.thermo_params, ls.thermo_state),
 )
 
+moisture_variables(ls, ::CloudyMoisture) = (;
+    ρq_tot = ls.ρ *
+             TD.total_specific_humidity(ls.thermo_params, ls.thermo_state),
+    ρq_liq = ls.ρ *
+             TD.liquid_specific_humidity(ls.thermo_params, ls.thermo_state),
+)
+
 precip_variables(ls, ::NoPrecipitation) = (;)
 precip_variables(ls, ::Microphysics0Moment) = (;)
 precip_variables(ls, ::Microphysics1Moment) = (;
     ρq_rai = ls.ρ * ls.precip_state.q_rai,
     ρq_sno = ls.ρ * ls.precip_state.q_sno,
+)
+precip_variables(ls, ::MicrophysicsCloudy) = (;
+    moments = ls.precip_state.moments,
+    ρq_rai = ls.ρ * ls.precip_state.q_rai,
 )
 
 # We can use paper-based cases for LES type configurations (no TKE)

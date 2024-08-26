@@ -84,12 +84,12 @@ function CloudyParameters(FT, ND::Integer)
     size_threshold = FT(5e-10)
     mass_thresholds = ntuple(ND) do k
         if k < ND
-            size_threshold * 10^(k - ND/2)
+            size_threshold * FT(10^(k - ND/2))
         else
             FT(Inf)
         end
     end
-
+    
     # Define coalescence data required by Cloudy
     coal_data = CL.Coalescence.CoalescenceData(matrix_of_kernels, NProgMoms, mass_thresholds, norms)
 

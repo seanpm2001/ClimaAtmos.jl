@@ -310,7 +310,7 @@ function compute_hur!(
     cache,
     time,
     moisture_model::T,
-) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
+) where {T <: Union{EquilMoistModel, NonEquilMoistModel, CloudyMoisture}}
     thermo_params = CAP.thermodynamics_params(cache.params)
     if isnothing(out)
         return TD.relative_humidity.(thermo_params, cache.precomputed.ᶜts)
@@ -342,7 +342,7 @@ function compute_hus!(
     cache,
     time,
     moisture_model::T,
-) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
+) where {T <: Union{EquilMoistModel, NonEquilMoistModel, CloudyMoisture}}
     if isnothing(out)
         return state.c.ρq_tot ./ state.c.ρ
     else
@@ -373,7 +373,7 @@ function compute_clw!(
     cache,
     time,
     moisture_model::T,
-) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
+) where {T <: Union{EquilMoistModel, NonEquilMoistModel, CloudyMoisture}}
     thermo_params = CAP.thermodynamics_params(cache.params)
     if isnothing(out)
         return copy(cache.precomputed.cloud_diagnostics_tuple.q_liq)
@@ -445,7 +445,7 @@ function compute_hussfc!(
     cache,
     time,
     moisture_model::T,
-) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
+) where {T <: Union{EquilMoistModel, NonEquilMoistModel, CloudyMoisture}}
     thermo_params = CAP.thermodynamics_params(cache.params)
     if isnothing(out)
         return TD.total_specific_humidity.(
@@ -578,7 +578,7 @@ function compute_evspsbl!(
     cache,
     time,
     moisture_model::T,
-) where {T <: Union{EquilMoistModel, NonEquilMoistModel}}
+) where {T <: Union{EquilMoistModel, NonEquilMoistModel, CloudyMoisture}}
     (; ρ_flux_q_tot) = cache.precomputed.sfc_conditions
     (; surface_ct3_unit) = cache.core
 

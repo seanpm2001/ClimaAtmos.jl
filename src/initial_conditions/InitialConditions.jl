@@ -4,9 +4,11 @@ import ..AtmosModel
 import ..DryModel
 import ..EquilMoistModel
 import ..NonEquilMoistModel
+import ..CloudyMoisture
 import ..NoPrecipitation
 import ..Microphysics0Moment
 import ..Microphysics1Moment
+import ..MicrophysicsCloudy
 import ..PrescribedSurfaceTemperature
 import ..PrognosticSurfaceTemperature
 import ..C3
@@ -30,6 +32,7 @@ import SciMLBase
 import Interpolations as Intp
 import NCDatasets as NC
 import Statistics: mean
+import Cloudy as CL
 
 include("local_state.jl")
 include("atmos_state.jl")
