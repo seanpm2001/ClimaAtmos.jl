@@ -482,6 +482,7 @@ thermo_state_type(::DryModel, ::Type{FT}) where {FT} = TD.PhaseDry{FT}
 thermo_state_type(::EquilMoistModel, ::Type{FT}) where {FT} = TD.PhaseEquil{FT}
 thermo_state_type(::NonEquilMoistModel, ::Type{FT}) where {FT} =
     TD.PhaseNonEquil{FT}
+thermo_state_type(::CloudyMoisture, ::Type{FT}) where {FT} = TD.PhaseEquil{FT}
 
 function get_sim_info(config::AtmosConfig)
     (; parsed_args) = config

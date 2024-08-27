@@ -437,12 +437,15 @@ end
 #####
 
 
-function precipitation_cache(Y, precip_model::MicrophysicsCloudy)
+function precipitation_cache(Y, precip_model::MicrophysicsCloudy, params)
     FT = Spaces.undertype(axes(Y.c))
+    clp = CAP.cloudy_params(params)
     return (;
         Smom = similar(Y.c, eltype(Y.c.moments)),
         Sρq_vap = similar(Y.c, FT),
         tmp_cloudy = similar(Y.c, eltype(Y.c.moments)),
+        pdists = similar(Y.c, typeof(clp.pdists)),
+        weighted_vt = similar(Y.c, typeof(Y.c.moments))
         # TODO ᶜSeₜᵖ = similar(Y.c, FT),
         # TODO surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
         # TODO surface_snow_flux = zeros(axes(Fields.level(Y.f, half))),
@@ -452,15 +455,19 @@ end
 function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     FT = Spaces.undertype(axes(Y.c))
     (; dt) = p
-    (; ᶜts, pdists, weighted_vt) = p.precomputed
+    (; ᶜts) = p.precomputed
     (; ᶜΦ) = p.core
-    (; Smom, Sρq_vap, tmp_cloudy) = p.precipitation
+    (; Smom, Sρq_vap, tmp_cloudy, pdists, weighted_vt) = p.precipitation
 
     # get thermodynamics and microphysics params
     (; params) = p
     cmp = CAP.microphysics_precipitation_params(params)
     thp = CAP.thermodynamics_params(params)
     clp = CAP.cloudy_params(params)
+
+    # update the pdists and weighted_vt
+    @. pdists = get_updated_pdists(Y.c.moments, pdists, clp)
+    @. weighted_vt = get_weighted_vt(FT, Y.c.moments, pdists, clp)
 
     # update the "standard" 1-moment variables
     @. tmp_cloudy = separate_liq_rai(FT, Y.c.moments, pdists, clp)

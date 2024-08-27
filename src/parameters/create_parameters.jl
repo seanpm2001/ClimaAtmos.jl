@@ -99,6 +99,7 @@ function CloudyParameters(FT, ND::Integer)
         mom_norms = mom_norms,
         coal_data = coal_data,
         vel = ((FT(30), FT(1.0 / 6)),),
+        pdists = pdists
     )
 end
 

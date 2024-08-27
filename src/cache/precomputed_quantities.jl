@@ -156,8 +156,7 @@ function precomputed_quantities(Y, atmos)
             ) 
         elseif atmos.precip_model isa MicrophysicsCloudy
             (;
-                pdists = similar(Y.c, eltype(Y.c.moments)),
-                weighted_vt = similar(Y.c, eltype(Y.c.moments)),
+                ᶜqᵣ = similar(Y.c, FT),
             )
         else 
             (;)
@@ -309,6 +308,8 @@ function thermo_vars(moisture_model, specific, K, Φ)
     elseif moisture_model isa NonEquilMoistModel
         q_pt_args = (specific.q_tot, specific.q_liq, specific.q_ice)
         (; q_pt = TD.PhasePartition(q_pt_args...))
+    elseif moisture_model isa CloudyMoisture
+        (; specific.q_tot)
     end
     return (; energy_var..., moisture_var...)
 end

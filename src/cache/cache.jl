@@ -204,61 +204,62 @@ function build_cache(Y, atmos, params, surface_setup, sim_info, aerosol_names)
     isnothing(precomputing_arguments.sfc_setup) &&
         SurfaceConditions.set_dummy_surface_conditions!(precomputing_arguments)
 
-    set_precomputed_quantities!(Y, precomputing_arguments, FT(0))
+    return precomputing_arguments
+    # set_precomputed_quantities!(Y, precomputing_arguments, FT(0))
 
-    radiation_args =
-        atmos.radiation_mode isa RRTMGPI.AbstractRRTMGPMode ?
-        (params, precomputed.ᶜp, aerosol_names) : ()
+    # radiation_args =
+    #     atmos.radiation_mode isa RRTMGPI.AbstractRRTMGPMode ?
+    #     (params, precomputed.ᶜp, aerosol_names) : ()
 
-    hyperdiff = hyperdiffusion_cache(Y, atmos)
-    rayleigh_sponge = rayleigh_sponge_cache(Y, atmos)
-    viscous_sponge = viscous_sponge_cache(Y, atmos)
-    smagorinsky_lilly = smagorinsky_lilly_cache(Y, atmos)
-    precipitation = precipitation_cache(Y, atmos)
-    subsidence = subsidence_cache(Y, atmos)
-    large_scale_advection = large_scale_advection_cache(Y, atmos)
-    external_forcing = external_forcing_cache(Y, atmos, params)
-    edmf_coriolis = edmf_coriolis_cache(Y, atmos)
-    forcing = forcing_cache(Y, atmos)
-    non_orographic_gravity_wave = non_orographic_gravity_wave_cache(Y, atmos)
-    orographic_gravity_wave = orographic_gravity_wave_cache(Y, atmos)
-    radiation = radiation_model_cache(Y, atmos, radiation_args...)
-    tracers = tracer_cache(Y, atmos, aerosol_names, start_date)
+    # hyperdiff = hyperdiffusion_cache(Y, atmos)
+    # rayleigh_sponge = rayleigh_sponge_cache(Y, atmos)
+    # viscous_sponge = viscous_sponge_cache(Y, atmos)
+    # smagorinsky_lilly = smagorinsky_lilly_cache(Y, atmos)
+    # precipitation = precipitation_cache(Y, atmos)
+    # subsidence = subsidence_cache(Y, atmos)
+    # large_scale_advection = large_scale_advection_cache(Y, atmos)
+    # external_forcing = external_forcing_cache(Y, atmos, params)
+    # edmf_coriolis = edmf_coriolis_cache(Y, atmos)
+    # forcing = forcing_cache(Y, atmos)
+    # non_orographic_gravity_wave = non_orographic_gravity_wave_cache(Y, atmos)
+    # orographic_gravity_wave = orographic_gravity_wave_cache(Y, atmos)
+    # radiation = radiation_model_cache(Y, atmos, radiation_args...)
+    # tracers = tracer_cache(Y, atmos, aerosol_names, start_date)
 
-    args = (
-        dt,
-        t_end,
-        WallTimeEstimate(),
-        start_date,
-        atmos,
-        numerics,
-        params,
-        core,
-        sfc_setup,
-        ghost_buffer,
-        SG_quad,
-        precomputed,
-        scratch,
-        hyperdiff,
-        do_dss,
-        rayleigh_sponge,
-        viscous_sponge,
-        smagorinsky_lilly,
-        precipitation,
-        subsidence,
-        large_scale_advection,
-        external_forcing,
-        edmf_coriolis,
-        forcing,
-        non_orographic_gravity_wave,
-        orographic_gravity_wave,
-        radiation,
-        tracers,
-        net_energy_flux_toa,
-        net_energy_flux_sfc,
-        conservation_check,
-        output_dir,
-    )
+    # args = (
+    #     dt,
+    #     t_end,
+    #     WallTimeEstimate(),
+    #     start_date,
+    #     atmos,
+    #     numerics,
+    #     params,
+    #     core,
+    #     sfc_setup,
+    #     ghost_buffer,
+    #     SG_quad,
+    #     precomputed,
+    #     scratch,
+    #     hyperdiff,
+    #     do_dss,
+    #     rayleigh_sponge,
+    #     viscous_sponge,
+    #     smagorinsky_lilly,
+    #     precipitation,
+    #     subsidence,
+    #     large_scale_advection,
+    #     external_forcing,
+    #     edmf_coriolis,
+    #     forcing,
+    #     non_orographic_gravity_wave,
+    #     orographic_gravity_wave,
+    #     radiation,
+    #     tracers,
+    #     net_energy_flux_toa,
+    #     net_energy_flux_sfc,
+    #     conservation_check,
+    #     output_dir,
+    # )
 
-    return AtmosCache{map(typeof, args)...}(args...)
+    # return AtmosCache{map(typeof, args)...}(args...)
 end
