@@ -19,8 +19,8 @@ precip_model: "0M"
 toml: [toml/longrun_aquaplanet.toml]
 prescribed_aerosols: ["CB1", "CB2", "DST01", "OC1", "OC2", "SO4", "SSLT01"]
 diagnostics:
-  - short_name: [mmrbcpo, mmrbcpi, mmrdust, mmrocpo, mmrocpi, mmrso4, mmrss]
+  - short_name: [mmrso4]
     period: "1days"
-  - short_name: [mmrbcpo, mmrbcpi, mmrdust, mmrocpo, mmrocpi, mmrso4, mmrss]
+  - short_name: [mmrso4]
     reduction_time: average
     period: "1months"
