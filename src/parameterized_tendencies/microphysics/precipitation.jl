@@ -11,14 +11,14 @@ import ClimaCore.Operators as Operators
 import ClimaCore.Fields as Fields
 import ClimaCore.Utilities: half
 
-precipitation_cache(Y, atmos::AtmosModel) =
-    precipitation_cache(Y, atmos.precip_model)
+precipitation_cache(Y, atmos::AtmosModel, params) =
+    precipitation_cache(Y, atmos.precip_model, params)
 
 #####
 ##### No Precipitation
 #####
 
-function precipitation_cache(Y, precip_model::NoPrecipitation)
+function precipitation_cache(Y, precip_model::NoPrecipitation, _)
     FT = Spaces.undertype(axes(Y.c))
     return (;
         surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
@@ -31,7 +31,7 @@ precipitation_tendency!(Yₜ, Y, p, t, ::NoPrecipitation, _) = nothing
 ##### 0-Moment without sgs scheme or with diagnostic/prognostic edmf
 #####
 
-function precipitation_cache(Y, precip_model::Microphysics0Moment)
+function precipitation_cache(Y, precip_model::Microphysics0Moment, _)
     FT = Spaces.undertype(axes(Y.c))
     return (;
         ᶜS_ρq_tot = similar(Y.c, FT),
@@ -183,7 +183,7 @@ end
 ##### 1-Moment without sgs scheme
 #####
 
-function precipitation_cache(Y, precip_model::Microphysics1Moment)
+function precipitation_cache(Y, precip_model::Microphysics1Moment, _)
     FT = Spaces.undertype(axes(Y.c))
     return (;
         ᶜSqₜᵖ = similar(Y.c, FT),
@@ -444,8 +444,8 @@ function precipitation_cache(Y, precip_model::MicrophysicsCloudy, params)
         Smom = similar(Y.c, eltype(Y.c.moments)),
         Sρq_vap = similar(Y.c, FT),
         tmp_cloudy = similar(Y.c, eltype(Y.c.moments)),
-        pdists = similar(Y.c, typeof(clp.pdists)),
-        weighted_vt = similar(Y.c, typeof(Y.c.moments))
+        pdists = similar(Y.c, eltype(clp.pdists)),
+        weighted_vt = similar(Y.c, eltype(Y.c.moments))
         # TODO ᶜSeₜᵖ = similar(Y.c, FT),
         # TODO surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
         # TODO surface_snow_flux = zeros(axes(Fields.level(Y.f, half))),
