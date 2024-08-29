@@ -59,7 +59,7 @@ end
 NVTX.@annotate function set_cloud_fraction!(
     Y,
     p,
-    ::Union{EquilMoistModel, NonEquilMoistModel},
+    ::Union{EquilMoistModel, NonEquilMoistModel, CloudyMoisture},
     ::QuadratureCloud,
 )
     (; SG_quad, params) = p

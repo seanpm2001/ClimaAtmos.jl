@@ -154,6 +154,7 @@ function ImplicitEquationJacobian(
     ρatke_if_available =
         is_in_Y(@name(c.sgs⁰.ρatke)) ? (@name(c.sgs⁰.ρatke),) : ()
     sfc_if_available = is_in_Y(@name(sfc)) ? (@name(sfc),) : ()
+    moments_if_available = is_in_Y(@name(c.moments)) ? (@name(c.moments),) : ()
 
     tracer_names = (
         @name(c.ρq_tot),
@@ -161,6 +162,7 @@ function ImplicitEquationJacobian(
         @name(c.ρq_ice),
         @name(c.ρq_rai),
         @name(c.ρq_sno),
+        #@name(c.moments)
     )
     available_tracer_names = MatrixFields.unrolled_filter(is_in_Y, tracer_names)
 
@@ -168,8 +170,9 @@ function ImplicitEquationJacobian(
     # which means that multiplying inv(-1) by a Float32 will yield a Float64.
     identity_blocks = MatrixFields.unrolled_map(
         name -> (name, name) => FT(-1) * I,
-        (@name(c.ρ), sfc_if_available...),
+        (@name(c.ρ), moments_if_available..., sfc_if_available...),
     )
+    @show moments_if_available
 
     active_scalar_names = (@name(c.ρ), @name(c.ρe_tot), ρq_tot_if_available...)
     advection_blocks = (
@@ -287,7 +290,7 @@ function ImplicitEquationJacobian(
     else
         ()
     end
-    names₁_group₁ = (@name(c.ρ), sfc_if_available...)
+    names₁_group₁ = (@name(c.ρ), moments_if_available..., sfc_if_available...)
     names₁_group₂ = (available_tracer_names..., ρatke_if_available...)
     names₁_group₃ = (@name(c.ρe_tot),)
     names₁ = (
@@ -618,6 +621,7 @@ function update_implicit_equation_jacobian!(A, Y, p, dtγ)
             (@name(c.ρq_ice), @name(q_ice)),
             (@name(c.ρq_rai), @name(q_rai)),
             (@name(c.ρq_sno), @name(q_sno)),
+            #(@name(c.moments), @name(moments)),
         )
         MatrixFields.unrolled_foreach(tracer_info) do (ρq_name, q_name)
             MatrixFields.has_field(Y, ρq_name) || return

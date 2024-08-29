@@ -160,6 +160,11 @@ function implicit_vertical_advection_tendency!(Yₜ, Y, p, t)
             ᶠwinterp(ᶜJ, Y.c.ρ) *
             ᶠright_bias(Geometry.WVector(-(ᶜwₛ)) * ᶜspecific.q_sno),
         )
+    # elseif precip_model isa MicrophysicsCloudy
+    #     (; weighted_vt) = p.precipitation
+    #     @. Yₜ.c.moments -= ᶜprecipdivᵥ(
+    #         ᶠright_bias(Geometry.WVector(-(weighted_vt)) * Y.c.moments),
+    #     )
     end
 
     @. Yₜ.f.u₃ -= ᶠgradᵥ(ᶜp) / ᶠinterp(Y.c.ρ) + ᶠgradᵥ_ᶜΦ
