@@ -445,10 +445,10 @@ function precipitation_cache(Y, precip_model::MicrophysicsCloudy, params)
         Sρq_vap = similar(Y.c, FT),
         tmp_cloudy = similar(Y.c, eltype(Y.c.moments)),
         pdists = similar(Y.c, eltype(clp.pdists)),
-        weighted_vt = similar(Y.c, eltype(Y.c.moments))
-        # TODO ᶜSeₜᵖ = similar(Y.c, FT),
-        # TODO surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
-        # TODO surface_snow_flux = zeros(axes(Fields.level(Y.f, half))),
+        weighted_vt = similar(Y.c, eltype(Y.c.moments)),
+        # TODO: ᶜSeₜᵖ = similar(Y.c, FT),
+        surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
+        surface_snow_flux = zeros(axes(Fields.level(Y.f, half))), # TODO: currently inactive (no cold phase mphys)
     )
 end
 
@@ -490,6 +490,28 @@ function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     end
 end
 
+function compute_precipitation_surface_fluxes!(
+    Y,
+    p,
+    precip_model::MicrophysicsCloudy,
+)
+    (; surface_rain_flux, weighted_vt) = p.precipitation
+    (; params) = p
+    clp = CAP.cloudy_params(params)
+
+    slg = Fields.level(Fields.local_geometry_field(ᶠtemp_scalar), Fields.half)
+
+    ˢmoments = Fields.Field(
+        Fields.field_values(Fields.level(Y.c.moments, 1)),
+        axes(slg),
+    )
+    ˢwvt = Fields.Field(Fields.field_values(Fields.level(weighted_vt, 1)), axes(slg))
+
+    # Project the flux to CT3 vector and convert to physical units.
+    @. surface_rain_flux =
+        -projected_vector_data(CT3, Geometry.WVector(get_M1_flux(ˢmoments, ˢwvt, clp)), slg)
+end
+
 function precipitation_tendency!(
     Yₜ,
     Y,
@@ -503,8 +525,7 @@ function precipitation_tendency!(
 
     # Populate the cache and precipitation surface fluxes
     compute_precipitation_cache!(Y, p, precip_model, turbconv_model)
-    # TODO compute_precipitation_surface_fluxes!(Y, p, precip_model)
-    
+    compute_precipitation_surface_fluxes!(Y, p, precip_model)
 
     # Update grid mean tendencies
     @. Yₜ.c.ρ += Sρq_vap # TODO: doesn't account for additional condensate loading

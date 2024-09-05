@@ -92,6 +92,7 @@ include("../../test_helpers.jl")
     @assert !any(isnan, ᶜYₜ.c.ρe_tot)
     @assert !any(isnan, ᶜYₜ.c.ρq_rai)
     @assert !any(isnan, ᶜYₜ.c.ρq_sno)
+    @assert !any(isnan, ᶜYₜ.c.moments)
     @assert !any(isnan, p.precomputed.ᶜwᵣ)
     @assert !any(isnan, p.precomputed.ᶜwₛ)
 

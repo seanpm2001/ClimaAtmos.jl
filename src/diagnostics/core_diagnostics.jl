@@ -614,6 +614,7 @@ function compute_pr!(
         NoPrecipitation,
         Microphysics0Moment,
         Microphysics1Moment,
+        MicrophysicsCloudy
     },
 )
     if isnothing(out)

@@ -500,3 +500,21 @@ function get_cond_evap_sources(FT, thermo_params, cmp, cloudy_params, œÅq_tot, œ
     end
 end
 
+"""
+   get_M1_flux(moments, weighted_vt, cloudy_params)
+
+ - moments - current distribution moments
+ - weighted_vt - moment-weighted terminal velocities
+ - cloudy_params
+
+Returns the vertical flux of the first moment
+"""
+function get_M1_flux(moments, weighted_vt, cloudy_params)
+    m1_ind = 2 - cloudy_params.NProgMoms[1]
+    m1_fluxes = ntuple(length(cloudy_params.NProgMoms)) do k
+        m1_ind = m1_ind + cloudy_params.NProgMoms[k]
+        moments[m1_ind] * weighted_vt[m1_ind]
+    end
+
+    return sum(m1_fluxes)
+end
