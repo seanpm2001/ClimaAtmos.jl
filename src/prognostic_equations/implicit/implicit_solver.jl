@@ -162,6 +162,7 @@ function ImplicitEquationJacobian(
         @name(c.ρq_ice),
         @name(c.ρq_rai),
         @name(c.ρq_sno),
+        @name(c.ρq_vap)
         #@name(c.moments)
     )
     available_tracer_names = MatrixFields.unrolled_filter(is_in_Y, tracer_names)
@@ -621,6 +622,7 @@ function update_implicit_equation_jacobian!(A, Y, p, dtγ)
             (@name(c.ρq_ice), @name(q_ice)),
             (@name(c.ρq_rai), @name(q_rai)),
             (@name(c.ρq_sno), @name(q_sno)),
+            (@name(c.ρq_vap), @name(q_vap)),
             #(@name(c.moments), @name(moments)),
         )
         MatrixFields.unrolled_foreach(tracer_info) do (ρq_name, q_name)

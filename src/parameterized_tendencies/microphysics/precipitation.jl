@@ -444,7 +444,7 @@ function precipitation_cache(Y, precip_model::MicrophysicsCloudy, params)
         Smom = similar(Y.c, eltype(Y.c.moments)),
         Sρq_vap = similar(Y.c, FT),
         tmp_cloudy = similar(Y.c, eltype(Y.c.moments)),
-        pdists = similar(Y.c, eltype(clp.pdists)),
+        pdists = similar(Y.c, typeof(clp.pdists)),
         weighted_vt = similar(Y.c, eltype(Y.c.moments)),
         # TODO: ᶜSeₜᵖ = similar(Y.c, FT),
         surface_rain_flux = zeros(axes(Fields.level(Y.f, half))),
@@ -454,23 +454,22 @@ end
 
 function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     FT = Spaces.undertype(axes(Y.c))
-    (; dt) = p
+    (; params, dt) = p
     (; ᶜts) = p.precomputed
     (; ᶜΦ) = p.core
     (; Smom, Sρq_vap, tmp_cloudy, pdists, weighted_vt) = p.precipitation
 
     # get thermodynamics and microphysics params
-    (; params) = p
     cmp = CAP.microphysics_precipitation_params(params)
     thp = CAP.thermodynamics_params(params)
     clp = CAP.cloudy_params(params)
 
     # update the pdists and weighted_vt
-    @. pdists = get_updated_pdists(Y.c.moments, pdists, clp)
-    @. weighted_vt = get_weighted_vt(FT, Y.c.moments, pdists, clp)
+    @. pdists = get_updated_pdists(Y.c.moments, pdists, (clp,))
+    @. weighted_vt = get_weighted_vt(FT, Y.c.moments, pdists, (clp,))
 
     # update the "standard" 1-moment variables
-    @. tmp_cloudy = separate_liq_rai(FT, Y.c.moments, pdists, clp)
+    @. tmp_cloudy = separate_liq_rai(FT, Y.c.moments, pdists, (clp,))
     @. Y.c.ρq_liq = tmp_cloudy.:1
     @. Y.c.ρq_rai = tmp_cloudy.:2
     @. Y.c.ρq_tot = Y.c.ρq_vap + Y.c.ρq_liq
@@ -480,8 +479,8 @@ function compute_precipitation_cache!(Y, p, ::MicrophysicsCloudy, _)
     @. Sρq_vap *= FT(0)
 
     # compute the source terms
-    @. Smom += get_coal_sources(moments, pdists, clp, dt)
-    @. tmp_cloudy = get_cond_evap_sources(thp, cmp, clp, ρq_tot, ρq_liq, moments, pdists, ᶜts, Y.c.ρ, dt)
+    @. Smom += get_coal_sources(Y.c.moments, pdists, (clp,), dt)
+    @. tmp_cloudy = get_cond_evap_sources(FT, thp, (cmp,), (clp,), Y.c.moments, pdists, ᶜts, Y.c.ρ, dt)
     @. Smom += tmp_cloudy
     mass_ind = 2
     for j in 1:length(pdists)
@@ -499,6 +498,7 @@ function compute_precipitation_surface_fluxes!(
     (; params) = p
     clp = CAP.cloudy_params(params)
 
+    (; ᶠtemp_scalar) = p.scratch
     slg = Fields.level(Fields.local_geometry_field(ᶠtemp_scalar), Fields.half)
 
     ˢmoments = Fields.Field(
@@ -509,7 +509,7 @@ function compute_precipitation_surface_fluxes!(
 
     # Project the flux to CT3 vector and convert to physical units.
     @. surface_rain_flux =
-        -projected_vector_data(CT3, Geometry.WVector(get_M1_flux(ˢmoments, ˢwvt, clp)), slg)
+        -projected_vector_data(CT3, Geometry.WVector(get_M1_flux(ˢmoments, ˢwvt, (clp,))), slg)
 end
 
 function precipitation_tendency!(

@@ -121,6 +121,8 @@ moisture_variables(ls, ::CloudyMoisture) = (;
              TD.total_specific_humidity(ls.thermo_params, ls.thermo_state),
     ρq_liq = ls.ρ *
              TD.liquid_specific_humidity(ls.thermo_params, ls.thermo_state),
+    ρq_vap = ls.ρ *
+             TD.vapor_specific_humidity(ls.thermo_params, ls.thermo_state),
 )
 
 precip_variables(ls, ::NoPrecipitation) = (;)
