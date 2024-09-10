@@ -5,19 +5,19 @@ z_elem: 32
 z_max: 10000.0
 z_stretch: false
 dt: "1secs"
-t_end: "10secs"
+t_end: "360secs"
 dt_save_state_to_disk: "6000secs"
 dt_cloud_fraction: "60secs"
 moist: "nonequil"
 precip_model: "Cloudy"
 num_dist: 2
-vert_diff: "FriersonDiffusion"
 smagorinsky_lilly: true
 c_smag: 0.20
 implicit_diffusion: false
 approximate_linear_solve_iters: 2
 regression_test: false
 toml: [toml/single_column_precipitation_test.toml]
+output_dir: "output/cloudy_test"
 diagnostics:
-  - short_name: [hus, clw, cli, husra, hussn, ta, wa, pr]
+  - short_name: [hus, clw, husra, ta, wa, pr]
     period: 10secs

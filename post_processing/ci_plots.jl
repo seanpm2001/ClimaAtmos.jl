@@ -512,7 +512,10 @@ function make_plots(
 end
 
 function make_plots(
-    ::Val{:single_column_precipitation_test},
+    ::Union{
+        Val{:single_column_precipitation_test},
+        Val{:single_column_precipitation_cloudy_test},
+    },
     output_paths::Vector{<:AbstractString},
 )
     simdirs = SimDir.(output_paths)
@@ -522,31 +525,37 @@ function make_plots(
 
     short_names = ["hus", "clw", "cli", "husra", "hussn", "ta"]
     vars = [
-        slice(get(simdir; short_name), x = 0.0, y = 0.0) for
-        short_name in short_names
+            try
+                slice(get(simdir; short_name), x = 0.0, y = 0.0)
+            catch e 
+                println(short_name * " not found, skipping")
+            end for short_name in short_names
     ]
 
     # We first prepare the axes with all the nice labels with ClimaAnalysis, then we use
     # CairoMakie to add the additional lines.
-    fig = CairoMakie.Figure(; size = (1200, 600))
+    fig = CairoMakie.Figure(; size = (1200, 1200))
 
     p_loc = [1, 1]
 
     axes = map(vars) do var
-        viz.plot!(
-            fig,
-            var;
-            time = 0.0,
-            p_loc,
-            more_kwargs = Dict(
-                :plot => ca_kwargs(color = :navy),
-                :axis => ca_kwargs(dim_on_y = true, title = ""),
-            ),
-        )
-
+        if !isnothing(var)
+            viz.plot!(
+                fig,
+                var;
+                time = 0.0,
+                p_loc,
+                more_kwargs = Dict(
+                    :plot => ca_kwargs(color = :navy),
+                    :axis => ca_kwargs(dim_on_y = true, title = ""),
+                ),
+            )
+        end
         # Make a grid of plots
+        @show p_loc
         p_loc[2] += 1
         p_loc[2] > 3 && (p_loc[1] += 1; p_loc[2] = 1)
+        @show var
         return CairoMakie.current_axis()
     end
 
@@ -554,12 +563,14 @@ function make_plots(
 
     for (time, color) in col
         for (i, var) in enumerate(vars)
-            CairoMakie.lines!(
-                axes[i],
-                slice(var; time).data,
-                var.dims["z"],
-                color = color,
-            )
+            if !isnothing(var)
+                CairoMakie.lines!(
+                    axes[i],
+                    slice(var; time).data,
+                    var.dims["z"],
+                    color = color,
+                )
+            end
         end
     end
 
