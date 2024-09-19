@@ -1,7 +1,7 @@
 agents:
   queue: clima
   slurm_mem: 8G
-  modules: julia/1.10.0 cuda/julia-pref openmpi/4.1.5-mpitrampoline nsight-systems/2024.4.1
+  modules: julia/1.10.5 cuda/julia-pref openmpi/4.1.5-mpitrampoline nsight-systems/2024.5.1
 
 env:
   JULIA_MPI_HAS_CUDA: "true"
@@ -61,7 +61,6 @@ steps:
         agents:
           slurm_gpus: 1
           slurm_cpus_per_task: 4
-          slurm_exclusive:
 
       - label: "moist Held-Suarez"
         key: "gpu_hs_rhoe_equil_55km_nz63_0M"
@@ -78,7 +77,6 @@ steps:
         agents:
           slurm_gpus: 1
           slurm_cpus_per_task: 4
-          slurm_exclusive:
 
       - label: "moist Held-Suarez - 4 gpus"
         key: "gpu_hs_rhoe_equil_55km_nz63_0M_4process"
@@ -98,7 +96,6 @@ steps:
           slurm_gpus_per_task: 1
           slurm_cpus_per_task: 4
           slurm_ntasks: 4
-          slurm_exclusive:
 
       - label: "dry baroclinic wave - 4 gpus"
         key: "target_gpu_implicit_baroclinic_wave_4process"
@@ -118,7 +115,6 @@ steps:
           slurm_gpus_per_task: 1
           slurm_cpus_per_task: 4
           slurm_ntasks: 4
-          slurm_exclusive:
 
   - group: "DYAMOND GPU strong scaling"
     steps:
@@ -141,7 +137,6 @@ steps:
           slurm_ntasks: 1
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - label: "gpu_aquaplanet_dyamond - strong scaling - 1 GPU"
         command:
@@ -162,7 +157,6 @@ steps:
           slurm_ntasks: 1
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - label: "gpu_aquaplanet_dyamond - strong scaling - 2 GPUs"
         command:
@@ -182,7 +176,6 @@ steps:
           slurm_ntasks: 2
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - label: "gpu_aquaplanet_dyamond - strong scaling - 4 GPUs"
         command:
@@ -202,7 +195,6 @@ steps:
           slurm_ntasks: 4
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - wait
 
@@ -217,7 +209,6 @@ steps:
         agents:
           slurm_cpus_per_task: 1
           slurm_ntasks: 1
-          slurm_exclusive:
 
   - group: "DYAMOND GPU weak scaling"
     steps:
@@ -240,7 +231,6 @@ steps:
           slurm_ntasks: 1
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - label: "gpu_aquaplanet_dyamond - weak scaling - 2 GPUs"
         command:
@@ -260,7 +250,6 @@ steps:
           slurm_ntasks: 2
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - label: "gpu_aquaplanet_dyamond - weak scaling - 4 GPUs"
         command:
@@ -280,7 +269,6 @@ steps:
           slurm_ntasks: 4
           slurm_mem: 32G
           slurm_time: 8:00:00
-          slurm_exclusive:
 
       - wait
 
@@ -296,9 +284,6 @@ steps:
         agents:
           slurm_cpus_per_task: 1
           slurm_ntasks: 1
-          slurm_exclusive:
-
-
 
   - group: "Diagnostic EDMF GPU"
     steps:
@@ -319,8 +304,7 @@ steps:
           slurm_gpus_per_task: 1
           slurm_cpus_per_task: 4
           slurm_ntasks: 1
-          slurm_mem: 32G
-          slurm_exclusive:
+          slurm_mem: 48G
 
       - label: "gpu_aquaplanet_diagedmf_benchmark"
         command: >
@@ -352,8 +336,7 @@ steps:
           slurm_gpus_per_task: 1
           slurm_cpus_per_task: 4
           slurm_ntasks: 1
-          slurm_mem: 32G
-          slurm_exclusive:
+          slurm_mem: 48G
 
       - label: "gpu_aquaplanet_progedmf_benchmark"
         command: >
