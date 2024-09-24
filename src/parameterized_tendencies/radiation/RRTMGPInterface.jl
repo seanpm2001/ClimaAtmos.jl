@@ -844,7 +844,6 @@ function RRTMGPModel(
                 )
             end
             aerosol_state = RRTMGP.AtmosphericStates.AerosolState(
-                aero_mask,
                 aero_size,
                 aero_mass,
             )
