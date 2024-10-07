@@ -132,6 +132,7 @@ function get_spaces(parsed_args, params, comms_ctx)
     z_elem = Int(parsed_args["z_elem"])
     z_max = FT(parsed_args["z_max"])
     dz_bottom = FT(parsed_args["dz_bottom"])
+    dz_top = FT(parsed_args["dz_top"])
     topography = parsed_args["topography"]
     bubble = parsed_args["bubble"]
     deep = parsed_args["deep_atmosphere"]
@@ -179,7 +180,8 @@ function get_spaces(parsed_args, params, comms_ctx)
         h_space =
             make_horizontal_space(horizontal_mesh, quad, comms_ctx, bubble)
         z_stretch = if parsed_args["z_stretch"]
-            Meshes.HyperbolicTangentStretching(dz_bottom)
+            #Meshes.HyperbolicTangentStretching(dz_bottom)
+            Meshes.GeneralizedExponentialStretching(dz_bottom, dz_top)
         else
             Meshes.Uniform()
         end
@@ -214,7 +216,8 @@ function get_spaces(parsed_args, params, comms_ctx)
         h_space =
             make_horizontal_space(horizontal_mesh, quad, comms_ctx, bubble)
         z_stretch = if parsed_args["z_stretch"]
-            Meshes.HyperbolicTangentStretching(dz_bottom)
+            #Meshes.HyperbolicTangentStretching(dz_bottom)
+            Meshes.GeneralizedExponentialStretching(dz_bottom, dz_top)
         else
             Meshes.Uniform()
         end
@@ -236,7 +239,8 @@ function get_spaces(parsed_args, params, comms_ctx)
         h_space =
             make_horizontal_space(horizontal_mesh, quad, comms_ctx, bubble)
         z_stretch = if parsed_args["z_stretch"]
-            Meshes.HyperbolicTangentStretching(dz_bottom)
+            #Meshes.HyperbolicTangentStretching(dz_bottom)
+            Meshes.GeneralizedExponentialStretching(dz_bottom, dz_top)
         else
             Meshes.Uniform()
         end
@@ -260,7 +264,8 @@ function get_spaces(parsed_args, params, comms_ctx)
         h_space =
             make_horizontal_space(horizontal_mesh, quad, comms_ctx, bubble)
         z_stretch = if parsed_args["z_stretch"]
-            Meshes.HyperbolicTangentStretching(dz_bottom)
+            #Meshes.HyperbolicTangentStretching(dz_bottom)
+            Meshes.GeneralizedExponentialStretching(dz_bottom, dz_top)
         else
             Meshes.Uniform()
         end

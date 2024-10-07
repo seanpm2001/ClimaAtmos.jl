@@ -2,6 +2,7 @@ h_elem: 16
 z_max: 65000.0
 z_elem: 63
 dz_bottom: 30.0
+dz_top: 3000.0
 rayleigh_sponge: true
 viscous_sponge: true
 dt_save_to_sol: "10days"
