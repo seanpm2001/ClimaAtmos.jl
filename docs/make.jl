@@ -26,6 +26,7 @@ makedocs(;
         "Home" => "index.md",
         "Installation instructions" => "installation_instructions.md",
         "Contributor Guide" => "contributor_guide.md",
+        "Quick Start" => "quickstart.md",
         "Equations" => "equations.md",
         "EDMF Equations" => "edmf_equations.md",
         "Diagnostics" => "diagnostics.md",
