@@ -1456,6 +1456,7 @@ EDMFBoxPlots = Union{
     Val{:prognostic_edmfx_bomex_stretched_column},
     Val{:prognostic_edmfx_bomex_pigroup_column},
     Val{:prognostic_edmfx_bomex_implicit_column},
+    Val{:prognostic_edmfx_bomex_implicit_column_autodiff},
     Val{:prognostic_edmfx_dycoms_rf01_column},
     Val{:prognostic_edmfx_trmm_column_0M},
     Val{:prognostic_edmfx_simpleplume_column},
@@ -1594,6 +1595,14 @@ function make_plots(
         period = "10m"
     elseif "30m" in available_periods
         period = "30m"
+    elseif "1h" in available_periods
+        period = "1h"
+    elseif "1m" in available_periods
+        period = "1m"
+    elseif "1m_20s" in available_periods
+        period = "1m_20s"
+    elseif "1m_40s" in available_periods
+        period = "1m_40s"
     end
 
     short_name_tuples = pair_edmf_names(short_names)
