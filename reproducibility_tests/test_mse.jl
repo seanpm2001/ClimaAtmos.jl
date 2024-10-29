@@ -11,6 +11,9 @@ function parse_commandline()
         "--out_dir"
         help = "Output data directory"
         arg_type = String
+        "--test_broken_report_flakiness"
+        help = "Bool indicating that the job is flaky, use `@test_broken` on flaky job and report flakiness"
+        arg_type = Bool
     end
     parsed_args = ArgParse.parse_args(ARGS, s)
     return (s, parsed_args)
@@ -20,22 +23,53 @@ function get_params()
     (s, parsed_args) = parse_commandline()
     job_id = parsed_args["job_id"]
     out_dir = parsed_args["out_dir"]
-    return (; job_id, out_dir)
+    test_broken_report_flakiness = parsed_args["test_broken_report_flakiness"]
+    return (; job_id, out_dir, test_broken_report_flakiness)
 end
 
-(; job_id, out_dir) = get_params()
+(; job_id, out_dir, test_broken_report_flakiness) = get_params()
 include(joinpath(@__DIR__, "mse_tables.jl"))
 best_mse = all_best_mse[job_id]
 best_mse_string =
     Dict(map(x -> string(x) => best_mse[x], collect(keys(best_mse))))
-computed_mse_filename = joinpath(out_dir, "computed_mse.json")
-computed_mse = JSON.parsefile(
-    computed_mse_filename;
-    dicttype = OrderedCollections.OrderedDict,
-)
 
 import ClimaReproducibilityTests as CRT
 using Test
-for (var, reproducible) in CRT.test_mse(; computed_mse)
-    @test reproducible
+is_mse_file(x) = startswith(x, "computed_mse") && endswith(x, ".json")
+computed_mse_filenames = filter(is_mse_file, readdir(out_dir))
+n_passes = 0
+for computed_mse_filename in computed_mse_filenames
+    computed_mse = JSON.parsefile(
+        computed_mse_filename;
+        dicttype = OrderedCollections.OrderedDict,
+    )
+
+    if test_broken_report_flakiness
+        all_reproducible = true
+        for (var, reproducible) in CRT.test_mse(; computed_mse)
+            reproducible || (all_reproducible = false)
+            @show var, reproducible
+        end
+        all_reproducible && (n_passes+=1)
+    else
+        for (var, reproducible) in CRT.test_mse(; computed_mse)
+            @test reproducible
+        end
+    end
+end
+
+n_allowed_passes = 5
+# If we successfully compare against 5 other jobs,
+# let's error and tell the user that the job now
+# seems reproducible.
+if test_broken_report_flakiness
+    if n_passes > n_allowed_passes
+        now_reproducible = true
+        @test_broken now_reproducible
+    else
+        n_times_reproducible = n_passes
+        n_times_not_reproducible = length(computed_mse_filenames) - n_passes
+        @show n_times_reproducible
+        @show n_times_not_reproducible
+    end
 end
