@@ -50,7 +50,7 @@ for computed_mse_filename in computed_mse_filenames
             reproducible || (all_reproducible = false)
             @show var, reproducible
         end
-        all_reproducible && (n_passes+=1)
+        all_reproducible && (n_passes += 1)
     else
         for (var, reproducible) in CRT.test_mse(; computed_mse)
             @test reproducible

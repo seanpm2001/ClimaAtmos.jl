@@ -72,7 +72,7 @@ Reprodicibility tests are performed at the end of `examples/hybrid/driver.jl`, a
  0) Run a simulation, with a particular `job_id`, to the final time.
  1) Load a dictionary, `all_best_mse`, of previous "best" mean-squared errors from `mse_tables.jl` and extract the mean squared errors for the given `job_id` (store in job-specific dictionary, `best_mse`).
  2) Export the solution (a `FieldVector`) at the final simulation time to an `NCDataset` file.
- 3) Compute the errors between the exported solution and the exported solution from the reference `NCDataset` file (which is saved in a dedicated folder on the Caltech Central cluster) and save into a dictionary, called `computed_mse`.
+ 3) Compute the errors between the exported solution and the exported solution from the reference `NCDataset` files (which are saved in a dedicated folders on the Caltech Central cluster) and save into a dictionary, called `computed_mse`.
  4) Export this dictionary (`computed_mse`) to the output folder
  5) Test that `computed_mse` is no worse than `best_mse` (determines if reproducibility test passes or not).
 

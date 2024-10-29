@@ -3,7 +3,7 @@ import JSON
 
 # Get cases from JobIDs in mse_tables file:
 include(joinpath(@__DIR__, "self_reference_or_path.jl"))
-self_reference = self_reference_or_path() == :self_reference
+self_reference = self_reference_or_paths() == :self_reference
 
 all_lines = readlines(joinpath(@__DIR__, "mse_tables.jl"))
 lines = deepcopy(all_lines)

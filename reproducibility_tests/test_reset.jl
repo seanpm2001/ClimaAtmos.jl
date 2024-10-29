@@ -2,7 +2,7 @@ import OrderedCollections
 
 # Get cases from JobIDs in mse_tables file:
 include(joinpath(@__DIR__, "self_reference_or_path.jl"))
-self_reference = self_reference_or_path() == :self_reference
+self_reference = self_reference_or_paths() == :self_reference
 include(joinpath(@__DIR__, "mse_tables.jl"))
 
 #### Test that mse values are all zero if ref counter is incremented

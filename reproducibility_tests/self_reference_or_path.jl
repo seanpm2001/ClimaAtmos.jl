@@ -24,7 +24,7 @@ function ref_counters_per_path(paths)
     return ref_counters_in_path
 end
 
-function self_reference_or_path()
+function self_reference_or_paths()
     if get(ENV, "BUILDKITE_PIPELINE_SLUG", nothing) != "climaatmos-ci"
         @warn "Not using climaatmos-ci pipeline slug, assuming self-reference"
         @info "Please review output results before merging."
@@ -50,34 +50,39 @@ function self_reference_or_path()
     ref_counter_PR = parse(Int, first(readlines(ref_counter_file_PR)))
 
     ref_counters_main = ref_counters_per_path(sorted_paths)
-    i_largest_reference = findfirst(ref_counters_main) do ref_counter_main
+    i_comparable_references = findall(ref_counters_main) do ref_counter_main
         ref_counter_main == ref_counter_PR
     end
-    if i_largest_reference == nothing
+    if i_comparable_references == nothing
         @warn "`ref_counter.jl` not found on main, assuming self-reference"
         @info "Please review output results before merging."
         return :self_reference
     end
     # Largest ref-counter reference path:
-    path = sorted_paths[i_largest_reference]
-    ref_counter_file_main = joinpath(path, "ref_counter.jl")
+    paths = map(i -> sorted_paths[i], i_comparable_references)
+    ref_counter_files_main = joinpath(paths, "ref_counter.jl")
 
-    @info "Files in $path:" # for debugging
-    for file_on_main in readdir(path)
-        @info "   File:`$file_on_main`"
+    for p in ref_counter_files_main
+        @info "Files in $p:" # for debugging
+        for file_on_main in readdir(p)
+            @info "   File:`$file_on_main`"
+        end
     end
-    @assert isfile(ref_counter_file_main)
-    ref_counter_main = parse(Int, first(readlines(ref_counter_file_main)))
-    if ref_counter_PR == ref_counter_main + 1 # new reference
+    @assert all(isfile, ref_counter_files_main)
+    ref_counters_main =
+        map(f -> parse(Int, first(readlines(f))), ref_counter_files_main)
+    if all(rc -> ref_counter_PR == rc + 1, ref_counters_main) # new reference
         @warn "`ref_counter.jl` incremented, assuming self-reference"
+        @info "Ref counters main: $ref_counters_main."
         @info "Please review output results before merging."
         return :self_reference
-    elseif ref_counter_PR == ref_counter_main # unchanged reference
-        @info "Comparing results against main path:$path"
+    elseif all(rc -> ref_counter_PR == rc, ref_counters_main) # unchanged reference
+        @info "Ref counters main: $ref_counters_main."
+        @info "Comparing results against main path:$paths"
     else
         error(
             "Unexpected reference. Please open an issue pointing to this build.",
         )
     end
-    return path
+    return paths
 end
