@@ -58,9 +58,14 @@ function self_reference_or_paths()
         @info "Please review output results before merging."
         return :self_reference
     end
+    @info "Found $(length(i_comparable_references)) comparable references:$i_comparable_references"
     # Largest ref-counter reference path:
     paths = map(i -> sorted_paths[i], i_comparable_references)
+    @info "$(length(paths)) paths found"
     ref_counter_files_main = map(p -> joinpath(p, "ref_counter.jl"), paths)
+    @info "$(length(ref_counter_files_main)) reference counter paths on central"
+    filter!(isfile, ref_counter_files_main)
+    @info "$(length(ref_counter_files_main)) reference counter paths on central after filtering isfile"
 
     for p in ref_counter_files_main
         @info "Files in $p:" # for debugging
