@@ -67,7 +67,7 @@ function self_reference_or_paths()
     filter!(isfile, ref_counter_files_main)
     @info "$(length(ref_counter_files_main)) reference counter paths on central after filtering isfile"
 
-    for p in ref_counter_files_main
+    for p in paths
         @info "Files in $p:" # for debugging
         for file_on_main in readdir(p)
             @info "   File:`$file_on_main`"
