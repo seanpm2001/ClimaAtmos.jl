@@ -60,7 +60,7 @@ function self_reference_or_paths()
     end
     # Largest ref-counter reference path:
     paths = map(i -> sorted_paths[i], i_comparable_references)
-    ref_counter_files_main = joinpath(paths, "ref_counter.jl")
+    ref_counter_files_main = map(p -> joinpath(p, "ref_counter.jl"), paths)
 
     for p in ref_counter_files_main
         @info "Files in $p:" # for debugging
