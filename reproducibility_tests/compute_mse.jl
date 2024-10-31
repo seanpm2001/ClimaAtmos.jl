@@ -136,7 +136,7 @@ function reproducibility_test(;
     dict_references =
         map(ds -> to_dict(ds, reference_keys), ds_filename_references)
     @info "Computed keys $(collect(keys(dict_computed)))"
-    @info "Reference keys $(collect(keys(first(dict_reference))))"
+    @info "Reference keys $(collect(keys(first(dict_references))))"
     if all(dr -> keys(dict_computed) == keys(dr), dict_references) && all(
         dr -> typeof(values(dict_computed)) == typeof(values(dr)),
         dict_references,
