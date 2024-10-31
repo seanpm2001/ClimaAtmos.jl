@@ -27,6 +27,13 @@ At this moment, it's crucial to mention several important points:
 
  - Every time the reference counter is incremented, data from that PR is saved onto Caltech's central cluster. And that solution's dataset is the new reference dataset that all future PRs are compared against (until the reference counter is incremented again).
 
+## Allowing flaky tests
+
+Users can add the flag `test_broken_report_flakiness` to the `test_mse.jl` script: `julia --project=examples reproducibility_tests/test_mse.jl --test_broken_report_flakiness true`, which will have the following behavior:
+
+ - If the test is not reproducible (i.e., flaky) when compared against `N` appropriate references, then the test will pass and be reported as broken.
+ - If the test is reproducible when compared against `N` appropriate references, then the test will fail `@test_broken`, and users will be asked to fix the broken test. At which point you can remove the `--test_broken_report_flakiness true` flag from that particular job, reinforcing a strict reproducibility constraint.
+
 ## How to update mse tables
 
 To update the mse tables:

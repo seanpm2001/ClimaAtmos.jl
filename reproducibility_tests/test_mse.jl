@@ -1,3 +1,7 @@
+#=
+Please see ClimaAtmos.jl/reproducibility_tests/README.md
+for a more detailed information on how reproducibility tests work.
+=#
 import OrderedCollections
 import JSON
 import ArgParse
