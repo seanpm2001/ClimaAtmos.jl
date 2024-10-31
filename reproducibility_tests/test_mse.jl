@@ -39,41 +39,52 @@ best_mse_string =
 
 import ClimaReproducibilityTests as CRT
 using Test
+function test_reproducibility_results(
+    computed_mse_filenames;
+    test_broken_report_flakiness,
+)
+    @info "computed_mse_filenames: $computed_mse_filenames"
+    @info "isfile.(computed_mse_filenames): $(isfile.(computed_mse_filenames))"
+    n_passes = 0
+    for computed_mse_filename in computed_mse_filenames
+        computed_mse = JSON.parsefile(
+            computed_mse_filename;
+            dicttype = OrderedCollections.OrderedDict,
+        )
+
+        if test_broken_report_flakiness
+            all_reproducible = true
+            for (var, reproducible) in CRT.test_mse(; computed_mse)
+                reproducible || (all_reproducible = false)
+                @show var, reproducible
+            end
+            all_reproducible && (n_passes += 1)
+        else
+            for (var, reproducible) in CRT.test_mse(; computed_mse)
+                @test reproducible
+            end
+        end
+    end
+
+    n_allowed_passes = 5
+    # If we successfully compare against 5 other jobs,
+    # let's error and tell the user that the job now
+    # seems reproducible.
+    if test_broken_report_flakiness
+        if n_passes > n_allowed_passes
+            now_reproducible = true
+            @test_broken now_reproducible
+        else
+            n_times_reproducible = n_passes
+            n_times_not_reproducible = length(computed_mse_filenames) - n_passes
+            @show n_times_reproducible
+            @show n_times_not_reproducible
+        end
+    end
+end
 is_mse_file(x) = startswith(x, "computed_mse") && endswith(x, ".json")
 computed_mse_filenames = filter(is_mse_file, readdir(out_dir))
-n_passes = 0
-for computed_mse_filename in computed_mse_filenames
-    computed_mse = JSON.parsefile(
-        computed_mse_filename;
-        dicttype = OrderedCollections.OrderedDict,
-    )
-
-    if test_broken_report_flakiness
-        all_reproducible = true
-        for (var, reproducible) in CRT.test_mse(; computed_mse)
-            reproducible || (all_reproducible = false)
-            @show var, reproducible
-        end
-        all_reproducible && (n_passes += 1)
-    else
-        for (var, reproducible) in CRT.test_mse(; computed_mse)
-            @test reproducible
-        end
-    end
-end
-
-n_allowed_passes = 5
-# If we successfully compare against 5 other jobs,
-# let's error and tell the user that the job now
-# seems reproducible.
-if test_broken_report_flakiness
-    if n_passes > n_allowed_passes
-        now_reproducible = true
-        @test_broken now_reproducible
-    else
-        n_times_reproducible = n_passes
-        n_times_not_reproducible = length(computed_mse_filenames) - n_passes
-        @show n_times_reproducible
-        @show n_times_not_reproducible
-    end
-end
+test_reproducibility_results(
+    computed_mse_filenames;
+    test_broken_report_flakiness,
+)
